@@ -381,3 +381,11 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .abody h3{font-size:clamp(15px,2.8cqw,32px)}
 .cfoot{padding:1.6cqw 4cqw}
 .planbtn[aria-pressed="true"]{background:var(--tint)}
+
+/* ===== plain white slide with a soft shadow on a pale backdrop ===== */
+.stagebox{background:#eceef4;border:0;border-radius:14px;padding:24px}
+.slidewrap2{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.slidepage{width:min(100cqw,calc((100cqh - 52px) * 1.33333));aspect-ratio:4/3;background:#fff;box-shadow:0 12px 40px rgba(70,75,110,.14),0 2px 6px rgba(70,75,110,.08);border:0;border-radius:2px;display:flex;flex-direction:column;overflow:hidden}
+.slidewrap2 .snav{width:min(100cqw,calc((100cqh - 52px) * 1.33333));display:flex;align-items:center;justify-content:space-between;height:40px}
+.snavmid{display:flex;align-items:center;gap:12px}
+.stagebox .actcard{width:min(100cqw,calc(100cqh * 1.33333))}

@@ -68,8 +68,10 @@ function spawnEmoji(k) {
 function slideCard(sl, s) {
   const cur = sl[Math.min(s.slideIdx, sl.length - 1)];
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : `<div class="stext"><small>SLIDE ${s.slideIdx + 1} OF ${sl.length}</small><h2>${esc(cur.t)}</h2><p>${esc(cur.p || '')}</p></div>`;
-  return `<div class="card2 slidecard">${body}${(s.attach[s.slideIdx] || []).length ? `<div class="runrow">${s.attach[s.slideIdx].map(a => `<button class="run" style="background:${ACT_META[a].color}" data-a="run" data-t="${esc(a)}">▶ ${esc(a)}</button>`).join('')}</div>` : ''}
-  <div class="cfoot"><button class="lk" data-a="prev" ${s.slideIdx === 0 ? 'disabled' : ''}>Previous</button><span class="dotsrow">${sl.slice(0, 12).map((_, i) => `<i class="${i === s.slideIdx ? 'on' : ''}"></i>`).join('')}</span><button class="lk" data-a="next" ${s.slideIdx >= sl.length - 1 ? 'disabled' : ''}>Next</button></div></div>`;
+  return `<div class="slidewrap2"><div class="slidepage">${body}</div>
+  <div class="snav"><button class="lk" data-a="prev" ${s.slideIdx === 0 ? 'disabled' : ''}>Previous</button>
+  <span class="snavmid">${(s.attach[s.slideIdx] || []).map(a => `<button class="run" style="background:${ACT_META[a].color}" data-a="run" data-t="${esc(a)}">▶ ${esc(a)}</button>`).join('')}<span class="dotsrow">${sl.slice(0, 12).map((_, i) => `<i class="${i === s.slideIdx ? 'on' : ''}"></i>`).join('')}</span></span>
+  <button class="lk" data-a="next" ${s.slideIdx >= sl.length - 1 ? 'disabled' : ''}>Next</button></div></div>`;
 }
 function actCard() {
   const m = ACT_META[A.type], p = PROMPTS[A.type];
