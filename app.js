@@ -49,14 +49,19 @@ function botbar() {
   b.innerHTML = `${L.plan ? planStrip(slidesFor(s), s) : ''}
   <div class="barrow">${L.plan ? '' : '<button class="bb planbtn" data-a="toggleplan">Session plan ▴</button>'}<span class="spacer"></span>
   <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
-  <button class="bb" data-a="toggleReact" aria-pressed="${L.react}">React <span class="spark">✦</span></button>
-  <div class="reactp" id="reactp" ${L.react ? '' : 'hidden'}></div></div>`;
-  renderReact();
+  <span class="bb reactlbl" aria-label="Class reactions appear here">React <span class="reactemo">${EMOJIS.map(e => e.e).join(' ')}</span></span></div>`;
 }
-function renderReact() {
-  const el = $('#reactp'); if (!el) return;
-  el.hidden = !L.react;
-  el.innerHTML = EMOJIS.map(e => `<button class="ebtn" data-k="${e.k}" title="${e.l}" aria-label="${e.l}">${e.e}</button>`).join('');
+const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function spawnEmoji(k) {
+  const layer = $('#floatlayer'); if (!layer || V !== 'live' || REDUCED) return;
+  const em = EMOJIS.find(x => x.k === k); if (!em) return;
+  const el = document.createElement('span');
+  el.className = 'fe'; el.textContent = em.e;
+  el.style.setProperty('--x', Math.round(Math.random() * 80) + '%');
+  el.style.setProperty('--sway', (Math.random() * 60 - 30).toFixed(0) + 'px');
+  el.style.setProperty('--dur', (2.8 + Math.random() * 1.6).toFixed(2) + 's');
+  el.addEventListener('animationend', () => el.remove());
+  layer.appendChild(el);
 }
 
 /* ---------- live view ---------- */
@@ -143,8 +148,7 @@ const modal = html => { $('#modal').innerHTML = `<div class="scrim" data-x><div 
 
 document.addEventListener('click', e => {
   const nv = e.target.closest('.nav [data-v]'); if (nv) { V = nv.dataset.v === 'ov' ? 'ov' : 'live'; L.menu = L.subj = false; return render(); }
-  const rb = e.target.closest('.ebtn'); if (rb) { const em = EMOJIS.find(x => x.k === rb.dataset.k); S().reactions[em.k]++; L.react = false; renderReact(); document.querySelector('[data-a=toggleReact]')?.setAttribute('aria-pressed', 'false'); return toast(em.e + ' ' + em.l + ' sent to the class'); }
-  const ss = e.target.closest('[data-ss]'); if (ss) { O.s = ss.dataset.ss; O.open = null; return render(); }
+    const ss = e.target.closest('[data-ss]'); if (ss) { O.s = ss.dataset.ss; O.open = null; return render(); }
   const sd = e.target.closest('[data-s]'); if (sd) {
     const [oid, i] = sd.dataset.s.split('|'), o = findOut(oid), x = o.who[+i];
     return modal(`<h4>${esc(x[0])}</h4><div class="focus" style="background:var(--live-soft)"><small>${o.lo} · STUCK AT ${LVL[x[1]][0].toUpperCase()}</small>${esc(x[2])}</div><p class="sub" style="margin:0;font-size:12px">${esc(o.out)}</p><label class="k2" for="note">Add observation</label><textarea id="note"></textarea><div class="row"><button class="sm" data-x>Close</button><button class="sm p" data-save>Save</button></div>`);
@@ -161,7 +165,6 @@ document.addEventListener('click', e => {
     case 'pick': si = +a.dataset.i; L.subj = false; A = null; if (!S().weeks[O.w]) O.w = S().liveWeek in S().weeks ? S().liveWeek : +Object.keys(S().weeks)[0]; O.open = null; toast('Subject: ' + S().name); break;
     case 'toggleplan': L.plan = !L.plan; botbar(); return;
     case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
-    case 'toggleReact': L.react = !L.react; L.menu = false; renderReact(); a.setAttribute('aria-pressed', L.react); return;
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev': if (A) A.q = Math.max(0, A.q - 1); else s.slideIdx = Math.max(0, s.slideIdx - 1); break;
     case 'next': if (A) A.q = Math.min(PROMPTS[A.type].length - 1, A.q + 1); else s.slideIdx = Math.min(slidesFor(s).length - 1, s.slideIdx + 1); break;
@@ -204,7 +207,7 @@ document.addEventListener('drop', e => { const d = e.target.closest('[data-drop]
 
 /* simulated live class: reactions and new questions */
 const busy = () => V !== 'live' || L.reply || L.dragging || document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.closest?.('.inl');
-setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; renderReact(); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 3500);
+setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; spawnEmoji(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
 setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
 
 render();

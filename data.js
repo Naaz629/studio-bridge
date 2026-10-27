@@ -23,7 +23,7 @@ const PROMPTS = {
 const ACTIVITY_TYPES = Object.keys(PROMPTS);
 const EMOJIS = [
   { k: 'und', e: '✅', l: 'Understood', c: 'var(--tint)' },
-  { k: 'con', e: '😕', l: 'Confused', c: 'var(--lav)' },
+  { k: 'con', e: '🤔', l: 'Confused', c: 'var(--lav)' },
   { k: 'qst', e: '❓', l: 'Question', c: 'var(--sand)' },
   { k: 'idea', e: '💡', l: 'Idea', c: 'var(--live-soft)' },
   { k: 'great', e: '👏', l: 'Great', c: 'var(--tint)' }

@@ -352,3 +352,10 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .qr.seen .qn{color:#16c55a;font-weight:700}
 .qr .asked{position:absolute;right:4px;bottom:8px}
 .qd{padding-right:4px}
+
+/* ===== floating class reactions ===== */
+.reactlbl{cursor:default;gap:10px}.reactlbl:hover{background:none}
+.reactemo{letter-spacing:.25em;font-size:15px}
+#floatlayer{position:absolute;right:0;bottom:52px;width:240px;height:60%;pointer-events:none;overflow:hidden;z-index:35}
+.fe{position:absolute;bottom:0;left:var(--x);font-size:30px;line-height:1;animation:feRise var(--dur) ease-out forwards;will-change:transform,opacity}
+@keyframes feRise{0%{transform:translate(0,0) scale(.6);opacity:0}12%{opacity:1;transform:translate(0,-30px) scale(1)}55%{transform:translate(var(--sway),-200px) scale(1.05)}100%{transform:translate(calc(var(--sway) * -1),-420px) scale(.9);opacity:0}}
