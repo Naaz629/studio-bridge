@@ -47,7 +47,7 @@ function botbar() {
   const b = $('#botbar'), s = S();
   b.style.display = V === 'live' ? '' : 'none';
   b.innerHTML = `${L.plan ? planStrip(slidesFor(s), s) : ''}
-  <div class="barrow"><span class="studio">STUDIO ${pad(s.liveWeek)}</span>${L.plan ? '' : '<button class="bb planbtn" data-a="toggleplan">Session plan ▴</button>'}<span class="spacer"></span>
+  <div class="barrow">${L.plan ? '' : '<button class="bb planbtn" data-a="toggleplan">Session plan ▴</button>'}<span class="spacer"></span>
   <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
   <button class="bb" data-a="toggleReact" aria-pressed="${L.react}">React <span class="spark">✦</span></button>
   <div class="reactp" id="reactp" ${L.react ? '' : 'hidden'}></div></div>`;
@@ -85,18 +85,18 @@ function live() {
 }
 function renderQP() {
   const el = $('#qp'); if (!el) return;
-  const s = S(), list = [...s.qs].sort((a, b) => (a.st === 'open' ? 0 : 1) - (b.st === 'open' ? 0 : 1) || b.up - a.up);
+  const s = S(), list = [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   el.innerHTML = `<div class="qh"><small>Activity</small><h2>Questions &amp; answers</h2></div>
-  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id; return `<div class="qr ${q.st !== 'open' ? 'done' : ''}">
-    <button class="qrow" data-a="qopen" data-q="${q.id}"><span class="qn">${pad(i + 1)}</span><span class="qt">${q.st !== 'open' ? '✓ ' : ''}${esc(q.text)}</span>${q.up ? `<span class="asked" title="${q.up} students asked">${q.up}</span>` : ''}</button>
-    ${open ? `<div class="qd">${q.tr ? `<div class="box tr"><div class="k">Translated · English</div>${esc(q.tr)}</div>` : ''}
-      <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.up} students asked · ${q.same} same question</div>
+  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id, en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${green ? 'seen' : ''}">
+    <div class="qwrap"><button class="qrow" data-a="qopen" data-q="${q.id}"><span class="qn">${pad(i + 1)}</span><span class="qtxt"><span class="qt">${q.st !== 'open' ? '✓ ' : ''}${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</span></button>
+    ${q.up ? `<span class="asked" title="${q.up} students asked">${q.up}</span>` : ''}</div>
+    ${open ? `<div class="qd">
+      <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.same} same question</div>
       ${q.st === 'verbal' ? `<div class="box verbal">🎙 <span><b>Answered verbally in class</b><small>You responded at ${esc(q.at)}</small></span></div>` : ''}
       ${q.ans ? `<div class="box ans"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}
-      ${L.reply === q.id ? `<form class="inl" data-q="${q.id}"><input placeholder="Type an answer for the class…" aria-label="Answer"><button class="sm p">Post</button></form>` : ''}
-      <div class="qacts">${q.st === 'open' ? `<button class="sm" data-a="verbal" data-q="${q.id}">🎙 Verbally</button><button class="sm p" data-a="reply" data-q="${q.id}">Answer</button>` : `<button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button>`}</div></div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>
+      ${q.st === 'open' ? `<form class="inl" data-q="${q.id}"><input placeholder="Type your answer…" aria-label="Answer"><button class="sm p">Post</button></form><div class="qacts"><button class="sm" data-a="verbal" data-q="${q.id}">🎙 Answered verbally</button></div>` : `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>`}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>
   <button class="addq" data-a="addq">+ Add a question</button>`;
-  const b = $('#bdg'); if (b) b.textContent = unanswered();
+  const bd = $('#bdg'); if (bd) bd.textContent = unanswered();
 }
 
 /* ---------- overview ---------- */
@@ -170,7 +170,7 @@ document.addEventListener('click', e => {
     case 'actclose': A = null; break;
     case 'upload': L.menu = false; return $('#slideFile').click();
     case 'addq': return modal(`<h4>Add a question</h4><textarea id="newq" placeholder="Type a question for the class…"></textarea><div class="row"><button class="sm" data-x>Cancel</button><button class="sm p" data-addok>Add</button></div>`);
-    case 'qopen': L.open = L.open === q.id ? null : q.id; return renderQP();
+    case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'verbal': q.st = 'verbal'; q.at = now(); toast('Marked as answered verbally · students notified'); renderQP(); return;
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;

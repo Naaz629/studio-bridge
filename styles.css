@@ -341,3 +341,14 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .reactp{flex-direction:row;gap:6px;width:auto;padding:8px;border-radius:12px;right:12px}
 .reactp[hidden]{display:none}
 .ebtn{width:44px;height:44px;border-radius:10px;font-size:22px;display:grid;place-items:center}.ebtn:hover{background:var(--tint)}
+
+/* ===== question rows: English first, upvotes bottom-right, green number once clicked ===== */
+.qwrap{position:relative}
+.qrow{padding:14px 56px 30px 2px}
+.qtxt{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.qt{font-size:13.5px;line-height:1.4}
+.qorig{font-size:11px;color:var(--muted)}
+.qn{transition:color .2s}
+.qr.seen .qn{color:#16c55a;font-weight:700}
+.qr .asked{position:absolute;right:4px;bottom:8px}
+.qd{padding-right:4px}
