@@ -628,25 +628,3 @@ button.qtxt{padding-top:12px}
 .reactemo i::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 10px);left:50%;transform:translate(-50%,4px);white-space:nowrap;padding:6px 10px;border-radius:8px;background:#26302a;color:#fff;font-size:12px;font-weight:600;font-style:normal;line-height:1.2;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,.22)}
 .reactemo i::before{content:"";position:absolute;bottom:calc(100% + 5px);left:50%;transform:translate(-50%,4px);border:5px solid transparent;border-top-color:#26302a;border-bottom:0;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:200}
 .reactemo i:hover::after,.reactemo i:hover::before{opacity:1;transform:translate(-50%,0)}
-
-/* ===== real slide content + thumbnails in the plan ===== */
-.simg{width:100%;height:100%;object-fit:contain;background:#fff;display:block}
-.planbody .tile{aspect-ratio:16/9;width:148px;min-height:0;height:auto;overflow:hidden}
-.tile.hasimg{padding:0;background:#fff}
-.tile .tth{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.tile.hasimg small{position:absolute;top:6px;left:8px;z-index:1;background:rgba(0,0,0,.5);color:#fff;border-radius:6px;padding:1px 7px;font-size:10px}
-.tile.hasimg span{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:16px 9px 6px;font-size:11px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6))}
-.tile.hasimg.on{outline:2px solid var(--ink);outline-offset:-2px}
-
-/* ===== Session plan tab like the reference: cream block, caret on the right, rounded strip corner ===== */
-.barrow{background:var(--dock,#fffaf6)}
-.botbar:not(.open) .barrow{background:transparent}
-.barright{flex:1;display:flex;align-items:stretch;min-width:0}
-.botbar.open .barrow{padding-left:0;gap:0}
-.botbar.open .barright{background:var(--strip);border-top-left-radius:34px}
-button.ptab.flip{width:250px;flex:none;margin:0;align-self:stretch;height:auto;border-radius:0;padding:0 30px 0 32px;display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:600;letter-spacing:.01em;color:var(--ink);background:var(--dock,#fffaf6)}
-button.ptab.flip::before,button.ptab.flip::after{display:none}
-button.ptab.flip:hover{background:#fff6ee}
-.ptab .caret,.planbtn .caret{font-style:normal;font-size:12px;color:var(--muted)}
-.planbtn{width:auto;padding:0 28px;font-size:15px;gap:16px;justify-content:space-between}
-.livedot{display:none!important}

@@ -65,9 +65,9 @@ function botbar() {
   const b = $('#botbar'), s = S();
   b.style.display = V === 'live' ? '' : 'none';
   b.className = 'botbar' + (L.plan ? ' open' : '');
-  b.innerHTML = `<div class="barrow"><button class="${L.plan ? 'ptab flip' : 'bb planbtn'}" id="planbtn" data-a="toggleplan" aria-expanded="${L.plan}" aria-label="Session plan"><span>Session plan</span><i class="caret">${L.plan ? '▾' : '▴'}</i></button><div class="barright"><span class="spacer"></span>
+  b.innerHTML = `<div class="barrow"><button class="${L.plan ? 'ptab flip' : 'bb planbtn'}" id="planbtn" data-a="toggleplan" aria-expanded="${L.plan}" aria-label="Session plan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Session plan</span><i class="caret">${L.plan ? '▾' : '▴'}</i></button><span class="spacer"></span>
   <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
-  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i data-k="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}">${e.e}</i>`).join("")}</span></span></div></div>`;
+  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i data-k="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}">${e.e}</i>`).join("")}</span></span></div>`;
 }
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function popBall(k) {
@@ -103,9 +103,9 @@ function planStrip(sl, s) {
   const f = flowOf(s), gap = p => `<div class="tgap" data-ins="${p}"></div>`;
   const tiles = f.map((it, p) => {
     if (it.k === 'a') { const m = ACT_META[it.act]; return gap(p) + `<div class="tile act ${p === s.pos ? 'on' : ''}" style="background:${m.color}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>${esc(m.tile)}</span><button class="tx" data-a="rmflow" data-i="${p}" aria-label="Remove activity">✕</button></div>`; }
-    const th = sl[it.i] && sl[it.i].img; return gap(p) + `<div class="tile ${p === s.pos ? 'on' : ''} ${th ? 'hasimg' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}">${th ? `<img class="tth" src="${esc(th)}" alt="">` : ''}<small>${pad(p + 1)}</small><span>Slide ${it.i + 1}/${sl.length}</span></div>`;
+    return gap(p) + `<div class="tile ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>Slide ${it.i + 1}/${sl.length}</span></div>`;
   }).join('') + gap(f.length);
-  return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><h2 class="phead">Week ${s.liveWeek} studio flow</h2><div class="tiles">${tiles}</div>
+  return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><div class="tiles">${tiles}</div>
   <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">Drag an activity between slides to add it to the flow</span></div></div></div></section>`;
 }
 function live() {
@@ -211,57 +211,13 @@ document.addEventListener('submit', e => {
   if (!v) return; q.ans = v; q.st = 'ans'; L.reply = null; toast('Answer posted to the class'); renderQP();
 });
 document.addEventListener('change', e => { if (e.target.id === 'wk') { O.w = +e.target.value; O.open = null; render(); } });
-/* ---------- slides: images, PDF pages and PowerPoint files, shown exactly as authored ---------- */
-let pdfjsLib = null;
-async function getPdfjs() {
-  if (pdfjsLib) return pdfjsLib;
-  pdfjsLib = await import('./vendor/pdf.min.mjs');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdf.worker.min.mjs', location.href).href;
-  return pdfjsLib;
-}
-async function renderPdf(data, name) {
-  const lib = await getPdfjs();
-  const raf = window.requestAnimationFrame;
-  window.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), 0);
-  try { return await renderPdfPages(lib, data, name); } finally { window.requestAnimationFrame = raf; }
-}
-async function renderPdfPages(lib, data, name) {
-  const doc = await lib.getDocument({ data: new Uint8Array(data) }).promise;
-  const out = [];
-  for (let n = 1; n <= doc.numPages; n++) {
-    const pg = await doc.getPage(n), v0 = pg.getViewport({ scale: 1 });
-    const vp = pg.getViewport({ scale: Math.min(2.5, 1800 / v0.width) });
-    const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
-    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-    await pg.render({ canvasContext: ctx, viewport: vp }).promise;
-    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
-    out.push({ name: name + ' · ' + n, url: URL.createObjectURL(blob) });
-    if (n % 5 === 0) toast('Preparing slides… ' + n + '/' + doc.numPages);
-  }
-  return out;
-}
-async function loadSlideFiles(files) {
-  const s = S(), slides = [];
-  toast('Preparing slides…');
-  for (const f of files) {
-    const ext = (f.name.split('.').pop() || '').toLowerCase();
-    try {
-      if (f.type.startsWith('image/')) slides.push({ name: f.name, url: URL.createObjectURL(f) });
-      else if (ext === 'pdf') slides.push(...await renderPdf(await f.arrayBuffer(), f.name));
-      else if (ext === 'ppt' || ext === 'pptx') {
-        if (!(window.shell && window.shell.pptxToPdf)) { toast('Export ' + f.name + ' as PDF and upload that'); continue; }
-        const res = await window.shell.pptxToPdf(window.shell.pathFor(f));
-        if (res.error) { toast(res.error); continue; }
-        slides.push(...await renderPdf(res.data, f.name));
-      } else toast('Upload a PDF, PowerPoint or image file');
-    } catch (err) { console.error(err); toast('Could not open ' + f.name); }
-  }
-  if (!slides.length) return;
-  s.upload = files.length === 1 ? files[0].name : files.length + ' files';
-  s.uploads = slides; s.flow = null; s.pos = 0; A = null;
-  toast(slides.length + ' slides loaded for ' + s.name); render();
-}
-$('#slideFile').addEventListener('change', e => { const files = [...e.target.files]; e.target.value = ''; if (files.length) loadSlideFiles(files); });
+$('#slideFile').addEventListener('change', e => {
+  const files = [...e.target.files], s = S(); if (!files.length) return;
+  s.upload = files.length === 1 ? files[0].name : `${files.length} files`;
+  const imgs = files.filter(f => f.type.startsWith('image/'));
+  if (imgs.length) { s.uploads = imgs.map(f => ({ name: f.name, url: URL.createObjectURL(f) })); s.flow = null; }
+  e.target.value = ''; toast(`Slides uploaded for ${s.name}`); render();
+});
 
 /* drag & drop: activity chip -> plan tile or the live card */
 document.addEventListener('dragstart', e => { const a = e.target.closest('[data-act]'); if (a) { e.dataTransfer.setData('text/plain', a.dataset.act); L.dragging = true; } });
