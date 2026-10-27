@@ -110,9 +110,62 @@ function buildCD(ctx) {
     qs: q.map((x, i) => Object.assign({ level: LEVELS[i].k, label: LEVELS[i].label, note: LEVELS[i].note, source: ctx.source }, x))
   });
 }
+/* ---- optional: questions written by an AI model from the slide text (needs an API key in the desktop app) ---- */
+function normaliseAI(raw, ctx) {
+  if (!Array.isArray(raw) || raw.length < 5) return null;
+  const qs = [];
+  for (let i = 0; i < 5; i++) {
+    const r = raw[i] || {}, text = String(r.text || '').trim();
+    const type = ['mc', 'scale', 'open'].includes(r.type) ? r.type : null;
+    if (!text || !type) return null;
+    const q = { level: LEVELS[i].k, label: LEVELS[i].label, note: LEVELS[i].note, source: ctx.source, type, text };
+    if (type === 'mc') {
+      const opts = (Array.isArray(r.options) ? r.options : []).map(o => ({ t: String((o && o.t) || '').trim(), ok: !!(o && o.ok) })).filter(o => o.t).slice(0, 4);
+      if (opts.length < 3 || !opts.some(o => o.ok)) return null;
+      let seen = false; opts.forEach(o => { if (o.ok && seen) o.ok = false; if (o.ok) seen = true; });
+      q.options = opts;
+    } else if (type === 'scale') {
+      q.lo = String(r.lo || 'Not yet').trim().slice(0, 24); q.hi = String(r.hi || 'Very').trim().slice(0, 24);
+    }
+    qs.push(q);
+  }
+  return qs;
+}
+async function aiBuildCD(ctx) {
+  const ai = window.shell && window.shell.ai;
+  if (!ai) return null;
+  const st = await ai.status();
+  if (!st.hasKey || !ctx.hasText) return null;
+  const res = await ai.generate({ lo: ctx.lo, out: ctx.out, title: ctx.title, text: ctx.text });
+  if (res.error) throw new Error(res.error);
+  const qs = normaliseAI(res.questions, ctx);
+  if (!qs) throw new Error('the reply could not be turned into questions');
+  return Object.assign({}, ctx, { qs, by: 'ai' });
+}
 function ensureCD(s, pos) {
   const item = flowOf(s)[pos];
-  if (!item.cd) item.cd = buildCD(cdContext(s, pos));
+  if (!item.cd) {
+    const ctx = cdContext(s, pos);
+    item.cd = buildCD(ctx);
+    // if an AI key is saved and the slide has text, replace the template draft with AI-written questions as soon as they arrive
+    if (window.shell && window.shell.ai && ctx.hasText) {
+      const cd = item.cd, here = () => typeof A !== 'undefined' && A && A.type === 'Concept Development' && flowOf(s)[s.pos] === item;
+      window.shell.ai.status().then(st => {
+        if (!st.hasKey) return null;
+        cd.pending = true; if (here()) render();
+        return aiBuildCD(ctx);
+      }).then(ai => {
+        if (ai === null && !cd.pending) return;
+        cd.pending = false;
+        if (ai && !cd.edited && item.cd === cd) item.cd = ai;
+        if (here()) render();
+      }).catch(err => {
+        cd.pending = false; cd.aiError = err.message;
+        toast('AI questions unavailable: ' + err.message + ' Using the template questions instead.');
+        if (here()) render();
+      });
+    }
+  }
   return item.cd;
 }
 

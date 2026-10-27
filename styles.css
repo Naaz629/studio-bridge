@@ -697,3 +697,7 @@ button.qtxt{padding-top:12px}
 .cdoptrow .let{width:24px;height:24px}
 /* slides drawn from text */
 .sbul{margin:.8cqw 0 0;padding-left:1.4em;display:flex;flex-direction:column;gap:.5cqw;font-size:clamp(11px,1.7cqw,22px);color:#444}
+
+/* AI-written draft flag on the concept check card */
+.aiflag{color:#4f4a73;font-weight:700}
+.aiflag.busy{animation:pulse 1.2s infinite}

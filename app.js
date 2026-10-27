@@ -59,7 +59,7 @@ function courseBtn() {
 }
 function mainMenu() {
   const m = $('#mainMenu'); m.hidden = !L.menu;
-  m.innerHTML = `<button data-a="upload">Upload slides for ${esc(S().name)}</button><button data-a="end">End session</button>`;
+  m.innerHTML = `<button data-a="upload">Upload slides for ${esc(S().name)}</button><button data-a="aisettings">✦ AI question writer…</button><button data-a="end">End session</button>`;
 }
 function botbar() {
   const b = $('#botbar'), s = S();
@@ -179,6 +179,17 @@ function insertAct(p, type) {
   const s = S(), f = flowOf(s); f.splice(p, 0, { k: 'a', act: type });
   s.pos = p; syncA(s); toast(`${ACT_META[type].title} added at step ${p + 1}`); render();
 }
+async function openAISettings() {
+  if (!(window.shell && window.shell.ai)) return modal(`<h4>AI question writer</h4><p class="sub">This is available in the desktop app. The browser preview uses the template questions.</p><div class="row"><button class="sm p" data-x>Close</button></div>`);
+  const st = await window.shell.ai.status();
+  const names = { 'claude-sonnet-5-5': 'Claude Sonnet 5.5 — balanced (recommended)', 'claude-haiku-5-5': 'Claude Haiku 5.5 — fastest, lowest cost', 'claude-opus-5-5': 'Claude Opus 5.5 — most capable' };
+  modal(`<div class="k2">✦ AI question writer</div><h4>${st.hasKey ? 'AI is on' : 'Write concept checks with AI'}</h4>
+  <p class="sub" style="margin:0;font-size:12.5px;line-height:1.5">When a Concept Development activity follows a slide, the app sends that slide's text and the week's learning outcome to Anthropic's API, which writes the five questions. Student answers are never sent. Questions are drafts: check them before you use them. Slides that are only pictures have no text, so they use the template questions.</p>
+  <label class="k2" for="aiKey">Anthropic API key</label><input id="aiKey" class="cdinput" type="password" autocomplete="off" spellcheck="false" placeholder="${st.hasKey ? '•••••••• saved — leave blank to keep it' : 'sk-ant-…'}">
+  <p class="sub" style="margin:0;font-size:11.5px">Create a key at console.anthropic.com. It is billed per use, separately from a Claude chat subscription. It is stored encrypted on this computer and is not shown again.${st.canStore ? '' : ' <b>Secure storage is not available here, so a key cannot be saved.</b>'}</p>
+  <label class="k2" for="aiModel">Model</label><select id="aiModel" class="cdinput">${st.models.map(m => `<option value="${m}" ${m === st.model ? 'selected' : ''}>${names[m] || m}</option>`).join('')}</select>
+  <div class="row">${st.hasKey ? '<button class="sm" data-a="aiclear">Remove key</button>' : ''}<span class="spacer"></span><button class="sm" data-x>Cancel</button><button class="sm p" data-a="aisave">Save</button></div>`);
+}
 let cdDraft = [];
 function cdBlock(i, q) {
   const slots = [0, 1, 2, 3].map(k => (q.options || [])[k] || { t: '', ok: false });
@@ -249,18 +260,37 @@ document.addEventListener('click', e => {
     case 'cdregen': {
       const topic = cleanTopic(document.getElementById('cdTopic').value) || 'this topic';
       const base = cdContext(s, s.pos);
-      const fresh = buildCD(Object.assign({}, base, { topic, title: topic, source: base.slideNo ? `Slide ${base.slideNo} · ${topic}` : topic }));
-      cdDraft = fresh.qs; document.getElementById('cdTopic').value = topic;
-      document.getElementById('cdBlocks').innerHTML = cdDraft.map((q, i) => cdBlock(i, q)).join(''); toast('Questions regenerated'); return;
+      const ctx = Object.assign({}, base, { topic, title: topic, source: base.slideNo ? `Slide ${base.slideNo} · ${topic}` : topic });
+      toast('Writing new questions…');
+      (async () => {
+        let fresh = null;
+        try { fresh = await aiBuildCD(ctx); } catch (err) { toast('AI unavailable: ' + err.message + ' Using the template questions.'); }
+        fresh = fresh || buildCD(ctx);
+        const box = document.getElementById('cdBlocks'); if (!box) return;
+        cdDraft = fresh.qs; document.getElementById('cdTopic').value = topic;
+        box.innerHTML = cdDraft.map((q, i) => cdBlock(i, q)).join('');
+        if (fresh.by === 'ai') toast('New questions written by AI from the slide');
+      })();
+      return;
     }
     case 'cdsave': {
       const cd = ensureCD(s, s.pos);
       cdDraft.forEach((q, i) => readBlock(i, q));
-      cd.title = cd.topic = document.getElementById('cdTopic').value.trim() || cd.title;
+      cd.title = cd.topic = document.getElementById('cdTopic').value.trim() || cd.title; cd.edited = true;
       cd.qs = cdDraft.map((q, i) => { const old = cd.qs[i] || {}; const same = old.text === q.text && old.type === q.type && JSON.stringify(old.options) === JSON.stringify(q.options); return Object.assign({}, q, { res: same ? old.res : null, edited: old.edited || !same }); });
       A.q = Math.min(A.q, cd.qs.length - 1);
       $('#modal').innerHTML = ''; toast('Questions saved'); break;
     }
+    case 'aisettings': L.menu = false; mainMenu(); openAISettings(); return;
+    case 'aisave': {
+      if (!(window.shell && window.shell.ai)) return;
+      window.shell.ai.save({ key: document.getElementById('aiKey').value, model: document.getElementById('aiModel').value }).then(r => {
+        if (r.error) return toast(r.error);
+        $('#modal').innerHTML = ''; toast('AI question writer is on. New concept checks will be written from the slide text.');
+      });
+      return;
+    }
+    case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('API key removed. Concept checks use the template questions.'); }); return;
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
     case 'otab': O.tab = a.dataset.t; break;
     case 'anon': O.anon = a.checked; break;
@@ -339,7 +369,7 @@ render();function answersHTML(q) {
 function cdCard(s, f, m) {
   const cd = ensureCD(s, s.pos), q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
   return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdchip">✦ CONCEPT CHECK</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><span class="cdbrand">Studio Bridge</span><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p><div id="cdAns">${answersHTML(q)}</div><div class="cdfoot">${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
+  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p><div id="cdAns">${answersHTML(q)}</div><div class="cdfoot">${cd.pending ? '<span class="aiflag busy">✦ Writing questions from this slide…</span> · ' : cd.by === 'ai' ? `<span class="aiflag">✦ ${cd.edited ? 'AI draft, edited' : 'AI draft from this slide · check before you use it'}</span> · ` : ''}${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 
