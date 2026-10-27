@@ -90,7 +90,8 @@ function navOverlay(idx, total, canPrev, canNext) {
 }
 function slideCard(sl, s) {
   const f = flowOf(s), it = f[s.pos], cur = sl[Math.min(it.i, sl.length - 1)];
-  const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
+  const lines = cur.text ? cur.text.split('\n').slice(1, 8) : [];
+  const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : cur.text ? `<div class="stext"><small>SLIDE ${it.i + 1} OF ${sl.length}</small><h2>${esc(cur.t)}</h2>${lines.length ? `<ul class="sbul">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}</div>` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
   return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}</div></div>`;
 }
 function discussionCard(s, f, m, p) {
@@ -107,12 +108,7 @@ function actQs() {
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
   if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
-  if (A.type === 'Concept Development') {
-    const cd = ensureCD(s, s.pos), q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
-    return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="ahead"><div><small>CONCEPT DEVELOPMENT</small><h2>${esc(m.title)}</h2><p class="dsub">Based on "${esc(cd.topic)}" · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</p></div><div class="aheadbtns"><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div></div>
-    <div class="abody"><small>QUESTION ${A.q + 1} OF ${cd.qs.length} · <span class="bloomchip">${esc(q.label)}</span></small><h3>${esc(q.text)}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${esc(q.note)} · ${esc(cd.lo)} · ${8 + A.q * 3} students have responded</div></div>
-    ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
-  }
+  if (A.type === 'Concept Development') return cdCard(s, f, m);
   return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="abody"><small>QUESTION ${A.q + 1} OF ${p.length}</small><h3>${esc(p[A.q])}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${8 + A.q * 3} students have responded</div></div>
   ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
@@ -183,6 +179,34 @@ function insertAct(p, type) {
   const s = S(), f = flowOf(s); f.splice(p, 0, { k: 'a', act: type });
   s.pos = p; syncA(s); toast(`${ACT_META[type].title} added at step ${p + 1}`); render();
 }
+let cdDraft = [];
+function cdBlock(i, q) {
+  const slots = [0, 1, 2, 3].map(k => (q.options || [])[k] || { t: '', ok: false });
+  if (q.type === 'mc' && !slots.some(o => o.ok)) slots[0].ok = true;
+  return `<div class="cdblock" data-i="${i}"><label class="k2">${i + 1}. ${esc(q.label)} <span class="muted">· ${esc(q.note)}</span></label>
+  <select class="cdtype" data-i="${i}">${Object.entries(TYPE_NAMES).map(([k, n]) => `<option value="${k}" ${q.type === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+  <textarea class="cdq" data-i="${i}">${esc(q.text)}</textarea>
+  ${q.type === 'mc' ? `<div class="cdoptlist">${slots.map((o, k) => `<div class="cdoptrow"><input type="radio" name="ok${i}" value="${k}" ${o.ok ? 'checked' : ''} title="Correct answer"><span class="let">${'ABCD'[k]}</span><input class="cdo" value="${esc(o.t)}" placeholder="Option ${'ABCD'[k]}"></div>`).join('')}<small class="muted">Select the circle next to the correct answer.</small></div>` : ''}
+  ${q.type === 'scale' ? `<div class="cdoptrow"><input class="cdlo" value="${esc(q.lo || 'Not yet')}" placeholder="Low label"><input class="cdhi" value="${esc(q.hi || 'Very')}" placeholder="High label"></div>` : ''}</div>`;
+}
+function readBlock(i, q) {
+  const b = document.querySelector(`.cdblock[data-i="${i}"]`); if (!b) return;
+  q.text = b.querySelector('.cdq').value.trim() || q.text;
+  if (q.type === 'mc') {
+    const opts = [...b.querySelectorAll('.cdoptrow')].map(r => ({ t: r.querySelector('.cdo').value.trim(), ok: r.querySelector('input[type=radio]').checked })).filter(o => o.t);
+    if (opts.length && !opts.some(o => o.ok)) opts[0].ok = true;
+    q.options = opts;
+  } else if (q.type === 'scale') {
+    q.lo = b.querySelector('.cdlo').value.trim() || 'Not yet'; q.hi = b.querySelector('.cdhi').value.trim() || 'Very';
+  }
+}
+document.addEventListener('change', e => {
+  if (!e.target.classList.contains('cdtype')) return;
+  const i = +e.target.dataset.i, q = cdDraft[i]; readBlock(i, q);
+  q.type = e.target.value; q.res = null;
+  if (q.type === 'mc' && !(q.options || []).length) q.options = [{ t: '', ok: true }, { t: '', ok: false }, { t: '', ok: false }, { t: '', ok: false }];
+  document.querySelector(`.cdblock[data-i="${i}"]`).outerHTML = cdBlock(i, q);
+});
 const now = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 const modal = html => { $('#modal').innerHTML = `<div class="scrim" data-x><div class="sheet" role="dialog">${html}</div></div>`; };
 
@@ -216,22 +240,25 @@ document.addEventListener('click', e => {
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;
     case 'cdedit': {
-      const cd = ensureCD(s, s.pos);
-      return modal(`<div class="k2">Concept Development · ${esc(cd.lo)}: ${esc(cd.out)}</div><h4>Edit the five questions</h4>
-      <label class="k2" for="cdTopic">Topic from the slide before this activity</label><input id="cdTopic" class="cdinput" value="${esc(cd.topic)}">
-      ${cd.qs.map((q, i) => `<label class="k2" for="cdq${i}">${i + 1}. ${esc(q.label)} <span class="muted">· ${esc(q.note)}</span></label><textarea id="cdq${i}" class="cdq" data-i="${i}">${esc(q.text)}</textarea>`).join('')}
-      <div class="row"><button class="sm" data-a="cdregen">↻ Regenerate from topic &amp; outcome</button><span class="spacer"></span><button class="sm" data-x>Cancel</button><button class="sm p" data-a="cdsave">Save</button></div>`);
+      const cd = ensureCD(s, s.pos); cdDraft = JSON.parse(JSON.stringify(cd.qs));
+      return modal(`<div class="k2">Concept check · ${esc(cd.lo)}: ${esc(cd.out)}</div><h4>Edit the five questions</h4>
+      <label class="k2" for="cdTopic">Topic from the slide before this activity</label><input id="cdTopic" class="cdinput" value="${esc(cd.title)}">
+      <div id="cdBlocks">${cdDraft.map((q, i) => cdBlock(i, q)).join('')}</div>
+      <div class="row"><button class="sm" data-a="cdregen">↻ Regenerate from slide &amp; outcome</button><span class="spacer"></span><button class="sm" data-x>Cancel</button><button class="sm p" data-a="cdsave">Save</button></div>`);
     }
     case 'cdregen': {
       const topic = cleanTopic(document.getElementById('cdTopic').value) || 'this topic';
-      const fresh = buildCD(Object.assign({}, cdContext(s, s.pos), { topic }));
-      fresh.qs.forEach((q, i) => { document.getElementById('cdq' + i).value = q.text; });
-      document.getElementById('cdTopic').value = topic; toast('Questions regenerated'); return;
+      const base = cdContext(s, s.pos);
+      const fresh = buildCD(Object.assign({}, base, { topic, title: topic, source: base.slideNo ? `Slide ${base.slideNo} · ${topic}` : topic }));
+      cdDraft = fresh.qs; document.getElementById('cdTopic').value = topic;
+      document.getElementById('cdBlocks').innerHTML = cdDraft.map((q, i) => cdBlock(i, q)).join(''); toast('Questions regenerated'); return;
     }
     case 'cdsave': {
       const cd = ensureCD(s, s.pos);
-      cd.topic = document.getElementById('cdTopic').value.trim() || cd.topic;
-      document.querySelectorAll('.cdq').forEach(t => { const q = cd.qs[+t.dataset.i], v = t.value.trim(); if (v) { q.edited = q.edited || v !== q.text; q.text = v; } });
+      cdDraft.forEach((q, i) => readBlock(i, q));
+      cd.title = cd.topic = document.getElementById('cdTopic').value.trim() || cd.title;
+      cd.qs = cdDraft.map((q, i) => { const old = cd.qs[i] || {}; const same = old.text === q.text && old.type === q.type && JSON.stringify(old.options) === JSON.stringify(q.options); return Object.assign({}, q, { res: same ? old.res : null, edited: old.edited || !same }); });
+      A.q = Math.min(A.q, cd.qs.length - 1);
       $('#modal').innerHTML = ''; toast('Questions saved'); break;
     }
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
@@ -248,12 +275,20 @@ document.addEventListener('submit', e => {
   if (!v) return; q.ans = v; q.st = 'ans'; L.reply = null; toast('Answer posted to the class'); renderQP();
 });
 document.addEventListener('change', e => { if (e.target.id === 'wk') { O.w = +e.target.value; O.open = null; render(); } });
-$('#slideFile').addEventListener('change', e => {
-  const files = [...e.target.files], s = S(); if (!files.length) return;
-  s.upload = files.length === 1 ? files[0].name : `${files.length} files`;
-  const imgs = files.filter(f => f.type.startsWith('image/'));
-  if (imgs.length) { s.uploads = imgs.map(f => ({ name: f.name, url: URL.createObjectURL(f) })); s.flow = null; }
-  e.target.value = ''; toast(`Slides uploaded for ${s.name}`); render();
+$('#slideFile').addEventListener('change', async e => {
+  const files = [...e.target.files], s = S(); e.target.value = ''; if (!files.length) return;
+  toast('Reading slides…');
+  const slides = [], skipped = [];
+  for (const f of files) {
+    try { const got = await readSlideFile(f, (n, t) => toast(`Reading ${f.name} · page ${n} of ${t}`)); if (got) slides.push(...got); else skipped.push(f.name); }
+    catch (err) { skipped.push(f.name); console.error(err); }
+  }
+  if (slides.length) {
+    s.uploads = slides; s.upload = files.length === 1 ? files[0].name : `${files.length} files`; s.flow = null;
+    const withText = slides.filter(x => x.text).length;
+    toast(`Read ${slides.length} slide${slides.length > 1 ? 's' : ''} · ${withText} with text the app can use for questions` + (skipped.length ? ` · skipped ${skipped.join(', ')} (save as PDF or PPTX)` : ''));
+  } else toast('Could not read ' + skipped.join(', ') + ' — save it as PDF or PPTX');
+  render();
 });
 
 /* drag & drop: activity chip -> plan tile or the live card */
@@ -261,6 +296,17 @@ document.addEventListener('dragstart', e => { const a = e.target.closest('[data-
 document.addEventListener('dragend', () => { L.dragging = false; document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); });
 document.addEventListener('dragover', e => { const d = e.target.closest('[data-ins]'); if (d) { e.preventDefault(); document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); d.classList.add('over'); } });
 document.addEventListener('drop', e => { const d = e.target.closest('[data-ins]'); if (!d) return; e.preventDefault(); L.dragging = false; insertAct(+d.dataset.ins, e.dataTransfer.getData('text/plain')); });
+
+/* simulated live class: answers arriving on a concept check */
+setInterval(() => {
+  if (V !== 'live' || !A || A.type !== 'Concept Development') return;
+  const s = S(), cd = flowOf(s)[s.pos] && flowOf(s)[s.pos].cd; if (!cd) return;
+  const q = cd.qs[Math.min(A.q, cd.qs.length - 1)], r = ensureRes(q), el = document.getElementById('cdAns'); if (!el) return;
+  if (q.type === 'mc') { const k = Math.random() < .55 ? Math.max(0, q.options.findIndex(o => o.ok)) : Math.floor(Math.random() * q.options.length); r.counts[k]++; }
+  else if (q.type === 'scale') r.counts[Math.min(4, 1 + Math.floor(Math.random() * 4))]++;
+  else { r.n++; r.shown = [...new Set([Math.floor(Math.random() * SAMPLES.length), ...r.shown])].slice(0, 3); }
+  el.innerHTML = answersHTML(q);
+}, 2500);
 
 /* simulated live class: students playing discussion cards */
 setInterval(() => {
@@ -278,4 +324,22 @@ const busy = () => V !== 'live' || L.reply || L.dragging || document.activeEleme
 setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; popBall(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
 setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
 
-render();
+render();function answersHTML(q) {
+  const r = ensureRes(q);
+  if (q.type === 'mc') {
+    const tot = r.counts.reduce((x, y) => x + y, 0) || 1;
+    return `<div class="cdopts">${q.options.map((o, i) => `<div class="cdopt ${o.ok ? 'ok' : ''}"><i class="rbar" style="width:${Math.round(r.counts[i] / tot * 100)}%"></i><span class="let">${'ABCDEF'[i]}</span><span class="otxt">${esc(o.t)}</span><span class="ocnt">${r.counts[i]}${o.ok ? ' ✓' : ''}</span></div>`).join('')}</div>`;
+  }
+  if (q.type === 'scale') {
+    const tot = r.counts.reduce((x, y) => x + y, 0) || 1, avg = r.counts.reduce((x, c, i) => x + c * (i + 1), 0) / tot, mx = Math.max(...r.counts, 1);
+    return `<div class="cdscale">${r.counts.map((c, i) => `<div class="sbox"><i class="rbar" style="height:${Math.round(c / mx * 100)}%"></i><b>${i + 1}</b><small>${c}</small></div>`).join('')}</div><div class="cdlabels"><span>${esc(q.lo || 'Not yet')}</span><span>Average ${avg.toFixed(1)}</span><span>${esc(q.hi || 'Very')}</span></div>`;
+  }
+  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}: “${esc(sm.t)}”</small>` : ''}</div>`; }).join('')}</div>`;
+}
+function cdCard(s, f, m) {
+  const cd = ensureCD(s, s.pos), q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
+  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdchip">✦ CONCEPT CHECK</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><span class="cdbrand">Studio Bridge</span><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p><div id="cdAns">${answersHTML(q)}</div><div class="cdfoot">${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
+  ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
+}
+

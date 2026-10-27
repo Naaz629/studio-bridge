@@ -15,6 +15,26 @@ function createWindow() {
   });
   win.maximize();
   win.loadFile(path.join(__dirname, 'index.html'));
+  // developer self-test: STUDIO_TEST_PDF / STUDIO_TEST_PPTX read the given files with the app's own slide reader and write a report
+  if (process.env.STUDIO_TEST_OUT) {
+    win.webContents.once('did-finish-load', async () => {
+      let report;
+      try {
+        const b64 = p => (p && fs.existsSync(p)) ? fs.readFileSync(p).toString('base64') : null;
+        const code = `(async () => {
+          const mk = (b, n) => new File([Uint8Array.from(atob(b), c => c.charCodeAt(0))], n);
+          const out = { origin: location.protocol };
+          const pdf = ${JSON.stringify(b64(process.env.STUDIO_TEST_PDF))}, pptx = ${JSON.stringify(b64(process.env.STUDIO_TEST_PPTX))};
+          if (pdf) { const t0 = performance.now(); const s = await readSlideFile(mk(pdf, 'test.pdf')); out.pdf = { pages: s.length, withText: s.filter(x => x.text).length, images: s.filter(x => (x.url||'').startsWith('data:image')).length, titles: s.slice(0, 3).map(x => x.title), ms: Math.round(performance.now() - t0) }; }
+          if (pptx) { const s = await readSlideFile(mk(pptx, 'test.pptx')); out.pptx = { slides: s.length, titles: s.map(x => x.title), notes: s[0].text.includes('Notes') }; }
+          return out;
+        })()`;
+        report = await win.webContents.executeJavaScript(code);
+      } catch (e) { report = { error: String(e && e.message || e) }; }
+      fs.writeFileSync(process.env.STUDIO_TEST_OUT, JSON.stringify(report, null, 2));
+      app.quit();
+    });
+  }
 }
 ipcMain.on('win', (e, action) => {
   const w = BrowserWindow.fromWebContents(e.sender);

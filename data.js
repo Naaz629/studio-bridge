@@ -115,7 +115,7 @@ function makeSubject(cfg) {
 }
 
 function slidesFor(s) {
-  if (s.uploads.length) return s.uploads.map(u => ({ img: u.url, t: u.name }));
+  if (s.uploads.length) return s.uploads.map(u => ({ img: u.url, t: u.title || u.name, title: u.title, text: u.text || '' }));
   const w = s.liveWeek, t = s.topics[w];
   const base = [{ t: `Week ${w}: ${t[0]}`, p: `Masterclass · ${s.name}` }, { t: `Tutorial: ${t[1]}`, p: 'Work-in-progress updates, then tutorial' }];
   (s.files[w] || []).forEach(f => base.push({ t: f, p: 'Canvas resource for this week' }));

@@ -31,6 +31,8 @@
       "styles.css",
       "app.js",
       "data.js",
+      "bloom.js",
+      "slides.js",
       "assets/**",
       "vendor/**"
     ]
