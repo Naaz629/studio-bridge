@@ -116,8 +116,7 @@ function renderQP() {
       <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.same} same question</div>
       ${q.st === 'verbal' ? `<div class="box verbal">🎙 <span><b>Answered verbally in class</b><small>You responded at ${esc(q.at)}</small></span></div>` : ''}
       ${q.ans ? `<div class="box ans"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}
-      ${q.st === 'open' ? `<form class="inl" data-q="${q.id}"><input placeholder="Type your answer…" aria-label="Answer"><button class="sm p">Post</button></form><div class="qacts"><button class="sm" data-a="verbal" data-q="${q.id}">🎙 Answered verbally</button></div>` : `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>`}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>
-  <button class="addq" data-a="addq">+ Add a question</button>`;
+      ${q.st === 'open' ? `<form class="inl" data-q="${q.id}"><input placeholder="Type your answer…" aria-label="Answer"><button class="sm p">Post</button></form><div class="qacts"><button class="sm" data-a="verbal" data-q="${q.id}">🎙 Answered verbally</button></div>` : `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>`}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
   const bd = $('#bdg'); if (bd) bd.textContent = unanswered();
 }
 
@@ -171,7 +170,6 @@ document.addEventListener('click', e => {
     return modal(`<h4>${esc(x[0])}</h4><div class="focus" style="background:var(--live-soft)"><small>${o.lo} · STUCK AT ${LVL[x[1]][0].toUpperCase()}</small>${esc(x[2])}</div><p class="sub" style="margin:0;font-size:12px">${esc(o.out)}</p><label class="k2" for="note">Add observation</label><textarea id="note"></textarea><div class="row"><button class="sm" data-x>Close</button><button class="sm p" data-save>Save</button></div>`);
   }
   if (e.target.closest('[data-save]')) { $('#modal').innerHTML = ''; return toast('Saved'); }
-  if (e.target.closest('[data-addok]')) { const v = $('#newq').value.trim(); $('#modal').innerHTML = ''; if (v) { S().qs.push({ id: qid++, who: 'You', av: 'dk', text: v, ago: 0, up: 0, same: 0, st: 'open' }); toast('Question added'); renderQP(); } return; }
   if (e.target.matches('[data-x]') || e.target.closest('button[data-x]')) { $('#modal').innerHTML = ''; return; }
   const a = e.target.closest('[data-a]');
   if (!a) { if (L.menu || L.subj) { L.menu = L.subj = false; courseBtn(); mainMenu(); } if (e.target.closest('#burger')) { } return; }
@@ -189,7 +187,6 @@ document.addEventListener('click', e => {
     case 'run': return runActivity(a.dataset.t);
     case 'actclose': A = null; break;
     case 'upload': L.menu = false; return $('#slideFile').click();
-    case 'addq': return modal(`<h4>Add a question</h4><textarea id="newq" placeholder="Type a question for the class…"></textarea><div class="row"><button class="sm" data-x>Cancel</button><button class="sm p" data-addok>Add</button></div>`);
     case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'verbal': q.st = 'verbal'; q.at = now(); toast('Marked as answered verbally · students notified'); renderQP(); return;
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
