@@ -737,3 +737,10 @@ button.qtxt{padding-top:12px}
 .tile.act .tnum{position:static;background:none;color:var(--muted);padding:0;font-size:11px}
 .planbody .tile{box-sizing:border-box;height:auto}
 .tthumb img{object-fit:contain;background:#fff}
+
+/* ===== slides in the plan are shown exactly as they are: their own picture and proportions, no badge, no crop ===== */
+.planbody .tile.slide:has(img){width:auto;height:88px;aspect-ratio:auto;background:none;box-shadow:none;border:2px solid transparent;border-radius:4px;padding:0}
+.planbody .tile.slide:has(img).on{border-color:var(--ink);box-shadow:none}
+.planbody .tile.slide:has(img) .tthumb{position:static;display:block;background:none;height:100%}
+.planbody .tile.slide:has(img) .tthumb img{display:block;height:100%;width:auto;object-fit:fill;background:none}
+.planbody .tile.slide:has(img) .tnum{display:none}
