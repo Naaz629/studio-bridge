@@ -713,3 +713,12 @@ button.qtxt{padding-top:12px}
 .aitext code{background:rgba(0,0,0,.06);border-radius:4px;padding:1px 5px;font-size:11px}
 .olrow{display:flex;gap:8px}.olrow .cdinput{flex:1}
 .olpicks{display:flex;flex-wrap:wrap;gap:6px}
+
+/* sentence starter shown under the question */
+.cdhint{margin:0;font-size:clamp(10px,1.2cqw,15px);color:var(--ink-2)}
+.cdhint b{font-weight:600;font-style:italic}
+
+/* concept check waiting / unavailable states */
+.cdwait{display:flex;flex-direction:column;gap:8px;padding:1cqw 0;font-size:clamp(11px,1.5cqw,19px)}
+.cdwait p{margin:0;color:var(--ink-2);max-width:60cqw;line-height:1.45}
+.cdwait b{font-size:clamp(13px,1.9cqw,24px)}

@@ -13,12 +13,6 @@ const LEVELS = [
   { k: 'create', label: 'Create', note: 'Demonstrates application of the overall outcome.' }
 ];
 const TYPE_NAMES = { mc: 'Multiple choice', scale: '1–5 scale', open: 'Open answer' };
-const GENERIC_WRONG = [
-  'It only applies once the project has finished.',
-  'It replaces the need to gather evidence.',
-  'It is a matter of personal opinion, not evidence.',
-  'It mainly concerns how the final poster looks.'
-];
 const STOP = new Set('about above after again also because before being between both could does each from have here into just like make more most much must only other over same should some such than that their them then there these they this those through under very want were what when where which while will with would your students student slide slides week tutorial lecture'.split(' '));
 
 const hash = str => { let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -60,7 +54,9 @@ function cdContext(s, pos) {
   // sentences from the rest of the deck serve as believable wrong answers
   const others = [];
   sl.forEach((x, i) => { if (i !== idx && x.text) others.push(...sentencesOf(x.text)); });
+  const asked = [...(s.qs || [])].sort((a, b) => b.up - a.up).slice(0, 6).map(q => ({ text: q.tr || q.text, count: q.up }));
   return {
+    asked,
     topic: title, title, text, hasText: sentencesOf(text).length > 0,
     slideNo: idx >= 0 ? idx + 1 : null,
     source: idx >= 0 ? `Slide ${idx + 1} · ${title}` : title,
@@ -69,107 +65,66 @@ function cdContext(s, pos) {
 }
 
 /* ---- question builders ---- */
-function mcFrom(stem, correct, ctx, seed) {
-  const pool = [...new Set(ctx.others.filter(x => x !== correct))];
-  const wrong = shuffled(pool, seed).slice(0, 3);
-  for (const g of GENERIC_WRONG) if (wrong.length < 3 && !wrong.includes(g)) wrong.push(g);
-  const opts = shuffled([{ t: correct, ok: true }, ...wrong.map(t => ({ t, ok: false }))], seed + 7);
-  return { type: 'mc', text: stem, options: opts };
-}
-
-function buildCD(ctx) {
-  const facts = sentencesOf(ctx.text), terms = termsOf(ctx.text), term = terms[0];
-  const seed = hash(ctx.source + ctx.out);
-  const factWithTerm = facts.find(x => term && x.toLowerCase().includes(term)) || facts[0];
-  const mainIdea = facts[0];
-  const q = [];
-
-  // 1. Identify & explain: multiple choice when the slide has statements to test
-  if (facts.length) {
-    const pick = factWithTerm === mainIdea && facts.length > 1 ? facts[1] : factWithTerm;
-    q.push(Object.assign(mcFrom(`According to "${ctx.title}", which of these statements is true?`, pick, ctx, seed), {}));
-  } else {
-    q.push({ type: 'open', text: `Looking at "${ctx.title}": which statement is an assumption rather than an observation, and why is it an assumption?` });
-  }
-  // 2. Apply: open answer
-  q.push({ type: 'open', text: term
-    ? `Using "${ctx.title}", rewrite one assumption about ${term} using only the evidence you have.`
-    : `Rewrite one assumption about "${ctx.title}" using only the evidence that is available.` });
-  // 3. Analyse: multiple choice about the main idea, or open when the slide has little text
-  if (facts.length > 1 || (facts.length === 1 && ctx.others.length)) {
-    q.push(mcFrom(`Which of these is the main idea of "${ctx.title}"?`, mainIdea, ctx, seed + 3));
-  } else {
-    q.push({ type: 'open', text: `What patterns emerge from the observations and evidence related to "${ctx.title}"?` });
-  }
-  // 4. Evaluate: confidence scale
-  q.push({ type: 'scale', text: `How confident are you that you can ${ctx.loAction}?`, lo: 'Not yet', hi: 'Very' });
-  // 5. Create: open answer, shows the whole outcome
-  q.push({ type: 'open', text: `Develop a statement, based on the evidence, that shows you can ${ctx.loAction}.` });
-
-  return Object.assign({}, ctx, {
-    qs: q.map((x, i) => Object.assign({ level: LEVELS[i].k, label: LEVELS[i].label, note: LEVELS[i].note, source: ctx.source }, x))
-  });
-}
-/* ---- optional: questions written by an AI model from the slide text (needs an API key in the desktop app) ---- */
+/* ---- the questions are written by an AI model only: there are no template questions ---- */
+const wordCount = t => String(t || '').trim().split(/\s+/).filter(Boolean).length;
 function normaliseAI(raw, ctx) {
   if (!Array.isArray(raw) || raw.length < 5) return null;
   const qs = [];
   for (let i = 0; i < 5; i++) {
     const r = raw[i] || {}, text = String(r.text || '').trim();
     const type = ['mc', 'scale', 'open'].includes(r.type) ? r.type : null;
-    if (!text || !type) return null;
+    if (!text || !type || wordCount(text) > 45) return null;
     const q = { level: LEVELS[i].k, label: LEVELS[i].label, note: LEVELS[i].note, source: ctx.source, type, text };
     if (type === 'mc') {
       const opts = (Array.isArray(r.options) ? r.options : []).map(o => ({ t: String((o && o.t) || '').trim(), ok: !!(o && o.ok) })).filter(o => o.t).slice(0, 4);
-      if (opts.length < 3 || !opts.some(o => o.ok)) return null;
+      if (opts.length < 3 || !opts.some(o => o.ok) || opts.some(o => wordCount(o.t) > 32)) return null;
       let seen = false; opts.forEach(o => { if (o.ok && seen) o.ok = false; if (o.ok) seen = true; });
       q.options = opts;
     } else if (type === 'scale') {
-      q.lo = String(r.lo || 'Not yet').trim().slice(0, 24); q.hi = String(r.hi || 'Very').trim().slice(0, 24);
-    }
+      q.lo = String(r.lo || 'Not yet').trim().slice(0, 24); q.hi = String(r.hi || 'Very sure').trim().slice(0, 24);
+    } else q.hint = String(r.hint || '').trim().slice(0, 90);
     qs.push(q);
   }
   return qs;
 }
 async function aiBuildCD(ctx) {
   const ai = window.shell && window.shell.ai;
-  if (!ai) return null;
+  const fail = (state, msg) => Object.assign(new Error(msg), { state });
+  if (!ai) throw fail('off', 'The AI question writer runs in the desktop app.');
   const st = await ai.status();
-  if (!st.enabled || !ctx.hasText) return null;
-  const res = await ai.generate({ lo: ctx.lo, out: ctx.out, title: ctx.title, text: ctx.text });
-  if (res.error) throw new Error(res.error);
-  const qs = normaliseAI(res.questions, ctx);
-  if (!qs) throw new Error('the reply could not be turned into questions');
-  return Object.assign({}, ctx, { qs, by: 'ai', aiProvider: res.provider });
+  if (!st.enabled) throw fail('off', 'AI is turned off. Choose a question writer to create concept checks.');
+  if (!ctx.hasText) throw fail('notext', 'This slide has no text the app can read, so the AI has nothing to work from.');
+  let last = 'The AI reply could not be used.';
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await ai.generate({ lo: ctx.lo, out: ctx.out, title: ctx.title, text: ctx.text, asked: ctx.asked });
+    if (res.error) { last = res.error; break; }   // connection or key problems are not fixed by asking again
+    const qs = normaliseAI(res.questions, ctx);
+    if (qs) return Object.assign({}, ctx, { qs, by: 'ai', aiProvider: res.provider, state: 'ready', pending: false });
+  }
+  throw fail('error', last);
 }
 function ensureCD(s, pos) {
   const item = flowOf(s)[pos];
   if (!item.cd) {
     const ctx = cdContext(s, pos);
-    item.cd = buildCD(ctx);
-    // if an AI key is saved and the slide has text, replace the template draft with AI-written questions as soon as they arrive
-    if (window.shell && window.shell.ai && ctx.hasText) {
-      const cd = item.cd, here = () => typeof A !== 'undefined' && A && A.type === 'Concept Development' && flowOf(s)[s.pos] === item;
-      window.shell.ai.status().then(st => {
-        if (!st.enabled) return null;
-        cd.pending = true; if (here()) render();
-        return aiBuildCD(ctx);
-      }).then(ai => {
-        if (ai === null && !cd.pending) return;
-        cd.pending = false;
-        if (ai && !cd.edited && item.cd === cd) item.cd = ai;
-        if (here()) render();
-      }).catch(err => {
-        cd.pending = false; cd.aiError = err.message;
-        toast('AI questions unavailable: ' + err.message + ' Using the template questions instead.');
-        if (here()) render();
-      });
-    }
+    item.cd = Object.assign({}, ctx, { qs: [], state: 'pending', pending: true });
+    runCD(s, pos, item, ctx);
   }
   return item.cd;
 }
+function retryCD(s, pos) { const item = flowOf(s)[pos]; item.cd = null; return ensureCD(s, pos); }
+function runCD(s, pos, item, ctx) {
+  const here = () => typeof A !== 'undefined' && A && A.type === 'Concept Development' && flowOf(s)[s.pos] === item;
+  aiBuildCD(ctx).then(ai => {
+    if (item.cd && item.cd.edited) { item.cd.pending = false; return; }   // the tutor wrote their own while the AI was working
+    item.cd = ai; if (here()) render();
+  }).catch(err => {
+    const cd = item.cd; if (!cd) return;
+    cd.pending = false; cd.state = err.state || 'error'; cd.aiError = err.message;
+    if (here()) render();
+  });
+}
 
-/* ---- simulated class responses (until students are connected) ---- */
 const SAMPLES = [
   { t: 'I think the assumption is that everyone already knows who the users are.' },
   { t: '我们应该只用访谈证据来重写这个假设。', en: 'We should rewrite this assumption using only interview evidence.', lang: 'Chinese' },

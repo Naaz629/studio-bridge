@@ -34,12 +34,12 @@ function createWindow() {
             const dt = new DataTransfer(); dt.items.add(mk(pptx, 'deck.pptx'));
             const inp = document.getElementById('slideFile'); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
             await sleep(1500); insertAct(1, 'Concept Development'); await sleep(200);
-            const early = flowOf(S())[S().pos].cd.pending;
+            const early = (flowOf(S())[S().pos].cd || {}).pending;
             const t0 = Date.now(); await sleep(1500);
             while (flowOf(S())[S().pos].cd.pending && Date.now() - t0 < 240000) await sleep(1000);
             out.aiSeconds = Math.round((Date.now() - t0) / 1000);
             const cd = flowOf(S())[S().pos].cd;
-            out.ai = { status: await window.shell.ai.status(), pendingWhileWaiting: early, by: cd.by, pendingNow: cd.pending, error: cd.aiError || null, footer: (document.querySelector('.cdfoot') || {}).textContent, qs: cd.qs.map(q => q.type + ' | ' + q.text + (q.options ? ' | ' + q.options.map(o => (o.ok ? '*' : '') + o.t).join(' ; ') : '')) };
+            out.ai = { state: cd.state, asked: cd.asked, aiError: cd.aiError, status: await window.shell.ai.status(), pendingWhileWaiting: early, by: cd.by, pendingNow: cd.pending, error: cd.aiError || null, footer: (document.querySelector('.cdfoot') || {}).textContent, qs: cd.qs.map(q => q.type + ' | ' + q.text + (q.options ? ' | ' + q.options.map(o => (o.ok ? '*' : '') + o.t).join(' ; ') : '')) };
           }
           if (${JSON.stringify(!!process.env.STUDIO_TEST_UNIT)}) {
             const bad = await window.shell.unit.fetch('https://example.com/units/IDEA9301');
@@ -139,13 +139,36 @@ async function ollamaCheck(url, model) {
   } catch { return { running: false, models: [], hasModel: false }; }
 }
 
-const AI_SYSTEM = `You help a university design tutor check students' understanding during a live studio session.
-Write exactly five concept-check questions about ONE slide, using ONLY what the slide text says. Do not add outside facts.
-Each question targets a Bloom's taxonomy level, in this order: 1 identify & explain, 2 apply, 3 analyse, 4 evaluate, 5 create.
-Question types: "mc" = multiple choice with exactly 4 options and exactly one correct (wrong options are plausible misconceptions, not silly); "scale" = a 1-5 self-rating with short low/high labels; "open" = a short written answer.
-Use at least one of each type. Tie questions 4 and 5 to the learning outcome. Plain, direct language. Questions under 30 words, options under 18 words.
-Reply with JSON only, no commentary: {"questions":[{"level":"identify|apply|analyse|evaluate|create","type":"mc|scale|open","text":"...","options":[{"t":"...","ok":true}],"lo":"...","hi":"..."}]}
-Include "options" only for mc, and "lo"/"hi" only for scale.`;
+const AI_SYSTEM = `You write concept-check questions for a university design tutor. Many students are international students and English is an additional language (CALD students). Questions must be easy to read, build understanding of the idea, and make students think about how it works in a real project.
+
+WRITE EXACTLY FIVE QUESTIONS about ONE slide, using ONLY what the slide text says. Do not add outside facts. Follow Bloom's taxonomy in this order:
+1 identify & explain: check the student understands the main idea.
+2 apply: ask for one real example from the student's OWN project, client or daily life.
+3 analyse: ask the student to compare, find a pattern, or say why.
+4 evaluate: ask the student to judge their own confidence or the strength of evidence.
+5 create: ask the student to write 1 to 2 sentences that use the idea on their real project.
+
+USE THE STUDENTS' OWN QUESTIONS: you are given the questions students asked during this session, most asked first. They show what is confusing. Write the multiple-choice and open questions so they test those exact ideas, in the students' own simple words. Do not copy a student question word for word if it is unclear: make it simpler.
+
+PLAIN LANGUAGE RULES (very important):
+- Short sentences. Maximum 18 words in a sentence. Maximum 2 sentences in a question.
+- Everyday words. Say "use" not "utilise", "show" not "demonstrate", "idea" not "concept".
+- No idioms, no phrasal-verb riddles, no slang, no sport or culture-specific examples.
+- One idea per question. No double questions. No negatives like "which is NOT" or "all except".
+- If a key design word is needed, keep it and add a short meaning in brackets, for example: insight (a new understanding of why something matters).
+- Use the same word for the same thing every time.
+
+REAL USE: questions 2 to 5 must connect to the student's real project, real users, or real evidence (for example "your project", "a real user you spoke to"). Never ask about a made-up story.
+
+QUESTION TYPES: "mc" = multiple choice, exactly 4 short options, exactly one correct, the wrong options are common misunderstandings in the same simple English, all four options are about the same length. "scale" = a 1 to 5 self-rating with short low and high labels. "open" = a short written answer. Use at least one of each type.
+
+HELP STUDENTS START: for every "open" question add "hint": a short sentence starter, for example "In my project, I saw ...". For other types leave "hint" out.
+
+EXAMPLE of the style (do not copy the topic):
+{"level":"apply","type":"open","text":"Think about your own project. Where do you see a user need? Give one real example.","hint":"In my project, I saw that users need ..."}
+
+Reply with JSON only, no other words: {"questions":[{"level":"identify|apply|analyse|evaluate|create","type":"mc|scale|open","text":"...","options":[{"t":"...","ok":true}],"lo":"...","hi":"...","hint":"..."}]}
+Include "options" only for mc, "lo" and "hi" only for scale, "hint" only for open.`;
 const QUESTIONS_SCHEMA = {
   type: 'object', required: ['questions'],
   properties: { questions: { type: 'array', minItems: 5, maxItems: 5, items: {
@@ -155,14 +178,15 @@ const QUESTIONS_SCHEMA = {
       type: { type: 'string', enum: ['mc', 'scale', 'open'] },
       text: { type: 'string' },
       options: { type: 'array', items: { type: 'object', required: ['t', 'ok'], properties: { t: { type: 'string' }, ok: { type: 'boolean' } } } },
-      lo: { type: 'string' }, hi: { type: 'string' }
+      lo: { type: 'string' }, hi: { type: 'string' }, hint: { type: 'string' }
     } } } }
 };
 const pickJSON = text => { const m = String(text || '').match(/\{[\s\S]*\}/); if (!m) return null; try { return JSON.parse(m[0]); } catch { return null; } };
 
 async function aiGenerate(p = {}) {
   const cfg = aiLoad();
-  const user = `Learning outcome (${p.lo || ''}): ${p.out || ''}\nSlide title: ${p.title || ''}\nSlide text:\n"""\n${String(p.text || '').slice(0, 6000)}\n"""`;
+  const asked = Array.isArray(p.asked) && p.asked.length ? `\nQuestions students asked in this session (most asked first):\n` + p.asked.map(a => `- ${String(a.text).slice(0, 200)} (${a.count} students)`).join('\n') : '';
+  const user = `Learning outcome (${p.lo || ''}): ${p.out || ''}\nSlide title: ${p.title || ''}\nSlide text:\n"""\n${String(p.text || '').slice(0, 6000)}\n"""${asked}`;
 
   if (cfg.provider === 'ollama') {
     const url = (process.env.STUDIO_OLLAMA_URL || cfg.ollamaUrl).replace(/\/$/, '');

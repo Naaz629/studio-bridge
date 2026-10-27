@@ -213,7 +213,7 @@ async function openAISettings() {
   const local = ['qwen2.5:3b|about 2 GB · recommended', 'llama3.2:3b|about 2 GB', 'gemma3:4b|about 3.3 GB · better wording, slower'];
   modal(`<div class="k2">✦ AI question writer</div><h4>Who writes the concept check questions?</h4>
   <div class="aiopts">
-    ${opt('template', 'Built-in templates', 'Free · works offline · uses the slide text and the week’s outcome')}
+    ${opt('template', 'Off', 'No AI. You write the concept check questions yourself')}
     ${opt('ollama', 'Free AI on this laptop (Ollama)', 'Free · no account · slide text never leaves your computer')}
     ${opt('anthropic', 'Claude (Anthropic API)', 'Best wording · paid per use · needs an API key')}
   </div>
@@ -250,12 +250,14 @@ function cdBlock(i, q) {
   return `<div class="cdblock" data-i="${i}"><label class="k2">${i + 1}. ${esc(q.label)} <span class="muted">· ${esc(q.note)}</span></label>
   <select class="cdtype" data-i="${i}">${Object.entries(TYPE_NAMES).map(([k, n]) => `<option value="${k}" ${q.type === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
   <textarea class="cdq" data-i="${i}">${esc(q.text)}</textarea>
+  ${q.type === 'open' ? `<div class="cdoptrow"><span class="muted" style="white-space:nowrap">Sentence starter</span><input class="cdhintin" value="${esc(q.hint || '')}" placeholder="In my project, I saw ..."></div>` : ''}
   ${q.type === 'mc' ? `<div class="cdoptlist">${slots.map((o, k) => `<div class="cdoptrow"><input type="radio" name="ok${i}" value="${k}" ${o.ok ? 'checked' : ''} title="Correct answer"><span class="let">${'ABCD'[k]}</span><input class="cdo" value="${esc(o.t)}" placeholder="Option ${'ABCD'[k]}"></div>`).join('')}<small class="muted">Select the circle next to the correct answer.</small></div>` : ''}
   ${q.type === 'scale' ? `<div class="cdoptrow"><input class="cdlo" value="${esc(q.lo || 'Not yet')}" placeholder="Low label"><input class="cdhi" value="${esc(q.hi || 'Very')}" placeholder="High label"></div>` : ''}</div>`;
 }
 function readBlock(i, q) {
   const b = document.querySelector(`.cdblock[data-i="${i}"]`); if (!b) return;
   q.text = b.querySelector('.cdq').value.trim() || q.text;
+  if (q.type === 'open') { const h = b.querySelector('.cdhintin'); q.hint = h ? h.value.trim() : (q.hint || ''); }
   if (q.type === 'mc') {
     const opts = [...b.querySelectorAll('.cdoptrow')].map(r => ({ t: r.querySelector('.cdo').value.trim(), ok: r.querySelector('input[type=radio]').checked })).filter(o => o.t);
     if (opts.length && !opts.some(o => o.ok)) opts[0].ok = true;
@@ -304,7 +306,7 @@ document.addEventListener('click', e => {
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;
     case 'cdedit': {
-      const cd = ensureCD(s, s.pos); cdDraft = JSON.parse(JSON.stringify(cd.qs));
+      const cd = ensureCD(s, s.pos); cdDraft = cd.qs.length ? JSON.parse(JSON.stringify(cd.qs)) : LEVELS.map(l => ({ level: l.k, label: l.label, note: l.note, source: cd.source, type: 'open', text: '', hint: '' }));
       return modal(`<div class="k2">Concept check · ${esc(cd.lo)}: ${esc(cd.out)}</div><h4>Edit the five questions</h4>
       <label class="k2" for="cdTopic">Topic from the slide before this activity</label><input id="cdTopic" class="cdinput" value="${esc(cd.title)}">
       <div id="cdBlocks">${cdDraft.map((q, i) => cdBlock(i, q)).join('')}</div>
@@ -317,8 +319,8 @@ document.addEventListener('click', e => {
       toast('Writing new questions…');
       (async () => {
         let fresh = null;
-        try { fresh = await aiBuildCD(ctx); } catch (err) { toast('AI unavailable: ' + err.message + ' Using the template questions.'); }
-        fresh = fresh || buildCD(ctx);
+        try { fresh = await aiBuildCD(ctx); } catch (err) { toast('The AI could not write new questions: ' + err.message); }
+        if (!fresh) return;
         const box = document.getElementById('cdBlocks'); if (!box) return;
         cdDraft = fresh.qs; document.getElementById('cdTopic').value = topic;
         box.innerHTML = cdDraft.map((q, i) => cdBlock(i, q)).join('');
@@ -330,13 +332,15 @@ document.addEventListener('click', e => {
       const cd = ensureCD(s, s.pos);
       cdDraft.forEach((q, i) => readBlock(i, q));
       cd.title = cd.topic = document.getElementById('cdTopic').value.trim() || cd.title; cd.edited = true;
-      cd.qs = cdDraft.map((q, i) => { const old = cd.qs[i] || {}; const same = old.text === q.text && old.type === q.type && JSON.stringify(old.options) === JSON.stringify(q.options); return Object.assign({}, q, { res: same ? old.res : null, edited: old.edited || !same }); });
+      cd.state = 'ready'; cd.pending = false; cd.by = cd.by || 'manual';
+      cd.qs = cdDraft.filter(q => q.text).map((q, i) => { const old = cd.qs[i] || {}; const same = old.text === q.text && old.type === q.type && JSON.stringify(old.options) === JSON.stringify(q.options); return Object.assign({}, q, { res: same ? old.res : null, edited: old.edited || !same }); });
       A.q = Math.min(A.q, cd.qs.length - 1);
       $('#modal').innerHTML = ''; toast('Questions saved'); break;
     }
     case 'unitimport': L.menu = false; mainMenu(); openUnitImport(); return;
     case 'unitfill': { const i = document.getElementById('unitUrl'); if (i) i.value = UNIT_EXAMPLE; return; }
     case 'unitgo': doUnitImport(); return;
+    case 'cdretry': retryCD(s, s.pos); break;
     case 'aisettings': L.menu = false; mainMenu(); openAISettings(); return;
     case 'aisave': {
       if (!(window.shell && window.shell.ai)) return;
@@ -347,13 +351,13 @@ document.addEventListener('click', e => {
       window.shell.ai.save(opts).then(r => {
         if (r.error) return toast(r.error);
         $('#modal').innerHTML = '';
-        toast(prov === 'template' ? 'Concept checks use the built-in templates.' : prov === 'ollama' ? 'Free local AI is on. New concept checks will be written on this laptop.' : 'Claude is on. New concept checks will be written from the slide text.');
+        toast(prov === 'template' ? 'AI is off. You can still write concept check questions yourself.' : prov === 'ollama' ? 'Free local AI is on. New concept checks will be written on this laptop.' : 'Claude is on. New concept checks will be written from the slide text.');
       });
       return;
     }
     case 'aicheck': checkOllama(); return;
     case 'olpick': { const i = document.getElementById('olModel'); if (i) { i.value = a.dataset.m; checkOllama(); } return; }
-    case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('Saved key removed. Concept checks use the built-in templates.'); }); return;
+    case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('Saved key removed.'); }); return;
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
     case 'otab': O.tab = a.dataset.t; break;
     case 'anon': O.anon = a.checked; break;
@@ -393,7 +397,7 @@ document.addEventListener('drop', e => { const d = e.target.closest('[data-ins]'
 /* simulated live class: answers arriving on a concept check */
 setInterval(() => {
   if (V !== 'live' || !A || A.type !== 'Concept Development') return;
-  const s = S(), cd = flowOf(s)[s.pos] && flowOf(s)[s.pos].cd; if (!cd) return;
+  const s = S(), cd = flowOf(s)[s.pos] && flowOf(s)[s.pos].cd; if (!cd || !cd.qs.length) return;
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)], r = ensureRes(q), el = document.getElementById('cdAns'); if (!el) return;
   if (q.type === 'mc') { const k = Math.random() < .55 ? Math.max(0, q.options.findIndex(o => o.ok)) : Math.floor(Math.random() * q.options.length); r.counts[k]++; }
   else if (q.type === 'scale') r.counts[Math.min(4, 1 + Math.floor(Math.random() * 4))]++;
@@ -431,10 +435,22 @@ function answersHTML(q) {
   }
   return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}: “${esc(sm.t)}”</small>` : ''}</div>`; }).join('')}</div>`;
 }
+function cdEmpty(s, f, m, cd) {
+  const own = '<button class="sm" data-a="cdedit">✎ Write my own questions</button>';
+  const body = cd.pending ? `<div class="cdwait"><span class="aiflag busy">✦ The AI is writing five questions</span><p>It reads this slide, the week's learning outcome and what your students asked. On a laptop this can take up to a minute.</p></div>`
+    : cd.state === 'notext' ? `<div class="cdwait"><b>This slide has no text to read</b><p>${esc(cd.aiError)} Upload the slides as PDF or PowerPoint, or write the questions yourself.</p><div class="qacts">${own}</div></div>`
+    : cd.state === 'off' ? `<div class="cdwait"><b>AI is turned off</b><p>${esc(cd.aiError || '')} Concept checks are written by an AI model so the wording is simple and matches your slide.</p><div class="qacts"><button class="sm p" data-a="aisettings">✦ Choose AI</button>${own}</div></div>`
+    : `<div class="cdwait"><b>The AI could not write the questions</b><p>${esc(cd.aiError || 'Something went wrong.')}</p><div class="qacts"><button class="sm p" data-a="cdretry">↻ Try again</button><button class="sm" data-a="aisettings">✦ AI settings</button>${own}</div></div>`;
+  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdchip">✦ CONCEPT CHECK</span><span class="spacer"></span><span class="cdbrand">Studio Bridge</span><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  <div class="cdbody"><h3 class="cdq">${esc(cd.title)}</h3><p class="cdsrc">Checking your understanding of: ${esc(cd.source)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</p>${body}</div>
+  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+}
 function cdCard(s, f, m) {
-  const cd = ensureCD(s, s.pos), q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
+  const cd = ensureCD(s, s.pos);
+  if (!cd.qs.length) return cdEmpty(s, f, m, cd);
+  const q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
   return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdchip">✦ CONCEPT CHECK</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><span class="cdbrand">Studio Bridge</span><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p><div id="cdAns">${answersHTML(q)}</div><div class="cdfoot">${cd.pending ? '<span class="aiflag busy">✦ Writing questions from this slide…</span> · ' : cd.by === 'ai' ? `<span class="aiflag">✦ ${cd.edited ? 'AI draft, edited' : 'AI draft from this slide · check before you use it'}</span> · ` : ''}${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
+  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}<div id="cdAns">${answersHTML(q)}</div><div class="cdfoot">${cd.pending ? '<span class="aiflag busy">✦ Writing questions from this slide…</span> · ' : cd.by === 'ai' ? `<span class="aiflag">✦ ${cd.edited ? 'AI draft, edited' : 'AI draft from this slide · check before you use it'}</span> · ` : ''}${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 
