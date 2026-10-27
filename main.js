@@ -35,7 +35,9 @@ function createWindow() {
             const inp = document.getElementById('slideFile'); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
             await sleep(1500); insertAct(1, 'Concept Development'); await sleep(200);
             const early = flowOf(S())[S().pos].cd.pending;
-            await sleep(2500);
+            const t0 = Date.now(); await sleep(1500);
+            while (flowOf(S())[S().pos].cd.pending && Date.now() - t0 < 240000) await sleep(1000);
+            out.aiSeconds = Math.round((Date.now() - t0) / 1000);
             const cd = flowOf(S())[S().pos].cd;
             out.ai = { status: await window.shell.ai.status(), pendingWhileWaiting: early, by: cd.by, pendingNow: cd.pending, error: cd.aiError || null, footer: (document.querySelector('.cdfoot') || {}).textContent, qs: cd.qs.map(q => q.type + ' | ' + q.text + (q.options ? ' | ' + q.options.map(o => (o.ok ? '*' : '') + o.t).join(' ; ') : '')) };
           }
