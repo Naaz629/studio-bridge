@@ -503,3 +503,11 @@ button.ptab.flip{gap:10px;font:inherit;font-size:13px;font-weight:600;color:var(
 .qr .qt{padding-top:6px}
 .qr.seen .qn{color:#111;font-weight:600}
 .qr.done.seen .qn{color:#fff}
+
+/* ===== question number: smaller circle; answered = green arcs + dots like the reference ===== */
+.qn{position:relative;isolation:isolate;flex:none;width:40px;height:40px;margin:-3px 0 -3px -6px;border:0;background:none;border-radius:0;color:#111;font-size:14px;font-weight:700;display:grid;place-items:center}
+.qn::before{content:"";position:absolute;inset:6px;border-radius:50%;background:#fff;border:1.5px solid #111;z-index:-1;transition:box-shadow .25s,border-color .25s}
+.qr.done .qn{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='%2322c55e' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3.6 14A17.5 17.5 0 0 1 36.4 14'/%3E%3Cpath d='M3.6 26A17.5 17.5 0 0 0 36.4 26'/%3E%3Cg fill='%2322c55e' stroke='none'%3E%3Ccircle cx='3.6' cy='14' r='2.2'/%3E%3Ccircle cx='36.4' cy='14' r='2.2'/%3E%3Ccircle cx='3.6' cy='26' r='2.2'/%3E%3Ccircle cx='36.4' cy='26' r='2.2'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat;color:#16a34a;border-color:transparent}
+.qr.done .qn::before{border-color:transparent;box-shadow:0 2px 8px rgba(30,40,30,.22)}
+.qr.done.seen .qn,.qr.seen .qn{color:inherit}
+.qr .qt{padding-top:8px}
