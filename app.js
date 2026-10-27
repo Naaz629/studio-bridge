@@ -14,7 +14,7 @@ const AVC = ['', 'sand', 'lav', 'dk', '', 'sand', 'lav'];
 let V = 'live';
 let si = 0; // subject index
 const S = () => SUBJECTS[si];
-const L = { open: null, reply: null, plan: true, react: false, subj: false, menu: false, dragging: false };
+const L = { open: null, reply: null, plan: true, qopen: true, react: false, subj: false, menu: false, dragging: false };
 const O = { w: 6, s: 'tut', open: null, q: '', tab: 'lo', anon: false };
 let A = null; // running activity { type, q }
 let qid = 100;
@@ -41,24 +41,22 @@ function courseBtn() {
 }
 function mainMenu() {
   const m = $('#mainMenu'); m.hidden = !L.menu;
-  m.innerHTML = `<button data-a="upload">Upload slides for ${esc(S().name)}</button><button data-a="toggleReact">${L.react ? 'Hide' : 'Show'} emoji reactions</button><button data-a="end">End session</button>`;
+  m.innerHTML = `<button data-a="upload">Upload slides for ${esc(S().name)}</button><button data-a="end">End session</button>`;
 }
 function botbar() {
   const b = $('#botbar'), s = S();
   b.style.display = V === 'live' ? '' : 'none';
-  const r = s.reactions;
-  b.innerHTML = `<span class="studio">STUDIO ${pad(s.liveWeek)}</span><span class="spacer"></span>
-  <button class="bb" data-a="toggleplan" aria-pressed="${L.plan}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
+  b.innerHTML = `${L.plan ? planStrip(slidesFor(s), s) : ''}
+  <div class="barrow"><span class="studio">STUDIO ${pad(s.liveWeek)}</span>${L.plan ? '' : '<button class="bb planbtn" data-a="toggleplan">Session plan ▴</button>'}<span class="spacer"></span>
+  <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
   <button class="bb" data-a="toggleReact" aria-pressed="${L.react}">React <span class="spark">✦</span></button>
-  <div class="reactp" id="reactp" ${L.react ? '' : 'hidden'}></div>`;
+  <div class="reactp" id="reactp" ${L.react ? '' : 'hidden'}></div></div>`;
   renderReact();
 }
 function renderReact() {
   const el = $('#reactp'); if (!el) return;
-  const r = S().reactions, tot = Object.values(r).reduce((a, b) => a + b, 0), cp = Math.round(r.con / Math.max(1, tot) * 100);
   el.hidden = !L.react;
-  el.innerHTML = `<div class="k2">How is this landing? · only you see this</div><div class="rrow">${EMOJIS.map(e => `<button class="rbtn" data-k="${e.k}" title="${e.l}"><span class="e" style="background:${e.c}">${e.e}</span><span>${e.l}</span><b>${r[e.k]}</b></button>`).join('')}</div>
-  <div class="rhint ${cp >= 20 ? 'warn' : ''}">${cp >= 20 ? cp + '% confused — pause and re-explain?' : 'Landing well · ' + cp + '% confused'}</div>`;
+  el.innerHTML = EMOJIS.map(e => `<button class="ebtn" data-k="${e.k}" title="${e.l}" aria-label="${e.l}">${e.e}</button>`).join('');
 }
 
 /* ---------- live view ---------- */
@@ -75,15 +73,14 @@ function actCard() {
   <div class="cfoot"><button class="lk" data-a="prev" ${A.q === 0 ? 'disabled' : ''}>Previous</button><span class="dotsrow">${p.map((_, i) => `<i class="${i === A.q ? 'on' : ''}"></i>`).join('')}</span><button class="lk" data-a="next" ${A.q >= p.length - 1 ? 'disabled' : ''}>Next</button></div></div>`;
 }
 function planStrip(sl, s) {
-  return `<section class="plan2"><div class="ph"><div><small>ACTIVITY PLAN</small><h2>Week ${s.liveWeek} studio flow</h2></div><button class="ulink" data-a="toggleplan">Minimize</button></div>
+  return `<section class="plan2"><div class="ph"><div><small>SESSION PLAN</small><h2>Week ${s.liveWeek} studio flow</h2></div><button class="ulink" data-a="toggleplan">Minimize</button></div>
   <div class="tiles">${sl.map((x, i) => { const at = (s.attach[i] || [])[0]; const m = at && ACT_META[at]; return `<div class="tile ${i === s.slideIdx ? 'on' : ''}" ${m ? `style="background:${m.color}"` : ''} data-a="tile" data-i="${i}" data-drop="${i}"><small>${pad(i + 1)}</small><span>${m ? esc(m.tile) : `Slide ${i + 1}/${sl.length}`}</span></div>`; }).join('')}</div>
   <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">${s.upload ? 'Slides: ' + esc(s.upload) : 'Drag an activity onto a slide'}</span></div></section>`;
 }
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek];
-  return `<div class="sess2"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div><span class="livetag"><i></i>LIVE SESSION</span></div>
-  <div class="stagebox" data-drop="${s.slideIdx}">${A ? actCard() : slideCard(sl, s)}</div>
-  ${L.plan ? planStrip(sl, s) : ''}</section>
+  return `<div class="sess2 ${L.qopen ? '' : 'qclosed'}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div><span class="livetag"><i></i>LIVE SESSION</span></div>
+  <div class="stagebox" data-drop="${s.slideIdx}">${A ? actCard() : slideCard(sl, s)}</div></section>
   <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside></div>`;
 }
 function renderQP() {
@@ -146,7 +143,7 @@ const modal = html => { $('#modal').innerHTML = `<div class="scrim" data-x><div 
 
 document.addEventListener('click', e => {
   const nv = e.target.closest('.nav [data-v]'); if (nv) { V = nv.dataset.v === 'ov' ? 'ov' : 'live'; L.menu = L.subj = false; return render(); }
-  const rb = e.target.closest('.rbtn'); if (rb) { S().reactions[rb.dataset.k]++; return renderReact(); }
+  const rb = e.target.closest('.ebtn'); if (rb) { const em = EMOJIS.find(x => x.k === rb.dataset.k); S().reactions[em.k]++; L.react = false; renderReact(); document.querySelector('[data-a=toggleReact]')?.setAttribute('aria-pressed', 'false'); return toast(em.e + ' ' + em.l + ' sent to the class'); }
   const ss = e.target.closest('[data-ss]'); if (ss) { O.s = ss.dataset.ss; O.open = null; return render(); }
   const sd = e.target.closest('[data-s]'); if (sd) {
     const [oid, i] = sd.dataset.s.split('|'), o = findOut(oid), x = o.who[+i];
@@ -162,8 +159,9 @@ document.addEventListener('click', e => {
   switch (act) {
     case 'subj': L.subj = !L.subj; L.menu = false; break;
     case 'pick': si = +a.dataset.i; L.subj = false; A = null; if (!S().weeks[O.w]) O.w = S().liveWeek in S().weeks ? S().liveWeek : +Object.keys(S().weeks)[0]; O.open = null; toast('Subject: ' + S().name); break;
-    case 'toggleplan': L.plan = !L.plan; break;
-    case 'toggleReact': L.react = !L.react; L.menu = false; break;
+    case 'toggleplan': L.plan = !L.plan; botbar(); return;
+    case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
+    case 'toggleReact': L.react = !L.react; L.menu = false; renderReact(); a.setAttribute('aria-pressed', L.react); return;
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev': if (A) A.q = Math.max(0, A.q - 1); else s.slideIdx = Math.max(0, s.slideIdx - 1); break;
     case 'next': if (A) A.q = Math.min(PROMPTS[A.type].length - 1, A.q + 1); else s.slideIdx = Math.min(slidesFor(s).length - 1, s.slideIdx + 1); break;

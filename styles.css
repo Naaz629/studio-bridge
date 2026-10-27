@@ -323,3 +323,21 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .seg2{display:flex;gap:6px}
 @media (max-width:1100px){.sess2{grid-template-columns:minmax(0,1fr) 300px}}
 @media (max-width:860px){.win{grid-template-columns:1fr}.sess2{grid-template-columns:1fr}.rightcol{border-left:0;border-top:1px solid var(--line)}}
+
+/* ===== docked session plan, sliding Q&A column, emoji popover ===== */
+.sess2{display:flex;min-height:100%}
+.left{flex:1;min-width:0}
+.rightcol{flex:none;width:340px;overflow:hidden;transition:width .28s ease,padding .28s ease,border-width .28s ease}
+.rightcol>*{min-width:300px}
+.sess2.qclosed .rightcol{width:0;padding-left:0;padding-right:0;border-left-width:0}
+.botbar{flex-direction:column;height:auto;border-top:1px solid var(--line)}
+.botbar .plan2{padding:12px 24px 10px;border-bottom:1px solid var(--line);gap:8px;max-height:230px}
+.botbar .ph h2{font-size:17px}
+.botbar .tiles{display:flex;overflow-x:auto;gap:10px;padding-bottom:2px}
+.botbar .tile{flex:none;width:112px;min-height:58px;padding:8px 10px}
+.botbar .achip2{padding:8px 14px;font-size:12px}
+.barrow{position:relative;display:flex;align-items:stretch;height:52px;flex:none}
+.planbtn{border-left:1px solid var(--line);padding:0 18px;font-size:12px}
+.reactp{flex-direction:row;gap:6px;width:auto;padding:8px;border-radius:12px;right:12px}
+.reactp[hidden]{display:none}
+.ebtn{width:44px;height:44px;border-radius:10px;font-size:22px;display:grid;place-items:center}.ebtn:hover{background:var(--tint)}
