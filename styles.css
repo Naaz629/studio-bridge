@@ -649,3 +649,4 @@ button.ptab.flip::before,button.ptab.flip::after{display:none}
 button.ptab.flip:hover{background:#fff6ee}
 .ptab .caret,.planbtn .caret{font-style:normal;font-size:12px;color:var(--muted)}
 .planbtn{width:auto;padding:0 28px;font-size:15px;gap:16px;justify-content:space-between}
+.livedot{display:none!important}
