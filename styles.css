@@ -484,3 +484,14 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 button.ptab.flip{gap:10px;font:inherit;font-size:13px;font-weight:600;color:var(--ink)}
 .ptab .caret,.planbtn .caret{font-style:normal;font-size:11px;color:var(--muted);margin-left:2px}
 .planbtn{gap:8px;display:flex;align-items:center}
+
+/* ===== activity card = exactly the slide's size (16:9), content scales to fit ===== */
+.stagebox .actcard{aspect-ratio:16/9;width:min(100cqw,calc(100cqh * 1.77778));max-height:none;height:auto;overflow:hidden}
+.actcard .ahead{padding:2cqw 4cqw 1.3cqw}
+.actcard h2{font-size:clamp(16px,2.8cqw,34px);margin-top:.4cqw}
+.actcard .ahead small,.actcard .abody small{font-size:clamp(9px,.9cqw,12px)}
+.actcard .abody{padding:1.8cqw 4cqw 5.5cqw;gap:1.2cqw;min-height:0;overflow:hidden}
+.actcard .abody h3{font-size:clamp(14px,2.3cqw,30px)}
+.actcard .abody textarea{flex:1;min-height:0;font-size:clamp(12px,1.4cqw,18px);padding:1.2cqw 1.4cqw}
+.actcard .abody .meta{font-size:clamp(10px,1cqw,13px)}
+.stagebox .actcard{box-sizing:border-box}
