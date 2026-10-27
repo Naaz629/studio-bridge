@@ -105,12 +105,12 @@ function planStrip(sl, s) {
     if (it.k === 'a') { const m = ACT_META[it.act]; return gap(p) + `<div class="tile act ${p === s.pos ? 'on' : ''}" style="background:${m.color}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>${esc(m.tile)}</span><button class="tx" data-a="rmflow" data-i="${p}" aria-label="Remove activity">✕</button></div>`; }
     return gap(p) + `<div class="tile ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>Slide ${it.i + 1}/${sl.length}</span></div>`;
   }).join('') + gap(f.length);
-  return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><div class="tiles">${tiles}</div>
+  return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><h2 class="phead">Week ${s.liveWeek} studio flow</h2><div class="tiles">${tiles}</div>
   <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">Drag an activity between slides to add it to the flow</span></div></div></div></section>`;
 }
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
-  return `<div class="sess2 ${L.qopen ? '' : 'qclosed'}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div></div>
+  return `<div class="sess2 ${L.qopen ? '' : 'qclosed'}"><section class="left"><div class="wk"><div><h1>${esc(t[0])}</h1></div></div>
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${planStrip(sl, s)}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside></div>`;
 }
