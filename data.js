@@ -8,11 +8,17 @@ const SRC = { k: 'Concept check', a: 'Tutorial activity', e: 'Exit check-in' };
 const GAP = { k: 'Students are not yet recalling the core concept.', a: 'Students know it but struggle to apply it to their own project.', e: 'Students can do it but cannot explain why it matters.' };
 const TIP = { k: 'Re-open with a 2-minute concept check using one real example.', a: 'Have each team apply the idea to their own brief in 5 minutes.', e: 'Give the frame: "We did ___ because ___, which shows ___."' };
 const NOTE = { k: 'Missed the concept check', a: 'Could not apply it to their project', e: 'Gave a one-word explanation' };
+const ACT_META = {
+  "Discussion Activity": { title: "Idea Exchange", tile: "D activity", color: "#e9e3f2" },
+  "Concept Development": { title: "Concept Development", tile: "CD", color: "#f5e7b9" },
+  "Q&A Session": { title: "Q&A Session", tile: "Q&A", color: "#d3e8d2" },
+  "Artefact upload": { title: "Artefact upload", tile: "Artefact", color: "#cfe3ea" }
+};
 const PROMPTS = {
-  'Concept Development': ['Define the idea in your own words.', 'Which user needs matter most?', 'What would make it believable?', 'Where could it mislead a team?', 'Sketch one goal.'],
-  'Discussion Activity': ['Share a time a product ignored you as a user.', 'Who is missing from our thinking?', 'Discuss in pairs: needs vs wants.', 'Which assumption would you test first?', 'Summarise your group view.'],
-  'Idea Exchange': ['Post one idea for researching users.', 'Build on a peer\'s idea.', 'Vote for the most feasible idea.', 'Combine two ideas.', 'Pick one to prototype.'],
-  'Q&A Session': ['Ask anything about this week.', 'Upvote questions you share.', 'Clarify the top question.', 'Answer a peer question.', 'Final open questions.']
+  "Discussion Activity": ["What details turn a profile into a believable person?", "Who is missing from our thinking?", "Discuss in pairs: needs vs wants.", "Which assumption would you test first?", "Summarise your group view."],
+  "Concept Development": ["Define the idea in your own words.", "Which user needs matter most?", "What would make it believable?", "Where could it mislead a team?", "Sketch one goal."],
+  "Q&A Session": ["Ask anything about this week.", "Upvote questions you share.", "Clarify the top question.", "Answer a peer question.", "Final open questions."],
+  "Artefact upload": ["Upload your persona canvas.", "Upload a photo of your sketch.", "Add a caption explaining it.", "Tag the learning outcome it shows.", "Review a peer's upload."]
 };
 const ACTIVITY_TYPES = Object.keys(PROMPTS);
 const EMOJIS = [

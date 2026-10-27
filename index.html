@@ -16,22 +16,20 @@
         <div><b>Studio</b><small>TUTOR</small></div>
       </div>
       <nav class="nav">
-        <button data-v="live" aria-current="page"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg></span><span><b>Live session <span class="livepill">LIVE</span></b><small id="navLiveSub"></small></span></button>
+        <button data-v="live" aria-current="page"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg></span><span><b>Session <span class="livepill">LIVE</span></b><small id="navLiveSub"></small></span></button>
         <button data-v="ov"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span><b>Overview</b><small>Learning outcomes</small></span></button>
       </nav>
       <div class="spacer"></div>
       <div class="course" id="course"></div>
       <div class="user"><span class="av dk">PN</span><div><b>Dr. Priya Nair</b><small>Tutor · Online</small></div></div>
     </aside>
-    <section class="main" id="mainCol">
+    <section class="main">
       <header class="top">
         <div class="crumb" id="crumb"></div>
-        <label class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="srch" placeholder="Search questions" aria-label="Search"><kbd>Ctrl K</kbd></label>
-        <button class="sm" id="emojiBtn" aria-pressed="true">😊 Emoji react</button>
-        <button class="sm" id="activityBtn" aria-pressed="false">Activity plan</button>
+        <div class="menu-wrap"><button class="icbtn" id="burger" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button><div class="menu" id="mainMenu" hidden></div></div>
       </header>
       <div class="view" id="view"></div>
-      <div id="floats"></div>
+      <footer class="botbar" id="botbar"></footer>
     </section>
   </div>
 </div>
