@@ -522,3 +522,12 @@ button.ptab.flip{gap:10px;font:inherit;font-size:13px;font-weight:600;color:var(
 button.qn{cursor:pointer}
 button.qn:hover::before{box-shadow:0 0 0 3px rgba(34,197,94,.25)}
 button.qtxt{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;gap:3px;padding:8px 0 0;cursor:pointer}
+
+/* ===== number ring never clipped: full arcs and dots visible on both sides ===== */
+.qrows{overflow-y:auto;overflow-x:visible;padding-left:6px}
+.qrow{gap:10px;padding-left:0}
+.qn{width:46px;height:46px;margin:-1px 0 -6px 0;overflow:visible}
+.qn::before{inset:9px}
+button.qtxt{padding-top:12px}
+.qr .qt{padding-top:0}
+.qd{padding-left:56px}
