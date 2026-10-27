@@ -542,3 +542,8 @@ button.qtxt{padding-top:12px}
 .botbar .barrow,.botbar.open .barrow{gap:0}
 .botbar .barrow .ptab.flip{margin-right:16px}
 .rightcol>*{min-width:0}
+
+/* ===== one ring component for every number: black until clicked/answered, then green ===== */
+.qn{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='%23111' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3.6 14A17.5 17.5 0 0 1 36.4 14'/%3E%3Cpath d='M3.6 26A17.5 17.5 0 0 0 36.4 26'/%3E%3Cg fill='%23111' stroke='none'%3E%3Ccircle cx='3.6' cy='14' r='2.2'/%3E%3Ccircle cx='36.4' cy='14' r='2.2'/%3E%3Ccircle cx='3.6' cy='26' r='2.2'/%3E%3Ccircle cx='36.4' cy='26' r='2.2'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat;color:#111}
+.qn::before{border:0;box-shadow:0 2px 8px rgba(30,40,30,.22)}
+.qr.seen .qn::before,.qr.done .qn::before{border:0}
