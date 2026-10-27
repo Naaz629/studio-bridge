@@ -466,3 +466,12 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 /* arrow circles: translucent black (20% opacity) */
 .navarrow{background:rgba(0,0,0,.2);color:#fff;box-shadow:none;backdrop-filter:none}
 .navarrow:hover:not(:disabled){background:rgba(0,0,0,.3)}
+
+/* ===== session flow: slides and activities as ordered steps, drop between them ===== */
+.planbody .tiles{display:flex;gap:0;overflow-x:auto;align-items:stretch;padding-bottom:4px}
+.planbody .tile{position:relative;flex:none;width:122px;min-height:84px}
+.tgap{flex:none;width:12px;border-radius:10px;transition:width .15s,background .15s}
+.tgap.over{width:56px;background:rgba(0,0,0,.07);outline:2px dashed var(--ink);outline-offset:-2px}
+.tile .tx{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;font-size:10px;opacity:0;background:rgba(0,0,0,.12)}
+.tile:hover .tx{opacity:1}
+.tile.act{border-style:solid}

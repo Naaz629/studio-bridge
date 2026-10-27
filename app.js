@@ -34,9 +34,18 @@ function render() {
   courseBtn(); mainMenu(); botbar();
   if (V === 'live') { renderQP(); pulseDots(); }
 }
+/* The session flow is an ordered list of steps: slides and activities. */
+function flowOf(s) {
+  const n = slidesFor(s).length;
+  if (!s.flow || s.flowN !== n) { s.flow = Array.from({ length: n }, (_, i) => ({ k: 's', i })); s.flowN = n; s.pos = 0; }
+  if (s.pos == null || s.pos >= s.flow.length) s.pos = 0;
+  return s.flow;
+}
+function syncA(s) { const it = flowOf(s)[s.pos]; A = it && it.k === 'a' ? { type: it.act, q: 0 } : null; }
+function goTo(s, p) { const f = flowOf(s); s.pos = Math.max(0, Math.min(f.length - 1, p)); syncA(s); }
 let pulseKey = '', pulseTimer = null;
 function pulseDots() {
-  const s = S(), key = si + '|' + s.slideIdx + '|' + (A ? A.type + A.q : '');
+  const s = S(), key = si + '|' + s.pos + '|' + (A ? A.type + A.q : '');
   if (key === pulseKey) return;
   pulseKey = key;
   const on = document.querySelector('.dotsov i.on'); if (!on) return;
@@ -84,25 +93,29 @@ function navOverlay(idx, total, canPrev, canNext) {
   return `<button class="navarrow l" data-a="prev" aria-label="Previous" ${canPrev ? '' : 'disabled'}>${ARROW_L}</button><button class="navarrow r" data-a="next" aria-label="Next" ${canNext ? '' : 'disabled'}>${ARROW_R}</button><div class="dotsov" aria-hidden="true">${dots}</div>`;
 }
 function slideCard(sl, s) {
-  const cur = sl[Math.min(s.slideIdx, sl.length - 1)];
+  const f = flowOf(s), it = f[s.pos], cur = sl[Math.min(it.i, sl.length - 1)];
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
-  const runs = (s.attach[s.slideIdx] || []).map(a => `<button class="run" style="background:${ACT_META[a].color}" data-a="run" data-t="${esc(a)}">▶ ${esc(a)}</button>`).join('');
-  return `<div class="slidewrap2"><div class="slidepage">${body}${runs ? `<div class="runov">${runs}</div>` : ''}${navOverlay(s.slideIdx, sl.length, s.slideIdx > 0, s.slideIdx < sl.length - 1)}</div></div>`;
+  return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}</div></div>`;
 }
 function actCard() {
-  const m = ACT_META[A.type], p = PROMPTS[A.type];
+  const s = S(), f = flowOf(s), m = ACT_META[A.type], p = PROMPTS[A.type];
   return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>${A.type === 'Discussion Activity' ? 'DISCUSSION ACTIVITY' : 'ACTIVITY'}</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="abody"><small>QUESTION ${A.q + 1} OF ${p.length}</small><h3>${esc(p[A.q])}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${8 + A.q * 3} students have responded</div></div>
-  ${navOverlay(A.q, p.length, A.q > 0, A.q < p.length - 1)}</div>`;
+  ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function planStrip(sl, s) {
-  return `<section class="plan2"><div class="planbody"><h2 class="phead">Week ${s.liveWeek} studio flow</h2><div class="tiles">${sl.map((x, i) => { const at = (s.attach[i] || [])[0]; const m = at && ACT_META[at]; return `<div class="tile ${i === s.slideIdx ? 'on' : ''}" ${m ? `style="background:${m.color}"` : ''} data-a="tile" data-i="${i}" data-drop="${i}"><small>${pad(i + 1)}</small><span>${m ? esc(m.tile) : `Slide ${i + 1}/${sl.length}`}</span></div>`; }).join('')}</div>
-  <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">${s.upload ? 'Slides: ' + esc(s.upload) : 'Drag an activity onto a slide'}</span></div></div></section>`;
+  const f = flowOf(s), gap = p => `<div class="tgap" data-ins="${p}"></div>`;
+  const tiles = f.map((it, p) => {
+    if (it.k === 'a') { const m = ACT_META[it.act]; return gap(p) + `<div class="tile act ${p === s.pos ? 'on' : ''}" style="background:${m.color}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>${esc(m.tile)}</span><button class="tx" data-a="rmflow" data-i="${p}" aria-label="Remove activity">✕</button></div>`; }
+    return gap(p) + `<div class="tile ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>Slide ${it.i + 1}/${sl.length}</span></div>`;
+  }).join('') + gap(f.length);
+  return `<section class="plan2"><div class="planbody"><h2 class="phead">Week ${s.liveWeek} studio flow</h2><div class="tiles">${tiles}</div>
+  <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">Drag an activity between slides to add it to the flow</span></div></div></section>`;
 }
 function live() {
-  const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek];
+  const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   return `<div class="sess2 ${L.qopen ? '' : 'qclosed'}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div><span class="livetag"><i></i>LIVE SESSION</span></div>
-  <div class="stagebox" data-drop="${s.slideIdx}">${A ? actCard() : slideCard(sl, s)}</div>${L.plan ? planStrip(sl, s) : ''}</section>
+  <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${L.plan ? planStrip(sl, s) : ''}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside></div>`;
 }
 function renderQP() {
@@ -152,12 +165,10 @@ function overview() {
 
 
 /* ---------- actions ---------- */
-function runActivity(type) { A = { type, q: 0 }; V = 'live'; render(); }
-function attach(i, type) {
+function insertAct(p, type) {
   if (!ACTIVITY_TYPES.includes(type)) return;
-  const s = S(); s.attach[i] = s.attach[i] || [];
-  if (!s.attach[i].includes(type)) s.attach[i].push(type);
-  s.slideIdx = i; toast(`${type} added to slide ${i + 1}`); runActivity(type);
+  const s = S(), f = flowOf(s); f.splice(p, 0, { k: 'a', act: type });
+  s.pos = p; syncA(s); toast(`${ACT_META[type].title} added at step ${p + 1}`); render();
 }
 const now = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 const modal = html => { $('#modal').innerHTML = `<div class="scrim" data-x><div class="sheet" role="dialog">${html}</div></div>`; };
@@ -177,15 +188,15 @@ document.addEventListener('click', e => {
   const top = () => [...s.qs].filter(x => x.st === 'open').sort((x, y) => y.up - x.up)[0];
   switch (act) {
     case 'subj': L.subj = !L.subj; L.menu = false; break;
-    case 'pick': si = +a.dataset.i; L.subj = false; A = null; if (!S().weeks[O.w]) O.w = S().liveWeek in S().weeks ? S().liveWeek : +Object.keys(S().weeks)[0]; O.open = null; toast('Subject: ' + S().name); break;
+    case 'pick': si = +a.dataset.i; L.subj = false; syncA(S()); if (!S().weeks[O.w]) O.w = S().liveWeek in S().weeks ? S().liveWeek : +Object.keys(S().weeks)[0]; O.open = null; toast('Subject: ' + S().name); break;
     case 'toggleplan': L.plan = !L.plan; botbar(); return;
     case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
-    case 'prev': if (A) A.q = Math.max(0, A.q - 1); else s.slideIdx = Math.max(0, s.slideIdx - 1); break;
-    case 'next': if (A) A.q = Math.min(PROMPTS[A.type].length - 1, A.q + 1); else s.slideIdx = Math.min(slidesFor(s).length - 1, s.slideIdx + 1); break;
-    case 'tile': s.slideIdx = +a.dataset.i; { const at = (s.attach[s.slideIdx] || [])[0]; A = at ? { type: at, q: 0 } : null; } break;
-    case 'run': return runActivity(a.dataset.t);
-    case 'actclose': A = null; break;
+    case 'prev': if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1); break;
+    case 'next': if (A && A.q < PROMPTS[A.type].length - 1) A.q++; else goTo(s, s.pos + 1); break;
+    case 'tile': goTo(s, +a.dataset.i); break;
+    case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
+    case 'actclose': { const f = flowOf(s); goTo(s, s.pos < f.length - 1 ? s.pos + 1 : s.pos - 1); break; }
     case 'upload': L.menu = false; return $('#slideFile').click();
     case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'verbal': q.st = 'verbal'; q.at = now(); toast('Marked as answered verbally · students notified'); renderQP(); return;
@@ -209,15 +220,15 @@ $('#slideFile').addEventListener('change', e => {
   const files = [...e.target.files], s = S(); if (!files.length) return;
   s.upload = files.length === 1 ? files[0].name : `${files.length} files`;
   const imgs = files.filter(f => f.type.startsWith('image/'));
-  if (imgs.length) { s.uploads = imgs.map(f => ({ name: f.name, url: URL.createObjectURL(f) })); s.slideIdx = 0; }
+  if (imgs.length) { s.uploads = imgs.map(f => ({ name: f.name, url: URL.createObjectURL(f) })); s.flow = null; }
   e.target.value = ''; toast(`Slides uploaded for ${s.name}`); render();
 });
 
 /* drag & drop: activity chip -> plan tile or the live card */
 document.addEventListener('dragstart', e => { const a = e.target.closest('[data-act]'); if (a) { e.dataTransfer.setData('text/plain', a.dataset.act); L.dragging = true; } });
 document.addEventListener('dragend', () => { L.dragging = false; document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); });
-document.addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d) { e.preventDefault(); document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); d.classList.add('over'); } });
-document.addEventListener('drop', e => { const d = e.target.closest('[data-drop]'); if (!d) return; e.preventDefault(); L.dragging = false; attach(+d.dataset.drop, e.dataTransfer.getData('text/plain')); });
+document.addEventListener('dragover', e => { const d = e.target.closest('[data-ins]'); if (d) { e.preventDefault(); document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); d.classList.add('over'); } });
+document.addEventListener('drop', e => { const d = e.target.closest('[data-ins]'); if (!d) return; e.preventDefault(); L.dragging = false; insertAct(+d.dataset.ins, e.dataTransfer.getData('text/plain')); });
 
 /* simulated live class: reactions and new questions */
 const busy = () => V !== 'live' || L.reply || L.dragging || document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.closest?.('.inl');
