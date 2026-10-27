@@ -34,7 +34,8 @@
       "bloom.js",
       "slides.js",
       "assets/**",
-      "vendor/**"
+      "vendor/**",
+      "outline.js"
     ]
   }
 }

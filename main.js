@@ -41,6 +41,13 @@ function createWindow() {
             const cd = flowOf(S())[S().pos].cd;
             out.ai = { status: await window.shell.ai.status(), pendingWhileWaiting: early, by: cd.by, pendingNow: cd.pending, error: cd.aiError || null, footer: (document.querySelector('.cdfoot') || {}).textContent, qs: cd.qs.map(q => q.type + ' | ' + q.text + (q.options ? ' | ' + q.options.map(o => (o.ok ? '*' : '') + o.t).join(' ; ') : '')) };
           }
+          if (${JSON.stringify(!!process.env.STUDIO_TEST_UNIT)}) {
+            const bad = await window.shell.unit.fetch('https://example.com/units/IDEA9301');
+            const bad2 = await window.shell.unit.fetch('not a link');
+            const r = await window.shell.unit.fetch('https://www.sydney.edu.au/units/IDEA9301/2026-S2C-ND-CC');
+            const o = r.html ? parseUnitOutline(r.html, r.url) : null;
+            out.unit = { refusedOtherSite: bad.error, refusedJunk: bad2.error, fetched: !!r.html, bytes: r.html ? r.html.length : 0, code: o && o.code, name: o && o.name, term: o && o.term, weeks: o && Object.keys(o.weeks).length, outcomes: o && Object.keys(o.ulo).length, assessments: o && o.assess.length, week6: o && JSON.stringify(o.weeks[6].tut) };
+          }
           return out;
         })()`;
         report = await win.webContents.executeJavaScript(code);
@@ -199,6 +206,15 @@ async function aiGenerate(p = {}) {
     return { error: e.name === 'TimeoutError' ? 'The AI took too long to answer.' : 'Could not reach the AI service. Check the internet connection.' };
   }
 }
+ipcMain.handle('unit:fetch', async (e, raw) => {
+  let u; try { u = new URL(String(raw).trim()); } catch { return { error: 'That is not a web address.' }; }
+  if (u.protocol !== 'https:' || !/(^|.)sydney.edu.au$/.test(u.hostname) || !u.pathname.startsWith('/units/')) return { error: 'Paste a unit outline link that starts with https://www.sydney.edu.au/units/' };
+  try {
+    const r = await fetch(u.href, { signal: AbortSignal.timeout(30000), headers: { 'user-agent': 'Mozilla/5.0 StudioBridge' } });
+    if (!r.ok) return { error: 'The page returned an error (' + r.status + ').' };
+    return { html: await r.text(), url: u.href };
+  } catch { return { error: 'Could not reach the page. Check the internet connection.' }; }
+});
 ipcMain.handle('ai:status', () => aiStatus());
 ipcMain.handle('ai:save', (e, opts) => aiSave(opts));
 ipcMain.handle('ai:clear', () => { try { fs.unlinkSync(aiFile()); } catch { /* nothing saved */ } return { ok: true }; });

@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('shell', {
   pathFor: file => webUtils.getPathForFile(file),
   pptxToPdf: p => ipcRenderer.invoke('pptx2pdf', p),
   // AI question writer: the key lives only in the main process; the page never sees it
+  unit: { fetch: url => ipcRenderer.invoke('unit:fetch', url) },
   ai: {
     status: () => ipcRenderer.invoke('ai:status'),
     save: opts => ipcRenderer.invoke('ai:save', opts),

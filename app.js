@@ -59,7 +59,7 @@ function courseBtn() {
 }
 function mainMenu() {
   const m = $('#mainMenu'); m.hidden = !L.menu;
-  m.innerHTML = `<button data-a="upload">Upload slides for ${esc(S().name)}</button><button data-a="aisettings">✦ AI question writer…</button><button data-a="end">End session</button>`;
+  m.innerHTML = `<button data-a="upload">Upload slides for ${esc(S().name)}</button><button data-a="unitimport">⇩ Import unit outline…</button><button data-a="aisettings">✦ AI question writer…</button><button data-a="end">End session</button>`;
 }
 function botbar() {
   const b = $('#botbar'), s = S();
@@ -161,7 +161,7 @@ function artefactsHTML() {
   <div class="art-grid">${s.artefacts.map(([nm, t, ic], i) => `<div class="art"><div class="thumb">${ic}</div><div class="am"><b>${esc(t)}</b><div class="meta">${O.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(nm)}</div></div></div>`).join('')}</div>`;
 }
 function overview() {
-  const s = S(), W = s.weeks[O.w] || s.weeks[Object.keys(s.weeks)[0]], S2 = W.sessions[O.s];
+  const s = S(), W = s.weeks[O.w] || s.weeks[Object.keys(s.weeks)[0]], S2 = W.sessions[O.s] || W.sessions[Object.keys(W.sessions)[0]];
   return `<div class="ovw"><div class="ovh"><div><div class="eyebrow">Learning outcomes · Week ${O.w}</div><h1 class="serif">${esc(W.title)}</h1><p class="sub">Each session is checked against its unit outcomes: can students <b>know</b>, <b>apply</b> and <b>explain</b> it?</p></div>
   <select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w}</option>`).join('')}</select></div>
   <div class="seg2"><button data-a="otab" data-t="lo" aria-pressed="${O.tab === 'lo'}">Class insight</button><button data-a="otab" data-t="art" aria-pressed="${O.tab === 'art'}">Artefacts</button></div>
@@ -178,6 +178,31 @@ function insertAct(p, type) {
   if (!ACTIVITY_TYPES.includes(type)) return;
   const s = S(), f = flowOf(s); f.splice(p, 0, { k: 'a', act: type });
   s.pos = p; syncA(s); toast(`${ACT_META[type].title} added at step ${p + 1}`); render();
+}
+/* ---------- import a unit outline (sydney.edu.au/units/...) ---------- */
+const UNIT_EXAMPLE = 'https://www.sydney.edu.au/units/IDEA9301/2026-S2C-ND-CC';
+function openUnitImport() {
+  if (!(window.shell && window.shell.unit)) return modal(`<h4>Import a unit outline</h4><p class="sub">This is available in the desktop app.</p><div class="row"><button class="sm p" data-x>Close</button></div>`);
+  modal(`<div class="k2">⇩ Unit outline</div><h4>Import the weekly schedule</h4>
+  <p class="sub aitext">Paste the link to a unit outline on sydney.edu.au. The app reads the unit name, the learning outcomes, the weekly schedule (each lecture, tutorial and practical with its outcomes) and the assessments. Concept checks then use the real outcomes for each week.</p>
+  <label class="k2" for="unitUrl">Unit outline link</label>
+  <input id="unitUrl" class="cdinput" spellcheck="false" placeholder="${UNIT_EXAMPLE}" value="${S().fromOutline || ''}">
+  <p class="sub aitext" id="unitStatus"></p>
+  <div class="row"><button class="sm" data-a="unitfill">Use the IDEA9301 example</button><span class="spacer"></span><button class="sm" data-x>Cancel</button><button class="sm p" data-a="unitgo">Import</button></div>`);
+}
+async function doUnitImport() {
+  const el = document.getElementById('unitStatus'), url = document.getElementById('unitUrl').value.trim() || UNIT_EXAMPLE;
+  el.textContent = 'Reading the unit page…';
+  const r = await window.shell.unit.fetch(url);
+  if (r.error) { el.textContent = '⚠ ' + r.error; return; }
+  let o;
+  try { o = parseUnitOutline(r.html, r.url); } catch (e) { el.textContent = '⚠ ' + e.message; return; }
+  const idx = applyOutline(o);
+  si = idx; L.open = null; A = null;
+  O.w = S().liveWeek in S().weeks ? S().liveWeek : +Object.keys(S().weeks)[0]; O.s = 'tut'; O.open = null;
+  $('#modal').innerHTML = '';
+  toast(`Imported ${o.code} ${o.name}: ${Object.keys(o.weeks).length} weeks, ${Object.keys(o.ulo).length} learning outcomes, ${o.assess.length} assessments`);
+  render();
 }
 async function openAISettings() {
   if (!(window.shell && window.shell.ai)) return modal(`<h4>AI question writer</h4><p class="sub">This is available in the desktop app. The browser preview uses the template questions.</p><div class="row"><button class="sm p" data-x>Close</button></div>`);
@@ -309,6 +334,9 @@ document.addEventListener('click', e => {
       A.q = Math.min(A.q, cd.qs.length - 1);
       $('#modal').innerHTML = ''; toast('Questions saved'); break;
     }
+    case 'unitimport': L.menu = false; mainMenu(); openUnitImport(); return;
+    case 'unitfill': { const i = document.getElementById('unitUrl'); if (i) i.value = UNIT_EXAMPLE; return; }
+    case 'unitgo': doUnitImport(); return;
     case 'aisettings': L.menu = false; mainMenu(); openAISettings(); return;
     case 'aisave': {
       if (!(window.shell && window.shell.ai)) return;
@@ -389,7 +417,9 @@ const busy = () => V !== 'live' || L.reply || L.dragging || document.activeEleme
 setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; popBall(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
 setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
 
-render();function answersHTML(q) {
+(typeof BUNDLED_UNITS !== 'undefined' ? BUNDLED_UNITS : []).forEach(o => applyOutline(o, false));
+render();
+function answersHTML(q) {
   const r = ensureRes(q);
   if (q.type === 'mc') {
     const tot = r.counts.reduce((x, y) => x + y, 0) || 1;
