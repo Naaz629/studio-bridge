@@ -413,3 +413,6 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .ptab.flip::after{right:-14px;background:radial-gradient(circle at 100% 100%,transparent 14px,var(--dock) 14.5px)}
 .botbar.open .pweek{align-self:center;padding-bottom:0}
 .botbar.open .barrow .bb{border-left-color:rgba(0,0,0,.08)}
+
+/* heading back at the top of the session plan panel */
+.phead{margin:0;font-family:var(--serif);font-weight:400;font-size:19px;color:var(--ink)}
