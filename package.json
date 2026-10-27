@@ -1,0 +1,12 @@
+{
+  "name": "studio-bridge",
+  "version": "0.1.0",
+  "description": "Studio Bridge - tutor live session companion",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac"
+  },
+  "devDependencies": { "electron": "^33.0.0", "electron-builder": "^25.0.0" },
+  "build": { "appId": "edu.studio.bridge", "productName": "Studio Bridge", "mac": { "category": "public.app-category.education", "target": "dmg" } }
+}

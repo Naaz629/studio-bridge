@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Studio Bridge</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- APP -->
+<div id="app">
+  <header class="topbar">
+    <div class="traffic" id="traffic" hidden><button class="tl close" data-w="close" title="Close"></button><button class="tl min" data-w="min" title="Minimize"></button><button class="tl max" data-w="max" title="Zoom"></button></div>
+    <div class="logo"><span class="logo-mark">S</span> Studio</div>
+    <nav class="tabs">
+      <button data-view="session" class="tab active">Session</button>
+      <button data-view="overview" class="tab">Overview</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="menu-wrap">
+      <button id="subjectBtn" class="pill">Subject name ▾</button>
+      <div id="subjectMenu" class="menu" hidden></div>
+    </div>
+    <div class="menu-wrap">
+      <button id="emojiBtn" class="pill">Emoji react</button>
+      <div id="emojiPanel" class="menu emoji-panel" hidden></div>
+    </div>
+    <button id="activityBtn" class="pill">Activity</button>
+    <div class="avatar" id="avatar" title="Sign out"></div>
+  </header>
+
+  <!-- LIVE SESSION -->
+  <main id="view-session" class="view">
+    <aside class="plan" id="plan">
+      <div class="plan-head">
+        <h3>Activity Plan</h3>
+        <button class="ghost" id="uploadSlidesBtn">Upload slides</button>
+        <input type="file" id="slideFile" accept=".pdf,.ppt,.pptx,.key" hidden>
+      </div>
+      <p class="muted small" id="slideFileName"></p>
+      <div id="planList" class="plan-list"></div>
+      <h4>Activities <span class="muted small">drag onto the session</span></h4>
+      <div id="activityLib" class="plan-list"></div>
+    </aside>
+
+    <section class="stage">
+      <div class="stage-head">
+        <h2 id="weekTitle">Week 6: Persona</h2>
+        <div class="stage-tools">
+          <button class="pill" data-open="qa">Questions &amp; Answer <span id="qaBadge" class="badge">0</span></button>
+          <span class="muted small" id="slideCount">Slide 1/11</span>
+        </div>
+      </div>
+      <div class="slide" id="slide"><div class="slide-inner"><h1 id="slideTitle"></h1><p id="slideBody" class="muted"></p></div></div>
+      <div class="slide-nav">
+        <button class="ghost" id="prevSlide">◀ Previous</button>
+        <div class="dropzone" id="dropzone">Drop an activity here to run it on this slide</div>
+        <button class="ghost" id="nextSlide">Next ▶</button>
+      </div>
+      <div id="reactionBar" class="reaction-bar"></div>
+    </section>
+
+    <!-- floating windows -->
+    <div id="floats"></div>
+  </main>
+
+  <!-- OVERVIEW -->
+  <main id="view-overview" class="view overview" hidden>
+    <div class="ov-head">
+      <h2>Class insight</h2>
+      <div class="ov-controls">
+        <label class="muted small">Week
+          <select id="weekSelect"></select>
+        </label>
+        <div class="seg" id="ovTabs">
+          <button class="active" data-ov="insight">Student activity</button>
+          <button data-ov="artefacts">Artefacts</button>
+        </div>
+      </div>
+    </div>
+    <div id="ov-insight"></div>
+    <div id="ov-artefacts" hidden></div>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
