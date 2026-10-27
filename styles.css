@@ -389,3 +389,17 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .slidewrap2 .snav{width:min(100cqw,calc((100cqh - 52px) * 1.33333));display:flex;align-items:center;justify-content:space-between;height:40px}
 .snavmid{display:flex;align-items:center;gap:12px}
 .stagebox .actcard{width:min(100cqw,calc(100cqh * 1.33333))}
+
+/* ===== session plan opens like a browser tab ===== */
+.botbar{--dock:#fffaf6;--strip:#efe6df}
+.botbar .plan2{padding:0;gap:0;border-bottom:0;max-height:none;background:var(--dock)}
+.plantabs{display:flex;align-items:flex-end;gap:16px;background:var(--strip);padding:8px 24px 0;border-top:1px solid var(--line)}
+.ptab{position:relative;display:flex;align-items:center;gap:10px;background:var(--dock);padding:10px 12px 10px 16px;border-radius:14px 14px 0 0;font-size:13px;font-weight:600;min-width:200px}
+.ptab::before,.ptab::after{content:"";position:absolute;bottom:0;width:14px;height:14px;pointer-events:none}
+.ptab::before{left:-14px;background:radial-gradient(circle at 0 0,transparent 14px,var(--dock) 14.5px)}
+.ptab::after{right:-14px;background:radial-gradient(circle at 100% 0,transparent 14px,var(--dock) 14.5px)}
+.ptab span{flex:1}
+.px{width:24px;height:24px;border-radius:50%;font-size:14px;color:var(--ink-2)}.px:hover{background:rgba(0,0,0,.07)}
+.pweek{padding-bottom:10px;font-size:12px;color:var(--muted)}
+.planbody{display:flex;flex-direction:column;gap:10px;padding:14px 24px 12px;background:var(--dock)}
+.planbtn[aria-pressed="true"]{background:var(--dock)}

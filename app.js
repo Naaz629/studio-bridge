@@ -80,9 +80,9 @@ function actCard() {
   <div class="cfoot"><button class="lk" data-a="prev" ${A.q === 0 ? 'disabled' : ''}>Previous</button><span class="dotsrow">${p.map((_, i) => `<i class="${i === A.q ? 'on' : ''}"></i>`).join('')}</span><button class="lk" data-a="next" ${A.q >= p.length - 1 ? 'disabled' : ''}>Next</button></div></div>`;
 }
 function planStrip(sl, s) {
-  return `<section class="plan2"><div class="ph"><div><small>SESSION PLAN</small><h2>Week ${s.liveWeek} studio flow</h2></div></div>
-  <div class="tiles">${sl.map((x, i) => { const at = (s.attach[i] || [])[0]; const m = at && ACT_META[at]; return `<div class="tile ${i === s.slideIdx ? 'on' : ''}" ${m ? `style="background:${m.color}"` : ''} data-a="tile" data-i="${i}" data-drop="${i}"><small>${pad(i + 1)}</small><span>${m ? esc(m.tile) : `Slide ${i + 1}/${sl.length}`}</span></div>`; }).join('')}</div>
-  <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">${s.upload ? 'Slides: ' + esc(s.upload) : 'Drag an activity onto a slide'}</span></div></section>`;
+  return `<section class="plan2"><div class="plantabs"><div class="ptab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Session plan</span><button class="px" data-a="toggleplan" aria-label="Close session plan">✕</button></div><span class="pweek">Week ${s.liveWeek} studio flow</span></div>
+  <div class="planbody"><div class="tiles">${sl.map((x, i) => { const at = (s.attach[i] || [])[0]; const m = at && ACT_META[at]; return `<div class="tile ${i === s.slideIdx ? 'on' : ''}" ${m ? `style="background:${m.color}"` : ''} data-a="tile" data-i="${i}" data-drop="${i}"><small>${pad(i + 1)}</small><span>${m ? esc(m.tile) : `Slide ${i + 1}/${sl.length}`}</span></div>`; }).join('')}</div>
+  <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">${s.upload ? 'Slides: ' + esc(s.upload) : 'Drag an activity onto a slide'}</span></div></div></section>`;
 }
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek];
