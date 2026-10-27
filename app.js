@@ -117,7 +117,9 @@ function planStrip(sl, s) {
   const f = flowOf(s), gap = p => `<div class="tgap" data-ins="${p}"></div>`;
   const tiles = f.map((it, p) => {
     if (it.k === 'a') { const m = ACT_META[it.act]; return gap(p) + `<div class="tile act ${p === s.pos ? 'on' : ''}" style="background:${m.color}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>${esc(m.tile)}</span><button class="tx" data-a="rmflow" data-i="${p}" aria-label="Remove activity">✕</button></div>`; }
-    return gap(p) + `<div class="tile ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>Slide ${it.i + 1}/${sl.length}</span></div>`;
+    const cur = sl[Math.min(it.i, sl.length - 1)] || {};
+    const thumb = cur.img ? `<img src="${esc(cur.img)}" alt="" draggable="false">` : cur.text ? `<div class="ttext"><b>${esc(cur.t)}</b><span>${esc((cur.text.split(String.fromCharCode(10))[1] || ''))}</span></div>` : `<div class="ttext"><b>${esc(cur.t || 'Slide ' + (it.i + 1))}</b></div>`;
+    return gap(p) + `<div class="tile slide ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}" title="${esc(cur.t || '')}"><div class="tthumb">${thumb}</div><small class="tnum">${pad(p + 1)}</small></div>`;
   }).join('') + gap(f.length);
   return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><h2 class="phead">Studio flow</h2><div class="tiles">${tiles}</div>
   <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">Drag an activity between slides to add it to the flow</span></div></div></div></section>`;

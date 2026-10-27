@@ -722,3 +722,18 @@ button.qtxt{padding-top:12px}
 .cdwait{display:flex;flex-direction:column;gap:8px;padding:1cqw 0;font-size:clamp(11px,1.5cqw,19px)}
 .cdwait p{margin:0;color:var(--ink-2);max-width:60cqw;line-height:1.45}
 .cdwait b{font-size:clamp(13px,1.9cqw,24px)}
+
+/* ===== session plan: Canva-style slide thumbnails (16:9) ===== */
+.planbody .tile{width:156px;min-height:0;aspect-ratio:16/9;padding:0;overflow:hidden;border-radius:10px;display:block;background:#fff;border:2px solid transparent;box-shadow:0 1px 3px rgba(38,48,38,.14)}
+.planbody .tile.on{border-color:var(--ink);box-shadow:0 0 0 2px rgba(17,17,17,.12)}
+.planbody .tile.act{display:flex;flex-direction:column;justify-content:space-between;padding:8px 10px;aspect-ratio:16/9}
+.planbody .tile.act span{font-size:14px;font-weight:600}
+.tthumb{position:absolute;inset:0;background:#fff;display:grid;place-items:center;overflow:hidden}
+.tthumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.ttext{width:100%;height:100%;padding:10px 12px;display:flex;flex-direction:column;gap:3px;text-align:left;overflow:hidden}
+.ttext b{font-size:11px;line-height:1.2;font-weight:700;color:#222;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ttext span{font-size:8.5px;line-height:1.3;color:#777;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tile .tnum{position:absolute;left:6px;bottom:6px;z-index:2;background:rgba(20,24,20,.72);color:#fff;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;letter-spacing:.04em}
+.tile.act .tnum{position:static;background:none;color:var(--muted);padding:0;font-size:11px}
+.planbody .tile{box-sizing:border-box;height:auto}
+.tthumb img{object-fit:contain;background:#fff}
