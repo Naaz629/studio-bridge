@@ -28,7 +28,7 @@ const unanswered = () => S().qs.filter(q => q.st === 'open').length;
 function render() {
   document.querySelectorAll('.nav [data-v]').forEach(b => b.dataset.v === V ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
   const s0 = S();
-  $('#navLiveSub').textContent = `Week ${s0.liveWeek} in progress`;
+  $('#navLiveSub').textContent = `Week ${s0.liveWeek} in progress`; $('#navLive').dataset.tip = `Session · Week ${s0.liveWeek} in progress`;
   $('#view').innerHTML = V === 'live' ? live() : overview();
   courseBtn(); mainMenu(); botbar();
   if (V === 'live') { renderQP(); pulseDots(); }
@@ -54,7 +54,7 @@ function pulseDots() {
 }
 function courseBtn() {
   const s = S();
-  $('#course').innerHTML = `<button class="coursebtn" data-a="subj" aria-expanded="${L.subj}"><span class="badge">${esc(s.badge)}</span><span><b>${esc(s.name)}</b><small>${esc(s.code)} · ${esc(s.term)}</small></span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+  $('#course').innerHTML = `<button class="coursebtn" data-a="subj" data-tip="${esc(s.name)} · ${esc(s.code)}" aria-label="Change subject: ${esc(s.name)}" aria-expanded="${L.subj}"><span class="badge">${esc(s.badge)}</span></button>
   ${L.subj ? `<div class="menu subjmenu"><div class="mh"><b>Change subject</b></div>${SUBJECTS.map((x, i) => `<button data-a="pick" data-i="${i}" aria-checked="${i === si}"><span class="badge sm">${esc(x.badge)}</span><span><b>${esc(x.name)}</b><small>${esc(x.code)}</small></span>${i === si ? '<span class="tick">✓</span>' : ''}</button>`).join('')}</div>` : ''}`;
 }
 function mainMenu() {
@@ -67,19 +67,16 @@ function botbar() {
   b.className = 'botbar' + (L.plan ? ' open' : '');
   b.innerHTML = `<div class="barrow"><button class="${L.plan ? 'ptab flip' : 'bb planbtn'}" id="planbtn" data-a="toggleplan" aria-expanded="${L.plan}" aria-label="Session plan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Session plan</span><i class="caret">${L.plan ? '▾' : '▴'}</i></button><span class="spacer"></span>
   <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
-  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i>${e.e}</i>`).join("")}</span></span></div>`;
+  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i data-k="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}">${e.e}</i>`).join("")}</span></span></div>`;
 }
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-function spawnEmoji(k) {
-  const layer = $('#floatlayer'); if (!layer || V !== 'live' || REDUCED) return;
+function popBall(k) {
   const em = EMOJIS.find(x => x.k === k); if (!em) return;
-  const el = document.createElement('span');
-  el.className = 'fe'; el.textContent = em.e;
-  el.style.setProperty('--x', Math.round(8 + Math.random() * 56) + '%');
-  el.style.setProperty('--y', Math.round(Math.random() * 18) + '%');
-  el.style.setProperty('--dur', (2 + Math.random() * 0.5).toFixed(2) + 's');
-  el.addEventListener('animationend', () => el.remove());
-  layer.appendChild(el);
+  const ball = document.querySelector(`.reactemo i[data-k="${k}"]`); if (!ball) return;
+  ball.dataset.tip = `${em.l} · ${S().reactions[k]}`;
+  if (REDUCED) return;
+  ball.classList.remove('pop'); void ball.offsetWidth; ball.classList.add('pop');
+  ball.addEventListener('animationend', () => ball.classList.remove('pop'), { once: true });
 }
 
 /* ---------- live view ---------- */
@@ -230,7 +227,7 @@ document.addEventListener('drop', e => { const d = e.target.closest('[data-ins]'
 
 /* simulated live class: reactions and new questions */
 const busy = () => V !== 'live' || L.reply || L.dragging || document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.closest?.('.inl');
-setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; spawnEmoji(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
+setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; popBall(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
 setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
 
 render();
