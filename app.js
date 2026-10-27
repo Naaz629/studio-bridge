@@ -29,7 +29,6 @@ function render() {
   document.querySelectorAll('.nav [data-v]').forEach(b => b.dataset.v === V ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
   const s0 = S();
   $('#navLiveSub').textContent = `Week ${s0.liveWeek} in progress`;
-  $('#crumb').innerHTML = V === 'live' ? `<b>Session</b><span>/</span><span class="sub">${esc(s0.name)} · Week ${s0.liveWeek}</span>` : `<b>Overview</b><span>/</span><span class="sub">${esc(s0.name)} · Week ${O.w}</span>`;
   $('#view').innerHTML = V === 'live' ? live() : overview();
   courseBtn(); mainMenu(); botbar();
   if (V === 'live') { renderQP(); pulseDots(); }
