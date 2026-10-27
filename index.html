@@ -7,83 +7,38 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<!-- APP -->
-<div id="app">
-  <header class="topbar">
-    <div class="traffic" id="traffic" hidden><button class="tl close" data-w="close" title="Close"></button><button class="tl min" data-w="min" title="Minimize"></button><button class="tl max" data-w="max" title="Zoom"></button></div>
-    <div class="logo"><span class="logo-mark">S</span> Studio</div>
-    <nav class="tabs">
-      <button data-view="session" class="tab active">Session</button>
-      <button data-view="overview" class="tab">Overview</button>
-    </nav>
-    <div class="spacer"></div>
-    <div class="menu-wrap">
-      <button id="subjectBtn" class="pill">Subject name ▾</button>
-      <div id="subjectMenu" class="menu" hidden></div>
-    </div>
-    <div class="menu-wrap">
-      <button id="emojiBtn" class="pill">Emoji react</button>
-      <div id="emojiPanel" class="menu emoji-panel" hidden></div>
-    </div>
-    <button id="activityBtn" class="pill">Activity</button>
-    <div class="avatar" id="avatar" title="Sign out"></div>
-  </header>
-
-  <!-- LIVE SESSION -->
-  <main id="view-session" class="view">
-    <aside class="plan" id="plan">
-      <div class="plan-head">
-        <h3>Activity Plan</h3>
-        <button class="ghost" id="uploadSlidesBtn">Upload slides</button>
-        <input type="file" id="slideFile" accept=".pdf,.ppt,.pptx,.key" hidden>
+<div class="stage">
+  <div class="win" id="win">
+    <aside class="side" aria-label="Studio Bridge navigation">
+      <div class="dots" id="dots"><button class="tl close" data-w="close" aria-label="Close"></button><button class="tl min" data-w="min" aria-label="Minimize"></button><button class="tl max" data-w="max" aria-label="Zoom"></button></div>
+      <div class="brand">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M4 22c0-7 5-12 11-12s11 5 11 12" fill="none" stroke="var(--green-2)" stroke-width="4" stroke-linecap="round"/><path d="M4 22h5M21 22h5" stroke="var(--green-2)" stroke-width="4" stroke-linecap="round"/><circle cx="15" cy="6" r="2.4" fill="var(--green-2)"/></svg>
+        <div><b>Studio</b><small>TUTOR</small></div>
       </div>
-      <p class="muted small" id="slideFileName"></p>
-      <div id="planList" class="plan-list"></div>
-      <h4>Activities <span class="muted small">drag onto the session</span></h4>
-      <div id="activityLib" class="plan-list"></div>
+      <nav class="nav">
+        <button data-v="live" aria-current="page"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg></span><span><b>Live session <span class="livepill">LIVE</span></b><small id="navLiveSub"></small></span></button>
+        <button data-v="ov"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span><b>Overview</b><small>Learning outcomes</small></span></button>
+      </nav>
+      <div class="spacer"></div>
+      <div class="course" id="course"></div>
+      <div class="user"><span class="av dk">PN</span><div><b>Dr. Priya Nair</b><small>Tutor · Online</small></div></div>
     </aside>
-
-    <section class="stage">
-      <div class="stage-head">
-        <h2 id="weekTitle">Week 6: Persona</h2>
-        <div class="stage-tools">
-          <button class="pill" data-open="qa">Questions &amp; Answer <span id="qaBadge" class="badge">0</span></button>
-          <span class="muted small" id="slideCount">Slide 1/11</span>
-        </div>
-      </div>
-      <div class="slide" id="slide"><div class="slide-inner"><h1 id="slideTitle"></h1><p id="slideBody" class="muted"></p></div></div>
-      <div class="slide-nav">
-        <button class="ghost" id="prevSlide">◀ Previous</button>
-        <div class="dropzone" id="dropzone">Drop an activity here to run it on this slide</div>
-        <button class="ghost" id="nextSlide">Next ▶</button>
-      </div>
-      <div id="reactionBar" class="reaction-bar"></div>
+    <section class="main" id="mainCol">
+      <header class="top">
+        <div class="crumb" id="crumb"></div>
+        <label class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="srch" placeholder="Search questions" aria-label="Search"><kbd>Ctrl K</kbd></label>
+        <button class="sm" id="emojiBtn" aria-pressed="true">😊 Emoji react</button>
+        <button class="sm" id="activityBtn" aria-pressed="false">Activity plan</button>
+      </header>
+      <div class="view" id="view"></div>
+      <div id="floats"></div>
     </section>
-
-    <!-- floating windows -->
-    <div id="floats"></div>
-  </main>
-
-  <!-- OVERVIEW -->
-  <main id="view-overview" class="view overview" hidden>
-    <div class="ov-head">
-      <h2>Class insight</h2>
-      <div class="ov-controls">
-        <label class="muted small">Week
-          <select id="weekSelect"></select>
-        </label>
-        <div class="seg" id="ovTabs">
-          <button class="active" data-ov="insight">Student activity</button>
-          <button data-ov="artefacts">Artefacts</button>
-        </div>
-      </div>
-    </div>
-    <div id="ov-insight"></div>
-    <div id="ov-artefacts" hidden></div>
-  </main>
+  </div>
 </div>
+<div id="modal"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<input type="file" id="slideFile" accept="image/*,.pdf,.ppt,.pptx,.key" multiple hidden>
+<script src="data.js"></script>
 <script src="app.js"></script>
-<script src="grad.js"></script>
-<script>boot();</script>
 </body>
 </html>

@@ -1,271 +1,256 @@
 'use strict';
-/* Studio Bridge - tutor prototype. All data is mock/in-memory (+ localStorage for login). */
+/* Studio Bridge - tutor app. Layout and interaction model follow the "Studio Bridge Dashboard" artifact. */
 
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
-  del(k) { try { localStorage.removeItem(k); } catch { /* ignore */ } }
-};
+const ini = n => n === 'Anonymous' ? 'A' : n.split(' ').map(w => w[0]).join('');
+function toast(m) { $('#toasts').innerHTML = `<div class="toast">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => $('#toasts').innerHTML = '', 2400); }
 
-const ACTIVITY_TYPES = ['Discussion Activity', 'Concept Development', 'Q&A Session', 'Idea Exchange'];
-const EMOJIS = [
-  { key: 'understood', icon: '✅', label: 'Understood' },
-  { key: 'confused', icon: '😕', label: 'Confused' },
-  { key: 'question', icon: '❓', label: 'Question' },
-  { key: 'idea', icon: '💡', label: 'Idea' },
-  { key: 'great', icon: '👏', label: 'Great' }
-];
-const STUDENTS = ['Amira K.', 'Ben T.', 'Chloe R.', 'Dev P.', 'Elena S.', 'Farid A.', 'Grace L.', 'Hamza N.'];
+const lvState = (n, t) => { const p = n / t; return p >= .8 ? 'ok' : p >= .65 ? 'mid' : 'low'; };
+const ST = { ok: ['On track', 'var(--good)', 'var(--good-s)'], mid: ['Watch', 'var(--mid)', 'var(--mid-s)'], low: ['Needs you', 'var(--live)', 'var(--live-soft)'], na: ['Not taught yet', 'var(--muted)', 'var(--line)'] };
+const AVC = ['', 'sand', 'lav', 'dk', '', 'sand', 'lav'];
 
-function makeSubject(name, code) {
-  const titles = ['Welcome', 'Learning outcomes', 'What is a persona?', 'Case study', 'Empathy maps', 'Building a persona', 'Wrap up', 'Reflection', 'Resources', 'Next week', 'Q&A'];
-  return {
-    name, code, slideFile: null, current: 0,
-    slides: titles.map((t, i) => ({ title: t, body: `${name} · slide ${i + 1}`, activities: [] })),
-    questions: [
-      { id: 1, text: 'What is the difference between a persona and a user segment?', askers: ['Amira K.', 'Ben T.', 'Dev P.', 'Grace L.'], answered: false },
-      { id: 2, text: 'How many personas should one project have?', askers: ['Chloe R.', 'Hamza N.'], answered: false },
-      { id: 3, text: 'Can a persona be based on one real person?', askers: ['Elena S.'], answered: false }
-    ],
-    prompts: {
-      'Concept Development': ['Define “persona” in your own words.', 'Which user needs matter most?', 'What makes a persona believable?', 'Where could a persona mislead a team?', 'Sketch one persona goal.'],
-      'Discussion Activity': ['Share a time a product ignored you as a user.', 'Who is missing from our persona?', 'Discuss in pairs: needs vs wants.', 'Which assumption would you test first?', 'Summarise your group view.'],
-      'Idea Exchange': ['Post one idea for researching users.', 'Build on a peer’s idea.', 'Vote for the most feasible idea.', 'Combine two ideas.', 'Pick one to prototype.'],
-      'Q&A Session': ['Ask anything about this week.', 'Upvote questions you share.', 'Clarify the top question.', 'Answer a peer question.', 'Final open questions.']
-    },
-    weeks: makeWeeks(name)
-  };
+let V = 'live';
+let si = 0; // subject index
+const S = () => SUBJECTS[si];
+const L = { qt: 'all', reply: null, menu: false, q: '', plan: false, react: true, subj: false, dragging: false };
+const O = { w: 6, s: 'tut', open: null, q: '', tab: 'lo', anon: false };
+let qid = 100;
+const floats = {};
+
+/* ---------- window controls (non-mac frame) ---------- */
+if (window.shell && window.shell.platform === 'darwin') document.body.classList.add('native-mac');
+$('#dots').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b && window.shell) window.shell.control(b.dataset.w); });
+
+/* ---------- render shell ---------- */
+function render() {
+  document.querySelectorAll('.nav [data-v]').forEach(b => b.dataset.v === V ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+  const s = S();
+  $('#navLiveSub').textContent = `Week ${s.liveWeek} in progress`;
+  $('#crumb').innerHTML = V === 'live' ? `<b>Live session</b><span>/</span><span class="sub">${esc(s.name)} · Week ${s.liveWeek}</span>` : `<b>Overview</b><span>/</span><span class="sub">${esc(s.name)} · Week ${O.w}</span>`;
+  $('#srch').placeholder = V === 'live' ? 'Search questions' : 'Search students';
+  $('#srch').value = V === 'live' ? L.q : O.q;
+  $('#emojiBtn').setAttribute('aria-pressed', L.react);
+  $('#activityBtn').setAttribute('aria-pressed', L.plan);
+  $('#emojiBtn').style.display = $('#activityBtn').style.display = V === 'live' ? '' : 'none';
+  $('#view').innerHTML = V === 'live' ? live() : overview();
+  courseBtn();
+  if (V === 'live') { renderReact(); renderQP(); }
+}
+function courseBtn() {
+  const s = S();
+  $('#course').innerHTML = `<button class="coursebtn" data-a="subj" aria-expanded="${L.subj}"><span class="badge">${esc(s.badge)}</span><span><b>${esc(s.name)}</b><small>${esc(s.code)} · ${esc(s.term)}</small></span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+  ${L.subj ? `<div class="menu subjmenu"><div class="mh"><b>Change subject</b></div>${SUBJECTS.map((x, i) => `<button data-a="pick" data-i="${i}" aria-checked="${i === si}"><span class="badge sm">${esc(x.badge)}</span><span><b>${esc(x.name)}</b><small>${esc(x.code)}</small></span>${i === si ? '<span class="tick">✓</span>' : ''}</button>`).join('')}</div>` : ''}`;
 }
 
-function makeWeeks(name) {
-  const weeks = {};
-  for (let w = 1; w <= 8; w++) {
-    weeks[w] = {
-      los: [
-        mkLO('LO1', 'Explain the purpose of a persona', w, [
-          ['What is a persona for?', [['Amira K.', 'It helps the team design for a real type of user.', true], ['Ben T.', 'To make posters of users.', false], ['Chloe R.', 'It keeps decisions grounded in user needs.', true]]],
-          ['Name one risk of using personas.', [['Dev P.', 'Stereotyping people.', true], ['Elena S.', 'Not sure.', false]]]
-        ]),
-        mkLO('LO2', 'Build a persona from research data', w, [
-          ['Which data points belong in a persona?', [['Farid A.', 'Goals, frustrations and context.', true], ['Grace L.', 'Their full address and name.', false], ['Hamza N.', 'Behaviours observed in interviews.', true]]]
-        ]),
-        mkLO('LO3', 'Critique a persona for bias', w, [
-          ['Spot the bias in the sample persona.', [['Amira K.', 'Assumes all older users dislike tech.', true], ['Dev P.', 'I don’t see one.', false], ['Elena S.', 'Gender is assumed from the job.', true], ['Ben T.', 'Assumes all older users dislike tech.', true]]]
-        ])
-      ],
-      artefacts: [
-        { name: 'Amira K.', title: 'Persona canvas', icon: '🗂️' },
-        { name: 'Ben T.', title: 'Empathy map', icon: '🧠' },
-        { name: 'Chloe R.', title: 'Journey sketch', icon: '🛤️' },
-        { name: 'Dev P.', title: 'Interview notes', icon: '📝' },
-        { name: 'Elena S.', title: 'Persona poster', icon: '🖼️' }
-      ]
-    };
-  }
-  return weeks;
+/* ---------- live view ---------- */
+function slideHTML() {
+  const sl = slidesFor(S()), cur = sl[Math.min(S().slideIdx, sl.length - 1)];
+  if (cur.img) return `<img src="${esc(cur.img)}" alt="${esc(cur.t)}">`;
+  return `<div class="gen"><div class="art">${esc(S().name)}</div><div class="txt"><h3>${esc(cur.t)}</h3><p>${esc(cur.p || '')}</p></div></div>`;
+}
+function planHTML() {
+  const s = S(), sl = slidesFor(s);
+  return `<aside class="plan" aria-label="Activity plan"><div class="plan-head"><h2>Activity plan</h2><button class="sm" data-a="upload">⬆ Upload slides</button></div>
+  <p class="meta">${s.upload ? `Slides: ${esc(s.upload)}` : `No slides uploaded for ${esc(s.name)} yet.`}</p>
+  <div class="k2">Slides · drop an activity on one</div>
+  <div class="plist">${sl.map((x, i) => `<div class="pi ${i === s.slideIdx ? 'on' : ''}" data-a="goto" data-i="${i}" data-drop="${i}"><span class="n">${i + 1}</span><span class="t">${esc(x.t)}</span><span class="chips">${(s.attach[i] || []).map(a => `<button class="achip" data-t="${esc(a)}" title="Run ${esc(a)}">${esc(a.split(/[ &]+/).map(w => w[0]).join(''))}</button>`).join('')}</span></div>`).join('')}</div>
+  <div class="k2" style="margin-top:14px">Activities · drag onto a slide</div>
+  <div class="plist">${ACTIVITY_TYPES.map(a => `<div class="pi act" draggable="true" data-act="${esc(a)}"><span class="n">⠿</span><span class="t">${esc(a)}</span></div>`).join('')}</div></aside>`;
+}
+function live() {
+  const s = S(), total = slidesFor(s).length, t = s.topics[s.liveWeek];
+  return `<div class="sess ${L.plan ? 'withplan' : ''}">
+  ${L.plan ? planHTML() : ''}
+  <div class="stagearea" data-drop="${s.slideIdx}">
+   <div class="shd"><div><div class="eyebrow"><span class="dot"></span>Live now · Tutorial</div><h1 class="serif">Week ${s.liveWeek}: ${esc(t[0])}</h1><div class="meta">You're presenting · 38 of 42 students joined</div></div>
+    <div class="more"><button class="morebtn" data-a="menu" aria-label="Session options" aria-expanded="${L.menu}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+    ${L.menu ? `<div class="menu"><button data-a="pausepoll">Send "still unsure?" check</button><button data-a="end">End session</button></div>` : ''}</div></div>
+   <div class="slidewrap"><button class="arrow l" data-a="prev" aria-label="Previous slide" ${s.slideIdx === 0 ? 'disabled' : ''}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 6-6 6 6 6"/></svg></button>
+    <div class="slide">${slideHTML()}</div>
+    <button class="arrow r" data-a="next" aria-label="Next slide" ${s.slideIdx >= total - 1 ? 'disabled' : ''}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m9 6 6 6-6 6"/></svg></button></div>
+   <div class="slidebar">${(s.attach[s.slideIdx] || []).map(a => `<button class="sm p" data-a="run" data-t="${esc(a)}">▶ ${esc(a)}</button>`).join('')}<span class="counter">${s.slideIdx + 1} / ${total} <span class="tag">Live</span></span></div>
+   <div class="react" id="react"></div>
+  </div>
+  <aside class="qpanel" id="qp" aria-label="Student questions"></aside></div>`;
+}
+function renderReact() {
+  const el = $('#react'); if (!el) return;
+  const r = S().reactions, tot = Object.values(r).reduce((a, b) => a + b, 0), cp = Math.round(r.con / Math.max(1, tot) * 100);
+  el.style.display = L.react ? '' : 'none';
+  el.innerHTML = `<div class="lbl"><span class="on"></span><span><b>How is this landing?</b><small>Class reactions · only you see this</small></span></div>
+   ${EMOJIS.map(e => `<span class="rbtn" data-k="${e.k}"><span class="e" style="background:${e.c}">${e.e}</span>${e.l}<span class="n">${r[e.k]}</span></span>`).join('')}
+   <span class="rhint ${cp >= 20 ? 'warn' : ''}">${cp >= 20 ? cp + '% confused — pause and re-explain?' : 'Landing well · ' + cp + '% confused'}</span>`;
+}
+function qlist() {
+  const s = S();
+  let list = [...s.qs].sort((a, b) => (a.st === 'open' ? 0 : 1) - (b.st === 'open' ? 0 : 1) || b.up - a.up);
+  if (L.qt === 'open') list = list.filter(q => q.st === 'open'); if (L.qt === 'done') list = list.filter(q => q.st !== 'open');
+  const f = L.q.toLowerCase(); if (f) list = list.filter(q => (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(f));
+  if (!list.length) return '<div class="none">No questions here.</div>';
+  return list.map(q => `<article class="q ${q.fresh ? 'new' : ''}" id="q${q.id}">
+  <div class="qtop"><span class="av ${q.av}">${ini(q.who)}</span><span><b>${esc(q.who)}</b><small>${q.ago ? q.ago + ' min ago' : 'just now'}</small></span>
+   <span class="st ${q.st === 'open' ? 'wait' : q.st}">${q.st === 'open' ? 'Waiting' : q.st === 'verbal' ? '🎙 Answered verbally' : '✓ Answered'}</span></div>
+  <p class="qtext">${esc(q.text)}</p>
+  ${q.tr ? `<div class="box tr"><div class="k">Translated · English</div>${esc(q.tr)}</div>` : ''}
+  ${q.st === 'verbal' ? `<div class="box verbal">🎙<span><b>Answered verbally in class</b><small>You responded at ${esc(q.at)}</small></span></div>` : ''}
+  ${q.ans ? `<div class="box ans"><div class="h"><span class="av dk" style="width:24px;height:24px;font-size:9px">PN</span><span><b>Dr. Priya Nair</b><small>Your answer</small></span></div><p>${esc(q.ans)}</p></div>` : ''}
+  ${L.reply === q.id ? `<form class="inl" data-q="${q.id}"><input placeholder="Type an answer for the class…" aria-label="Answer"><button class="sm p">Post</button></form>` : ''}
+  <div class="qfoot"><span class="v"><span class="asked" title="Students who asked">${q.up}</span> students asked · ${q.same} same question</span>
+   ${q.st === 'open' ? `<button class="sm" data-a="verbal" data-q="${q.id}">🎙 Verbally</button><button class="sm p" data-a="reply" data-q="${q.id}">Answer</button>` : `<button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button>`}</div></article>`).join('');
+}
+function renderQP() {
+  const el = $('#qp'); if (!el) return;
+  const s = S(), un = s.qs.filter(q => q.st === 'open').length;
+  const top = [...s.qs].filter(q => q.st === 'open').sort((a, b) => b.up - a.up)[0];
+  el.innerHTML = `<div class="qhead"><h2>Questions &amp; Answer</h2><span class="count ${un ? 'hot' : ''}" title="Unanswered">${un}</span></div>
+  <div class="tabs" role="tablist">${[['all', 'All', s.qs.length], ['open', 'Unanswered', un], ['done', 'Answered', s.qs.length - un]].map(([k, l, n]) => `<button role="tab" aria-selected="${L.qt === k}" data-qt="${k}">${l}${k === 'all' ? '' : ` <span class="c">${n}</span>`}</button>`).join('')}</div>
+  <div class="qlist">${qlist()}</div>
+  <div class="composer"><div class="k">Up next</div><p>${top ? esc(top.tr || top.text) : 'All questions answered 🎉'}</p>
+   <div class="crow"><button class="sm" data-a="verbalTop" ${un ? '' : 'disabled'}>🎙 Answered verbally</button><button class="sm p" data-a="replyTop" ${un ? '' : 'disabled'}>Answer</button></div></div>`;
 }
 
-function mkLO(id, text, week, evidence) {
-  const list = evidence.map(([q, answers]) => ({
-    q, answers: answers.map(([who, a, ok]) => ({ who, a, ok: week % 3 === 0 && id === 'LO3' ? !ok : ok }))
-  }));
-  const all = list.flatMap(e => e.answers);
-  const pct = Math.round(all.filter(a => a.ok).length / all.length * 100);
-  return { id, text, pct, evidence: list };
+/* ---------- overview ---------- */
+function nextAssess(lo) { return S().assess.find(([w, , los]) => w >= O.w && los.includes(lo)); }
+function findOut(id) { for (const sub of SUBJECTS) for (const W of Object.values(sub.weeks)) for (const ss of Object.values(W.sessions)) for (const o of ss.outs) if (o.id === id) return o; }
+function outcomeCard(o) {
+  const ulo = S().ulo, lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
+  const need = o.who.filter(w => w[0].toLowerCase().includes(O.q.toLowerCase())), isOpen = O.open === o.id, st = lvState(weak[1][0], o.total);
+  return `<article class="lo card"><div class="loh"><span class="lochip">${o.lo}</span><small>${esc(ulo[o.lo])}</small><span class="lost" style="background:${ST[st][2]};color:${ST[st][1]}">${ST[st][0]}</span></div>
+  <h3>${esc(o.out)}</h3>
+  <div class="lvls">${lv.map(([k, [n, src]]) => { const s2 = lvState(n, o.total); return `<div class="lvl ${k === weak[0] ? 'weak' : ''}"><div class="lt"><b>${LVL[k][0]}</b><span>${n}/${o.total}</span></div><div class="mbar"><i style="width:${Math.round(n / o.total * 100)}%;background:${ST[s2][1]}"></i></div><small>${esc(src)}</small></div>`; }).join('')}</div>
+  <div class="gap"><span class="k2">Where it breaks</span><p><b>${LVL[weak[0]][0]}</b> is the weak step. ${esc(o.gap)}</p></div>
+  <div class="loa"><button class="sm ${isOpen ? 'p' : ''}" data-a="openlo" data-o="${o.id}" aria-expanded="${isOpen}">See evidence · ${o.who.length} ${o.unit} need you ${isOpen ? '▴' : '▾'}</button><button class="sm" data-a="tip" data-o="${o.id}">Re-teach tip</button><button class="sm" data-a="group" data-o="${o.id}">Make a small group</button></div>
+  ${isOpen ? `<div class="stu">${need.length ? need.map(([nm, l, note], i) => `<button class="s" data-s="${o.id}|${i}"><span class="av ${AVC[i % 7]}">${nm.startsWith('Team') ? 'T' + nm.split(' ')[1] : ini(nm)}</span><span><b>${esc(nm)}</b><small>${esc(note)}</small></span><span class="lvtag">Stuck at: ${LVL[l][0]}</span><em>›</em></button>`).join('') : '<div class="none">No matches</div>'}</div>` : ''}</article>`;
+}
+function artefactsHTML() {
+  const s = S();
+  return `<div class="art-tools"><label class="switch"><input type="checkbox" data-a="anon" ${O.anon ? 'checked' : ''}> Show anonymously</label><span class="meta">${s.artefacts.length} uploads · Week ${O.w}</span></div>
+  <div class="art-grid">${s.artefacts.map(([nm, t, ic], i) => `<div class="art"><div class="thumb">${ic}</div><div class="am"><b>${esc(t)}</b><div class="meta">${O.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(nm)}</div></div></div>`).join('')}</div>`;
+}
+function overview() {
+  const s = S(), W = s.weeks[O.w] || s.weeks[Object.keys(s.weeks)[0]], S2 = W.sessions[O.s];
+  return `<div class="ovw"><div class="ovh"><div><div class="eyebrow">Learning outcomes · Week ${O.w}</div><h1 class="serif">${esc(W.title)}</h1><p class="sub">Each session is checked against its unit outcomes: can students <b>know</b>, <b>apply</b> and <b>explain</b> it?</p></div>
+  <select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w}</option>`).join('')}</select></div>
+  <div class="seg2"><button data-a="otab" data-t="lo" aria-pressed="${O.tab === 'lo'}">Class insight</button><button data-a="otab" data-t="art" aria-pressed="${O.tab === 'art'}">Artefacts</button></div>
+  ${O.tab === 'art' ? artefactsHTML() : `
+  <div class="semester card"><div class="k2">Unit outcomes this semester</div><div class="los">${Object.keys(s.ulo).map(lo => { const t = W.trend[lo], na = nextAssess(lo); return `<div class="sem"><div class="semt"><span class="lochip">${lo}</span><span class="lost" style="background:${ST[t][2]};color:${ST[t][1]}">${ST[t][0]}</span></div><p>${esc(s.ulo[lo])}</p><small>${na ? `Next tested: <b>${esc(na[1])}</b> · Week ${na[0]}` : 'No more assessments'}</small></div>`; }).join('')}</div></div>
+  <div class="sesstabs" role="tablist">${Object.entries(W.sessions).map(([k, v]) => `<button role="tab" aria-selected="${O.s === k}" data-ss="${k}"><b>${v.name}</b><small>${v.outs.map(o => o.lo).join(' · ')}</small></button>`).join('')}</div>
+  <p class="topic"><b>${S2.name}:</b> ${esc(S2.topic)}</p><div class="loList">${S2.outs.map(outcomeCard).join('')}</div>`}</div>`;
 }
 
-const state = {
-  user: null,
-  subjects: [makeSubject('Design Thinking', 'DES101'), makeSubject('Research Methods', 'RES204'), makeSubject('Digital Media', 'DIG150')],
-  subjectIdx: 0,
-  week: 6,
-  anon: false,
-  reactions: Object.fromEntries(EMOJIS.map(e => [e.key, 0])),
-  floats: {}
-};
-const subj = () => state.subjects[state.subjectIdx];
-
-/* ---------- user (login removed) ---------- */
-state.user = 'ST1042';
-$('#avatar').textContent = state.user.slice(0, 2);
-$('#avatar').removeAttribute('title');
-
-/* ---------- navigation ---------- */
-$$('.tab').forEach(t => t.onclick = () => {
-  $$('.tab').forEach(x => x.classList.toggle('active', x === t));
-  $('#view-session').hidden = t.dataset.view !== 'session';
-  $('#view-overview').hidden = t.dataset.view !== 'overview';
-  if (t.dataset.view === 'overview') renderOverview();
-});
-document.addEventListener('click', e => {
-  if (!e.target.closest('.menu-wrap')) $$('.menu').forEach(m => m.hidden = true);
-});
-
-/* ---------- subject menu ---------- */
-function renderSubjectMenu() {
-  $('#subjectBtn').textContent = subj().name + ' ▾';
-  const m = $('#subjectMenu');
-  m.innerHTML = state.subjects.map((s, i) => `<button class="${i === state.subjectIdx ? 'sel' : ''}" data-i="${i}">${esc(s.name)} <span class="muted small">${esc(s.code)}</span></button>`).join('');
-  $$('button', m).forEach(b => b.onclick = () => {
-    state.subjectIdx = +b.dataset.i; m.hidden = true;
-    closeAllFloats(); renderAll();
-  });
-}
-$('#subjectBtn').onclick = () => { const m = $('#subjectMenu'); m.hidden = !m.hidden; };
-
-/* ---------- emoji react ---------- */
-function renderEmoji() {
-  $('#emojiPanel').innerHTML = EMOJIS.map(e => `<button data-k="${e.key}" title="Simulate a student reaction"><span class="em">${e.icon}</span><span class="lbl">${e.label}</span></button>`).join('');
-  $$('#emojiPanel button').forEach(b => b.onclick = ev => { ev.stopPropagation(); state.reactions[b.dataset.k]++; renderReactions(); });
-  renderReactions();
-}
-function renderReactions() {
-  $('#reactionBar').innerHTML = EMOJIS.map(e => `<div class="reaction"><span>${e.icon}</span><span>${e.label}</span><b>${state.reactions[e.key]}</b></div>`).join('');
-}
-$('#emojiBtn').onclick = () => { const m = $('#emojiPanel'); m.hidden = !m.hidden; };
-setInterval(() => { // simulated live student reactions
-  if (!state.user) return;
-  const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].key;
-  if (Math.random() < .5) { state.reactions[k]++; renderReactions(); }
-}, 4000);
-
-/* ---------- session: plan + slides ---------- */
-function renderPlan() {
-  const s = subj();
-  $('#planList').innerHTML = s.slides.map((sl, i) =>
-    `<div class="plan-item ${i === s.current ? 'active' : ''}" data-i="${i}"><span>Slide ${i + 1}/${s.slides.length} · ${esc(sl.title)}</span><span>${sl.activities.map(a => `<span class="tag" data-run="${i}|${esc(a)}" title="Run ${esc(a)}">${esc(a.split(' ').map(w => w[0]).join(''))}</span>`).join('')}</span></div>`).join('');
-  $$('#planList .plan-item').forEach(el => {
-    el.onclick = ev => {
-      const run = ev.target.closest('[data-run]');
-      if (run) { const [i, a] = run.dataset.run.split('|'); s.current = +i; openActivity(a); renderSlide(); renderPlan(); return; }
-      s.current = +el.dataset.i; renderSlide(); renderPlan();
-    };
-    el.ondragover = ev => { ev.preventDefault(); el.classList.add('active'); };
-    el.ondragleave = () => renderPlan();
-    el.ondrop = ev => { ev.preventDefault(); attach(+el.dataset.i, ev.dataTransfer.getData('text/plain')); };
-  });
-  $('#activityLib').innerHTML = ACTIVITY_TYPES.map(a => `<div class="plan-item act-card" draggable="true" data-a="${esc(a)}">⠿ ${esc(a)}</div>`).join('');
-  $$('.act-card').forEach(c => c.ondragstart = ev => ev.dataTransfer.setData('text/plain', c.dataset.a));
-  $('#slideFileName').textContent = s.slideFile ? `Slides: ${s.slideFile}` : 'No slides uploaded for this subject yet.';
-}
-function attach(i, type) {
-  if (!ACTIVITY_TYPES.includes(type)) return;
-  const s = subj();
-  if (!s.slides[i].activities.includes(type)) s.slides[i].activities.push(type);
-  s.current = i; renderPlan(); renderSlide(); openActivity(type);
-}
-function renderSlide() {
-  const s = subj(), sl = s.slides[s.current];
-  $('#weekTitle').textContent = s.isGrad ? `Week ${state.week}: ${GRAD.topics[state.week][0]}` : `Week ${state.week}: Persona`;
-  $('#slideTitle').textContent = sl.title;
-  $('#slideBody').textContent = sl.body + (sl.activities.length ? ` · Activities: ${sl.activities.join(', ')}` : '');
-  $('#slideCount').textContent = `Slide ${s.current + 1}/${s.slides.length}`;
-}
-const dz = $('#dropzone');
-dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); };
-dz.ondragleave = () => dz.classList.remove('over');
-dz.ondrop = e => { e.preventDefault(); dz.classList.remove('over'); attach(subj().current, e.dataTransfer.getData('text/plain')); };
-$('#prevSlide').onclick = () => { const s = subj(); s.current = Math.max(0, s.current - 1); renderSlide(); renderPlan(); };
-$('#nextSlide').onclick = () => { const s = subj(); s.current = Math.min(s.slides.length - 1, s.current + 1); renderSlide(); renderPlan(); };
-$('#uploadSlidesBtn').onclick = () => $('#slideFile').click();
-$('#slideFile').onchange = e => { const f = e.target.files[0]; if (f) { subj().slideFile = f.name; renderPlan(); } e.target.value = ''; };
-$('#activityBtn').onclick = () => { // opens the activity plan (focus the library)
-  $('#plan').scrollTo({ top: 9999, behavior: 'smooth' });
-  $('#activityLib').animate([{ background: 'var(--accent-soft)' }, { background: 'transparent' }], { duration: 900 });
-};
-
-/* ---------- floating windows ---------- */
-function openActivity(type) {
-  if (type === 'Q&A Session') return openQA();
-  const s = subj(), id = 'act:' + type;
-  if (state.floats[id]) { state.floats[id].el.classList.remove('min'); return; }
-  const prompts = s.prompts[type]; let q = 0;
-  const el = mkFloat(id, `(${type})`, 60 + Object.keys(state.floats).length * 30, 40 + Object.keys(state.floats).length * 30);
-  const body = $('.float-body', el), foot = $('.float-foot', el);
-  const draw = () => {
-    const answers = STUDENTS.slice(0, 2 + (q % 3)).map((n, i) => `<div class="bubble"><small>${esc(n)}</small>${esc(['Interesting point.', 'I think it depends on the user.', 'Needs more research first.'][(q + i) % 3])}</div>`).join('');
-    body.innerHTML = `<div class="q-text">Q${q + 1}/${prompts.length} · ${esc(prompts[q])}</div>${answers}`;
-    $('.ctr', el).textContent = `Q${q + 1}/${prompts.length}`;
-  };
-  foot.innerHTML = '<button class="ghost" data-d="-1">Previous</button><span class="ctr muted"></span><button class="ghost" data-d="1">Next</button>';
-  $$('[data-d]', foot).forEach(b => b.onclick = () => { q = Math.min(prompts.length - 1, Math.max(0, q + +b.dataset.d)); draw(); });
-  draw();
-}
-function openQA() {
-  const id = 'qa';
-  if (state.floats[id]) { state.floats[id].el.classList.remove('min'); return; }
-  const el = mkFloat(id, 'Questions & Answer', 420, 60);
-  const draw = () => {
-    const qs = [...subj().questions].sort((a, b) => b.askers.length - a.askers.length);
-    $('.float-body', el).innerHTML = qs.map(q => `<div class="qa-row ${q.answered ? 'answered' : ''}">
-      <div class="count" title="${esc(q.askers.join(', '))}">${q.askers.length}</div>
-      <div><div class="q-text">${esc(q.text)}</div><div class="muted small">${q.askers.length} student${q.askers.length > 1 ? 's' : ''} asked</div>
-      <div class="acts"><button class="ghost" data-id="${q.id}">${q.answered ? 'Reopen' : 'Mark answered'}</button></div></div></div>`).join('');
-    $$('[data-id]', el).forEach(b => b.onclick = () => { const q = subj().questions.find(x => x.id === +b.dataset.id); q.answered = !q.answered; draw(); renderQaBadge(); });
-  };
-  el._redraw = draw; draw();
-}
+/* ---------- floating activity windows ---------- */
 function mkFloat(id, title, x, y) {
+  if (floats[id]) { floats[id].classList.remove('min'); return null; }
   const el = document.createElement('div');
   el.className = 'float'; el.style.left = x + 'px'; el.style.top = y + 'px';
   el.innerHTML = `<div class="float-head"><span class="ttl">${esc(title)}</span><button class="ctl" data-c="min" title="Minimize">–</button><button class="ctl" data-c="x" title="Close">✕</button></div><div class="float-body"></div><div class="float-foot"></div>`;
-  $('#floats').appendChild(el); state.floats[id] = { el };
-  $('[data-c=min]', el).onclick = () => el.classList.toggle('min');
-  $('[data-c=x]', el).onclick = () => { el.remove(); delete state.floats[id]; };
-  const head = $('.float-head', el);
+  $('#floats').appendChild(el); floats[id] = el;
+  el.querySelector('[data-c=min]').onclick = () => el.classList.toggle('min');
+  el.querySelector('[data-c=x]').onclick = () => { el.remove(); delete floats[id]; };
+  const head = el.querySelector('.float-head');
   head.onpointerdown = e => {
     if (e.target.closest('.ctl')) return;
-    const sx = e.clientX - el.offsetLeft, sy = e.clientY - el.offsetTop;
-    head.setPointerCapture(e.pointerId);
+    const sx = e.clientX - el.offsetLeft, sy = e.clientY - el.offsetTop; head.setPointerCapture(e.pointerId);
     head.onpointermove = m => { el.style.left = (m.clientX - sx) + 'px'; el.style.top = (m.clientY - sy) + 'px'; };
     head.onpointerup = () => { head.onpointermove = null; };
   };
   return el;
 }
-function closeAllFloats() { Object.values(state.floats).forEach(f => f.el.remove()); state.floats = {}; }
-function renderQaBadge() {
-  const n = subj().questions.filter(q => !q.answered).reduce((t, q) => t + q.askers.length, 0);
-  const b = $('#qaBadge'); b.textContent = n; b.classList.toggle('zero', n === 0);
+function runActivity(type) {
+  if (type === 'Q&A Session') { L.qt = 'open'; renderQP(); return toast('Q&A open · unanswered questions shown'); }
+  const prompts = PROMPTS[type], n = Object.keys(floats).length; let q = 0;
+  const el = mkFloat('act:' + type, `(${type})`, 90 + n * 28, 80 + n * 28); if (!el) return;
+  const body = el.querySelector('.float-body'), foot = el.querySelector('.float-foot');
+  const people = ['Amira K.', 'Ben T.', 'Chloe R.', 'Dev P.'], say = ['Interesting point.', 'I think it depends on the user.', 'Needs more research first.'];
+  const draw = () => {
+    body.innerHTML = `<div class="q-text">Q${q + 1}/${prompts.length} · ${esc(prompts[q])}</div>` + people.slice(0, 2 + q % 3).map((p, i) => `<div class="bubble"><small>${esc(p)}</small>${esc(say[(q + i) % 3])}</div>`).join('');
+    el.querySelector('.ctr').textContent = `Q${q + 1}/${prompts.length}`;
+  };
+  foot.innerHTML = '<button class="sm" data-d="-1">Previous</button><span class="ctr meta"></span><button class="sm p" data-d="1">Next</button>';
+  foot.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { q = Math.min(prompts.length - 1, Math.max(0, q + +b.dataset.d)); draw(); });
+  draw();
 }
-$$('[data-open=qa]').forEach(b => b.onclick = openQA);
+function attach(i, type) {
+  if (!ACTIVITY_TYPES.includes(type)) return;
+  const s = S(); s.attach[i] = s.attach[i] || [];
+  if (!s.attach[i].includes(type)) s.attach[i].push(type);
+  s.slideIdx = i; render(); toast(`${type} added to slide ${i + 1}`);
+}
 
-/* ---------- overview ---------- */
-function renderOverview() {
-  const sel = $('#weekSelect');
-  sel.innerHTML = Array.from({ length: subj().isGrad ? 13 : 8 }, (_, i) => `<option value="${i + 1}" ${state.week === i + 1 ? 'selected' : ''}>Week ${i + 1}</option>`).join('');
-  const w = subj().weeks[Math.min(state.week, subj().isGrad ? 13 : 8)];
-  $('#ov-insight').innerHTML = w.los.map((lo, i) => {
-    const cls = lo.pct >= 70 ? 'ok' : lo.pct >= 40 ? 'mid' : 'low';
-    const txt = lo.pct >= 70 ? 'Understood' : lo.pct >= 40 ? 'Partly understood' : 'Not yet understood';
-    return `<div class="lo" data-lo="${i}"><div class="lo-head"><span class="caret">▶</span><div class="name"><b>${esc(lo.id)}</b> · ${esc(lo.text)}</div><div class="meter"><i style="width:${lo.pct}%"></i></div><b>${lo.pct}%</b><span class="status ${cls}">${txt}</span></div>
-      <div class="lo-body">${lo.evidence.map(ev => `<div class="evidence"><div class="q">${esc(ev.q)}</div>${ev.answers.map(a => `<div class="ans"><span class="who">${esc(a.who)}</span><span class="verdict ${a.ok ? 'y' : 'n'}">${a.ok ? 'Shows understanding' : 'Gap'}</span><span>${esc(a.a)}</span></div>`).join('')}</div>`).join('')}</div></div>`;
-  }).join('');
-  $$('.lo-head').forEach(h => h.onclick = () => h.parentElement.classList.toggle('open'));
-  renderArtefacts();
-}
-function renderArtefacts() {
-  const w = subj().weeks[Math.min(state.week, subj().isGrad ? 13 : 8)];
-  $('#ov-artefacts').innerHTML = `<div class="art-tools"><label class="switch"><input type="checkbox" id="anonToggle" ${state.anon ? 'checked' : ''}> Anonymise student names</label><span class="muted small">${w.artefacts.length} uploads · Week ${state.week}</span></div>
-    <div class="art-grid">${w.artefacts.map((a, i) => `<div class="art"><div class="thumb">${a.icon}</div><div class="meta"><b>${esc(a.title)}</b><div class="muted small">${state.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(a.name)}</div></div></div>`).join('')}</div>`;
-  $('#anonToggle').onchange = e => { state.anon = e.target.checked; renderArtefacts(); };
-}
-$('#weekSelect').onchange = e => { state.week = +e.target.value; syncGradWeek(); renderOverview(); renderSlide(); renderPlan(); };
-$$('#ovTabs button').forEach(b => b.onclick = () => {
-  $$('#ovTabs button').forEach(x => x.classList.toggle('active', x === b));
-  $('#ov-insight').hidden = b.dataset.ov !== 'insight';
-  $('#ov-artefacts').hidden = b.dataset.ov !== 'artefacts';
+/* ---------- events ---------- */
+const now = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+document.addEventListener('click', e => {
+  const chip = e.target.closest('.achip'); if (chip) return runActivity(chip.dataset.t);
+  const nv = e.target.closest('.nav [data-v]'); if (nv) { V = nv.dataset.v; L.menu = false; L.subj = false; return render(); }
+  const rb = e.target.closest('.rbtn'); if (rb) { S().reactions[rb.dataset.k]++; return renderReact(); }
+  const ss = e.target.closest('[data-ss]'); if (ss) { O.s = ss.dataset.ss; O.open = null; return render(); }
+  const sd = e.target.closest('[data-s]'); if (sd) {
+    const [oid, i] = sd.dataset.s.split('|'), o = findOut(oid), x = o.who[+i];
+    $('#modal').innerHTML = `<div class="scrim" data-x><div class="sheet" role="dialog" aria-label="${esc(x[0])}"><h4>${esc(x[0])}</h4><div class="focus" style="background:var(--live-soft)"><small>${o.lo} · STUCK AT ${LVL[x[1]][0].toUpperCase()}</small>${esc(x[2])}</div><p class="sub" style="margin:0;font-size:12px">${esc(o.out)}</p><label class="k2" for="note">Add observation</label><textarea id="note"></textarea><div class="row"><button class="sm" data-x>Close</button><button class="sm p" data-save>Save</button></div></div></div>`; return;
+  }
+  if (e.target.closest('[data-save]')) { $('#modal').innerHTML = ''; return toast('Observation saved'); }
+  if (e.target.matches('[data-x]')) { $('#modal').innerHTML = ''; return; }
+  const qt = e.target.closest('[data-qt]'); if (qt) { L.qt = qt.dataset.qt; return renderQP(); }
+  if (e.target.closest('#emojiBtn')) { L.react = !L.react; return render(); }
+  if (e.target.closest('#activityBtn')) { V = 'live'; L.plan = !L.plan; return render(); }
+  const a = e.target.closest('[data-a]');
+  if (!a) { if (L.menu || L.subj) { L.menu = false; L.subj = false; render(); } return; }
+  const s = S(), q = s.qs.find(x => x.id == a.dataset.q), act = a.dataset.a;
+  const top = () => [...s.qs].filter(x => x.st === 'open').sort((x, y) => y.up - x.up)[0];
+  switch (act) {
+    case 'subj': L.subj = !L.subj; L.menu = false; break;
+    case 'pick': si = +a.dataset.i; L.subj = false; if (!S().weeks[O.w]) O.w = S().liveWeek in S().weeks ? S().liveWeek : +Object.keys(S().weeks)[0]; O.open = null; for (const k in floats) { floats[k].remove(); delete floats[k]; } toast('Subject: ' + S().name); break;
+    case 'menu': L.menu = !L.menu; L.subj = false; break;
+    case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
+    case 'pausepoll': L.menu = false; toast('Check sent: "What are you still unsure about?"'); break;
+    case 'prev': s.slideIdx = Math.max(0, s.slideIdx - 1); break;
+    case 'next': s.slideIdx = Math.min(slidesFor(s).length - 1, s.slideIdx + 1); break;
+    case 'goto': s.slideIdx = +a.dataset.i; break;
+    case 'run': return runActivity(a.dataset.t);
+    case 'upload': return $('#slideFile').click();
+    case 'verbal': q.st = 'verbal'; q.at = now(); toast('Marked as answered verbally · students notified'); break;
+    case 'verbalTop': { const t = top(); if (t) { t.st = 'verbal'; t.at = now(); toast('Marked as answered verbally · students notified'); } break; }
+    case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
+    case 'replyTop': { const t = top(); if (t) { L.qt = 'all'; L.reply = t.id; renderQP(); document.getElementById('q' + t.id)?.scrollIntoView({ block: 'center' }); document.querySelector('.inl input')?.focus(); } return; }
+    case 'reopen': q.st = 'open'; q.ans = null; break;
+    case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
+    case 'otab': O.tab = a.dataset.t; break;
+    case 'anon': O.anon = a.checked; break;
+    case 'tip': { const o = findOut(a.dataset.o); $('#modal').innerHTML = `<div class="scrim" data-x><div class="sheet" role="dialog" aria-label="Re-teach tip"><div class="k2">${o.lo} · Re-teach in 5 minutes</div><h4>${esc(o.out)}</h4><div class="focus" style="background:var(--tint)">${esc(o.tip)}</div><div class="row"><button class="sm p" data-x>Got it</button></div></div></div>`; return; }
+    case 'group': { const o = findOut(a.dataset.o); toast('Small group: ' + o.who.slice(0, 4).map(w => w[0].split(' ')[0]).join(', ')); break; }
+  }
+  if (V === 'live' && ['verbal', 'verbalTop', 'reopen'].includes(act)) return renderQP();
+  render();
 });
+document.addEventListener('submit', e => {
+  e.preventDefault(); const s = S(), q = s.qs.find(x => x.id == e.target.dataset.q), v = e.target.querySelector('input').value.trim();
+  if (!v) return; q.ans = v; q.st = 'ans'; L.reply = null; toast('Answer posted to the class'); renderQP();
+});
+document.addEventListener('change', e => { if (e.target.id === 'wk') { O.w = +e.target.value; O.open = null; render(); } });
+$('#slideFile').addEventListener('change', e => {
+  const files = [...e.target.files], s = S(); if (!files.length) return;
+  s.upload = files.length === 1 ? files[0].name : `${files.length} files`;
+  const imgs = files.filter(f => f.type.startsWith('image/'));
+  if (imgs.length) { s.uploads = imgs.map(f => ({ name: f.name, url: URL.createObjectURL(f) })); s.slideIdx = 0; }
+  e.target.value = ''; toast(`Slides uploaded for ${s.name}`); render();
+});
+$('#srch').addEventListener('input', e => {
+  if (V === 'live') { L.q = e.target.value; renderQP(); return; }
+  O.q = e.target.value; if (O.q && !O.open) O.open = S().weeks[O.w].sessions[O.s].outs[0].id;
+  render(); $('#srch').focus();
+});
+document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); $('#srch').focus(); } });
 
-/* ---------- boot ---------- */
-function syncGradWeek() { const s = subj(); if (s.isGrad && s.gradWeek !== state.week) { s.gradWeek = state.week; s.slides = gradSlides(state.week); s.current = 0; } }
-function renderAll() { syncGradWeek(); renderSubjectMenu(); renderEmoji(); renderPlan(); renderSlide(); renderQaBadge(); if (!$('#view-overview').hidden) renderOverview(); }
-function boot() { state.subjects.unshift(makeGradStudio()); state.subjectIdx = 0; renderAll(); }
+/* drag & drop: activity -> slide row or the live slide */
+document.addEventListener('dragstart', e => { const a = e.target.closest('[data-act]'); if (a) { e.dataTransfer.setData('text/plain', a.dataset.act); L.dragging = true; } });
+document.addEventListener('dragend', () => { L.dragging = false; document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); });
+document.addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d) { e.preventDefault(); document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); d.classList.add('over'); } });
+document.addEventListener('drop', e => { const d = e.target.closest('[data-drop]'); if (!d) return; e.preventDefault(); L.dragging = false; attach(+d.dataset.drop, e.dataTransfer.getData('text/plain')); });
 
-/* ---------- window controls (non-mac) ---------- */
-if (window.shell && window.shell.platform !== 'darwin') {
-  $('#traffic').hidden = false;
-  $$('.tl').forEach(b => b.onclick = () => window.shell.control(b.dataset.w));
-}
+/* simulated live class: reactions and new questions */
+const busy = () => V !== 'live' || L.reply || L.menu || L.dragging || document.activeElement?.id === 'srch' || document.activeElement?.closest?.('.inl');
+setInterval(() => { if (busy()) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; renderReact(); if (Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 3500);
+setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; q.fresh = 0; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open', fresh: 1 }); renderQP(); }, 25000);
+
+render();
