@@ -648,3 +648,14 @@ button.qtxt{padding-top:12px}
 .dwrap{container-type:size;--gap:12px;padding:6px 4cqw 4.6cqw}
 .dcards{height:auto;gap:var(--gap);align-items:center;width:100%;min-height:0}
 .dcard{--cw:min(calc((100cqw - 4 * var(--gap)) / 5), calc(100cqh * 115 / 247));width:var(--cw);height:auto;flex:none}
+
+/* ===== Concept Development: Bloom's-taxonomy questions with an editor ===== */
+.cdcard .aheadbtns{display:flex;gap:8px;align-items:flex-start}
+.cdcard .aheadbtns .x{margin-top:0}
+.cdcard .dsub{margin:.3cqw 0 0;font-size:clamp(11px,1.3cqw,16px);color:var(--ink-2);max-width:62cqw}
+.bloomchip{display:inline-block;background:rgba(0,0,0,.78);color:#fff;border-radius:999px;padding:2px 10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;font-size:clamp(9px,.9cqw,12px)}
+.sheet .cdinput{width:100%;border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;background:var(--card);font:inherit}
+.sheet .cdq{min-height:64px}
+.sheet{max-height:92vh;overflow:auto}
+.sheet .row .spacer{flex:1}
+.sheet label .muted{color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}

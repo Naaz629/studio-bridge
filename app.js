@@ -99,9 +99,20 @@ function discussionCard(s, f, m, p) {
   <div class="dwrap"><div class="dcards">${cards}</div></div>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
+/* the question list for the running activity (Concept Development comes from Bloom's taxonomy) */
+function actQs() {
+  if (A.type === 'Concept Development') { const s = S(); return ensureCD(s, s.pos).qs.map(q => q.text); }
+  return PROMPTS[A.type];
+}
 function actCard() {
-  const s = S(), f = flowOf(s), m = ACT_META[A.type], p = PROMPTS[A.type];
+  const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
   if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
+  if (A.type === 'Concept Development') {
+    const cd = ensureCD(s, s.pos), q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
+    return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="ahead"><div><small>CONCEPT DEVELOPMENT</small><h2>${esc(m.title)}</h2><p class="dsub">Based on "${esc(cd.topic)}" · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</p></div><div class="aheadbtns"><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div></div>
+    <div class="abody"><small>QUESTION ${A.q + 1} OF ${cd.qs.length} · <span class="bloomchip">${esc(q.label)}</span></small><h3>${esc(q.text)}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${esc(q.note)} · ${esc(cd.lo)} · ${8 + A.q * 3} students have responded</div></div>
+    ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
+  }
   return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="abody"><small>QUESTION ${A.q + 1} OF ${p.length}</small><h3>${esc(p[A.q])}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${8 + A.q * 3} students have responded</div></div>
   ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
@@ -195,7 +206,7 @@ document.addEventListener('click', e => {
     case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev': if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1); break;
-    case 'next': if (A && A.q < PROMPTS[A.type].length - 1) A.q++; else goTo(s, s.pos + 1); break;
+    case 'next': if (A && A.q < actQs().length - 1) A.q++; else goTo(s, s.pos + 1); break;
     case 'tile': goTo(s, +a.dataset.i); break;
     case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
     case 'actclose': { const f = flowOf(s); goTo(s, s.pos < f.length - 1 ? s.pos + 1 : s.pos - 1); break; }
@@ -204,6 +215,25 @@ document.addEventListener('click', e => {
     case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;
+    case 'cdedit': {
+      const cd = ensureCD(s, s.pos);
+      return modal(`<div class="k2">Concept Development · ${esc(cd.lo)}: ${esc(cd.out)}</div><h4>Edit the five questions</h4>
+      <label class="k2" for="cdTopic">Topic from the slide before this activity</label><input id="cdTopic" class="cdinput" value="${esc(cd.topic)}">
+      ${cd.qs.map((q, i) => `<label class="k2" for="cdq${i}">${i + 1}. ${esc(q.label)} <span class="muted">· ${esc(q.note)}</span></label><textarea id="cdq${i}" class="cdq" data-i="${i}">${esc(q.text)}</textarea>`).join('')}
+      <div class="row"><button class="sm" data-a="cdregen">↻ Regenerate from topic &amp; outcome</button><span class="spacer"></span><button class="sm" data-x>Cancel</button><button class="sm p" data-a="cdsave">Save</button></div>`);
+    }
+    case 'cdregen': {
+      const topic = cleanTopic(document.getElementById('cdTopic').value) || 'this topic';
+      const fresh = buildCD(Object.assign({}, cdContext(s, s.pos), { topic }));
+      fresh.qs.forEach((q, i) => { document.getElementById('cdq' + i).value = q.text; });
+      document.getElementById('cdTopic').value = topic; toast('Questions regenerated'); return;
+    }
+    case 'cdsave': {
+      const cd = ensureCD(s, s.pos);
+      cd.topic = document.getElementById('cdTopic').value.trim() || cd.topic;
+      document.querySelectorAll('.cdq').forEach(t => { const q = cd.qs[+t.dataset.i], v = t.value.trim(); if (v) { q.edited = q.edited || v !== q.text; q.text = v; } });
+      $('#modal').innerHTML = ''; toast('Questions saved'); break;
+    }
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
     case 'otab': O.tab = a.dataset.t; break;
     case 'anon': O.anon = a.checked; break;
