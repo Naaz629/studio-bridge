@@ -123,7 +123,7 @@ function renderQP() {
   const s = S(), list = [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   el.innerHTML = `<div class="qh"><small>Activity</small><h2>Questions &amp; answers</h2></div>
   <div class="qrows">${list.map((q, i) => { const open = L.open === q.id, en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''}">
-    <div class="qwrap"><button class="qrow" data-a="qopen" data-q="${q.id}"><span class="qn">${pad(i + 1)}</span><span class="qtxt"><span class="qt">${q.st !== 'open' ? '✓ ' : ''}${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</span></button>
+    <div class="qwrap"><div class="qrow"><button class="qn" data-a="qnum" data-q="${q.id}" aria-label="Mark question ${i + 1}">${pad(i + 1)}</button><button class="qtxt" data-a="qopen" data-q="${q.id}"><span class="qt">${q.st !== 'open' ? '✓ ' : ''}${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</button></div>
     ${q.up ? `<span class="asked" title="${q.up} students asked">${q.up}</span>` : ''}</div>
     ${open ? `<div class="qd">
       <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.same} same question</div>
@@ -197,6 +197,7 @@ document.addEventListener('click', e => {
     case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
     case 'actclose': { const f = flowOf(s); goTo(s, s.pos < f.length - 1 ? s.pos + 1 : s.pos - 1); break; }
     case 'upload': L.menu = false; return $('#slideFile').click();
+    case 'qnum': q.seen = !q.seen; renderQP(); return;
     case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;
