@@ -47,7 +47,7 @@ function botbar() {
   const b = $('#botbar'), s = S();
   b.style.display = V === 'live' ? '' : 'none';
   b.innerHTML = `${L.plan ? planStrip(slidesFor(s), s) : ''}
-  <div class="barrow">${L.plan ? '' : '<button class="bb planbtn" data-a="toggleplan">Session plan ▴</button>'}<span class="spacer"></span>
+  <div class="barrow"><button class="bb planbtn" data-a="toggleplan" aria-pressed="${L.plan}">Session plan ${L.plan ? '▾' : '▴'}</button><span class="spacer"></span>
   <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
   <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i>${e.e}</i>`).join("")}</span></span></div>`;
 }
@@ -78,7 +78,7 @@ function actCard() {
   <div class="cfoot"><button class="lk" data-a="prev" ${A.q === 0 ? 'disabled' : ''}>Previous</button><span class="dotsrow">${p.map((_, i) => `<i class="${i === A.q ? 'on' : ''}"></i>`).join('')}</span><button class="lk" data-a="next" ${A.q >= p.length - 1 ? 'disabled' : ''}>Next</button></div></div>`;
 }
 function planStrip(sl, s) {
-  return `<section class="plan2"><div class="ph"><div><small>SESSION PLAN</small><h2>Week ${s.liveWeek} studio flow</h2></div><button class="ulink" data-a="toggleplan">Minimize</button></div>
+  return `<section class="plan2"><div class="ph"><div><small>SESSION PLAN</small><h2>Week ${s.liveWeek} studio flow</h2></div></div>
   <div class="tiles">${sl.map((x, i) => { const at = (s.attach[i] || [])[0]; const m = at && ACT_META[at]; return `<div class="tile ${i === s.slideIdx ? 'on' : ''}" ${m ? `style="background:${m.color}"` : ''} data-a="tile" data-i="${i}" data-drop="${i}"><small>${pad(i + 1)}</small><span>${m ? esc(m.tile) : `Slide ${i + 1}/${sl.length}`}</span></div>`; }).join('')}</div>
   <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">${s.upload ? 'Slides: ' + esc(s.upload) : 'Drag an activity onto a slide'}</span></div></section>`;
 }

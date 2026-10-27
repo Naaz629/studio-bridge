@@ -380,3 +380,4 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .abody{padding:3cqw 4cqw;gap:2cqw;overflow:auto}
 .abody h3{font-size:clamp(15px,2.8cqw,32px)}
 .cfoot{padding:1.6cqw 4cqw}
+.planbtn[aria-pressed="true"]{background:var(--tint)}
