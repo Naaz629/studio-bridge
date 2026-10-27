@@ -135,12 +135,12 @@ async function aiBuildCD(ctx) {
   const ai = window.shell && window.shell.ai;
   if (!ai) return null;
   const st = await ai.status();
-  if (!st.hasKey || !ctx.hasText) return null;
+  if (!st.enabled || !ctx.hasText) return null;
   const res = await ai.generate({ lo: ctx.lo, out: ctx.out, title: ctx.title, text: ctx.text });
   if (res.error) throw new Error(res.error);
   const qs = normaliseAI(res.questions, ctx);
   if (!qs) throw new Error('the reply could not be turned into questions');
-  return Object.assign({}, ctx, { qs, by: 'ai' });
+  return Object.assign({}, ctx, { qs, by: 'ai', aiProvider: res.provider });
 }
 function ensureCD(s, pos) {
   const item = flowOf(s)[pos];
@@ -151,7 +151,7 @@ function ensureCD(s, pos) {
     if (window.shell && window.shell.ai && ctx.hasText) {
       const cd = item.cd, here = () => typeof A !== 'undefined' && A && A.type === 'Concept Development' && flowOf(s)[s.pos] === item;
       window.shell.ai.status().then(st => {
-        if (!st.hasKey) return null;
+        if (!st.enabled) return null;
         cd.pending = true; if (here()) render();
         return aiBuildCD(ctx);
       }).then(ai => {

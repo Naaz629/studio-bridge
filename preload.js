@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('shell', {
     status: () => ipcRenderer.invoke('ai:status'),
     save: opts => ipcRenderer.invoke('ai:save', opts),
     clear: () => ipcRenderer.invoke('ai:clear'),
+    check: o => ipcRenderer.invoke('ai:check', o),
     generate: payload => ipcRenderer.invoke('ai:generate', payload)
   }
 });

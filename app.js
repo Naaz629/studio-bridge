@@ -182,14 +182,42 @@ function insertAct(p, type) {
 async function openAISettings() {
   if (!(window.shell && window.shell.ai)) return modal(`<h4>AI question writer</h4><p class="sub">This is available in the desktop app. The browser preview uses the template questions.</p><div class="row"><button class="sm p" data-x>Close</button></div>`);
   const st = await window.shell.ai.status();
-  const names = { 'claude-sonnet-5-5': 'Claude Sonnet 5.5 — balanced (recommended)', 'claude-haiku-5-5': 'Claude Haiku 5.5 — fastest, lowest cost', 'claude-opus-5-5': 'Claude Opus 5.5 — most capable' };
-  modal(`<div class="k2">✦ AI question writer</div><h4>${st.hasKey ? 'AI is on' : 'Write concept checks with AI'}</h4>
-  <p class="sub" style="margin:0;font-size:12.5px;line-height:1.5">When a Concept Development activity follows a slide, the app sends that slide's text and the week's learning outcome to Anthropic's API, which writes the five questions. Student answers are never sent. Questions are drafts: check them before you use them. Slides that are only pictures have no text, so they use the template questions.</p>
-  <label class="k2" for="aiKey">Anthropic API key</label><input id="aiKey" class="cdinput" type="password" autocomplete="off" spellcheck="false" placeholder="${st.hasKey ? '•••••••• saved — leave blank to keep it' : 'sk-ant-…'}">
-  <p class="sub" style="margin:0;font-size:11.5px">Create a key at console.anthropic.com. It is billed per use, separately from a Claude chat subscription. It is stored encrypted on this computer and is not shown again.${st.canStore ? '' : ' <b>Secure storage is not available here, so a key cannot be saved.</b>'}</p>
-  <label class="k2" for="aiModel">Model</label><select id="aiModel" class="cdinput">${st.models.map(m => `<option value="${m}" ${m === st.model ? 'selected' : ''}>${names[m] || m}</option>`).join('')}</select>
-  <div class="row">${st.hasKey ? '<button class="sm" data-a="aiclear">Remove key</button>' : ''}<span class="spacer"></span><button class="sm" data-x>Cancel</button><button class="sm p" data-a="aisave">Save</button></div>`);
+  const names = { 'claude-sonnet-5-5': 'Claude Sonnet 5.5 — balanced', 'claude-haiku-5-5': 'Claude Haiku 5.5 — fastest, lowest cost', 'claude-opus-5-5': 'Claude Opus 5.5 — most capable' };
+  const opt = (v, title, sub) => `<label class="aiopt"><input type="radio" name="aiprov" value="${v}" ${st.provider === v ? 'checked' : ''}><span><b>${title}</b><small>${sub}</small></span></label>`;
+  const sec = (v, html) => `<div class="aisec" data-sec="${v}" ${st.provider === v ? '' : 'hidden'}>${html}</div>`;
+  const local = ['qwen2.5:3b|about 2 GB · recommended', 'llama3.2:3b|about 2 GB', 'gemma3:4b|about 3.3 GB · better wording, slower'];
+  modal(`<div class="k2">✦ AI question writer</div><h4>Who writes the concept check questions?</h4>
+  <div class="aiopts">
+    ${opt('template', 'Built-in templates', 'Free · works offline · uses the slide text and the week’s outcome')}
+    ${opt('ollama', 'Free AI on this laptop (Ollama)', 'Free · no account · slide text never leaves your computer')}
+    ${opt('anthropic', 'Claude (Anthropic API)', 'Best wording · paid per use · needs an API key')}
+  </div>
+  ${sec('ollama', `<p class="sub aitext">Ollama runs an AI model on your laptop. One-time setup: install Ollama from <b>ollama.com</b> (free), then open a terminal and run <code>ollama pull ${esc(st.ollamaModel)}</code>. After that it works without the internet. Each question set takes about 20–60 seconds on a laptop.</p>
+    <label class="k2" for="olModel">Model</label>
+    <div class="olrow"><input id="olModel" class="cdinput" value="${esc(st.ollamaModel)}" spellcheck="false"><button class="sm" data-a="aicheck">Check</button></div>
+    <div class="olpicks">${local.map(x => { const [m, d] = x.split('|'); return `<button class="sm" data-a="olpick" data-m="${m}">${m} <span class="muted">· ${d}</span></button>`; }).join('')}</div>
+    <p class="sub aitext" id="olStatus"></p>`)}
+  ${sec('anthropic', `<label class="k2" for="aiKey">Anthropic API key</label><input id="aiKey" class="cdinput" type="password" autocomplete="off" spellcheck="false" placeholder="${st.hasKey ? '•••••••• saved — leave blank to keep it' : 'sk-ant-…'}">
+    <p class="sub aitext">Create a key at console.anthropic.com. It needs prepaid credit, separate from a Claude chat subscription. It is stored encrypted on this computer and not shown again.${st.canStore ? '' : ' <b>Secure storage is not available here, so a key cannot be saved.</b>'}</p>
+    <label class="k2" for="aiModel">Model</label><select id="aiModel" class="cdinput">${st.models.map(m => `<option value="${m}" ${m === st.model ? 'selected' : ''}>${names[m] || m}</option>`).join('')}</select>`)}
+  <p class="sub aitext">Only the slide text and the week’s learning outcome are used. Student answers are never sent. AI questions are drafts: check them before you use them.</p>
+  <div class="row">${st.hasKey ? '<button class="sm" data-a="aiclear">Remove saved key</button>' : ''}<span class="spacer"></span><button class="sm" data-x>Cancel</button><button class="sm p" data-a="aisave">Save</button></div>`);
+  if (st.provider === 'ollama') checkOllama();
 }
+async function checkOllama() {
+  const el = document.getElementById('olStatus'), model = (document.getElementById('olModel') || {}).value || '';
+  if (!el) return;
+  el.textContent = 'Checking Ollama…';
+  const r = await window.shell.ai.check({ model });
+  el.innerHTML = !r.running ? '⚠ Ollama is not running on this laptop. Install it from ollama.com and open it, then press Check again.'
+    : r.hasModel ? `✓ Ollama is running and <b>${esc(model)}</b> is downloaded. Ready to use.`
+    : `Ollama is running, but <b>${esc(model)}</b> is not downloaded yet. In a terminal run: <code>ollama pull ${esc(model)}</code>` + (r.models.length ? `<br>Downloaded models: ${r.models.map(esc).join(', ')}` : '');
+}
+document.addEventListener('change', e => {
+  if (e.target.name !== 'aiprov') return;
+  document.querySelectorAll('.aisec').forEach(x => { x.hidden = x.dataset.sec !== e.target.value; });
+  if (e.target.value === 'ollama') checkOllama();
+});
 let cdDraft = [];
 function cdBlock(i, q) {
   const slots = [0, 1, 2, 3].map(k => (q.options || [])[k] || { t: '', ok: false });
@@ -284,13 +312,20 @@ document.addEventListener('click', e => {
     case 'aisettings': L.menu = false; mainMenu(); openAISettings(); return;
     case 'aisave': {
       if (!(window.shell && window.shell.ai)) return;
-      window.shell.ai.save({ key: document.getElementById('aiKey').value, model: document.getElementById('aiModel').value }).then(r => {
+      const prov = (document.querySelector('input[name=aiprov]:checked') || {}).value || 'template';
+      const opts = { provider: prov };
+      if (prov === 'anthropic') { opts.key = document.getElementById('aiKey').value; opts.model = document.getElementById('aiModel').value; }
+      if (prov === 'ollama') opts.ollamaModel = document.getElementById('olModel').value;
+      window.shell.ai.save(opts).then(r => {
         if (r.error) return toast(r.error);
-        $('#modal').innerHTML = ''; toast('AI question writer is on. New concept checks will be written from the slide text.');
+        $('#modal').innerHTML = '';
+        toast(prov === 'template' ? 'Concept checks use the built-in templates.' : prov === 'ollama' ? 'Free local AI is on. New concept checks will be written on this laptop.' : 'Claude is on. New concept checks will be written from the slide text.');
       });
       return;
     }
-    case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('API key removed. Concept checks use the template questions.'); }); return;
+    case 'aicheck': checkOllama(); return;
+    case 'olpick': { const i = document.getElementById('olModel'); if (i) { i.value = a.dataset.m; checkOllama(); } return; }
+    case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('Saved key removed. Concept checks use the built-in templates.'); }); return;
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
     case 'otab': O.tab = a.dataset.t; break;
     case 'anon': O.anon = a.checked; break;
