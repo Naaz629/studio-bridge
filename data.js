@@ -53,10 +53,24 @@ function buildOutcome(id, lo, outText, seed, unit) {
   return { id, lo, out: outText, unit, total, lv, gap: GAP[weak], tip: TIP[weak], who };
 }
 
+/* sessions taken straight from a unit outline: each lecture / tutorial / practical keeps its own topic and the outcomes the outline lists for it */
+function planSessions(cfg, w) {
+  const p = cfg.plan[w], names = { lec: 'Lecture', tut: 'Tutorial', prac: 'Practical' }, out = {};
+  let n = 0;
+  for (const k of ['lec', 'tut', 'prac']) {
+    const x = p[k]; if (!x) continue;
+    const los = x.los.length ? x.los : [Object.keys(cfg.ulo)[0]];
+    out[k] = { name: names[k], topic: x.topic, outs: los.map((lo, i) => buildOutcome(`${cfg.code}-${w}${k}${i}`, lo, cfg.ulo[lo] || lo, w * 31 + n * 7 + i * 3 + cfg.code.length, k === 'prac' ? 'teams' : 'students')) };
+    n++;
+  }
+  return out;
+}
+
 function buildWeeks(cfg) {
   const loKeys = Object.keys(cfg.ulo), weeks = {};
   for (const w of cfg.weeks) {
     const t = cfg.topics[w];
+    if (cfg.plan && cfg.plan[w]) { weeks[w] = { title: t[0], sessions: planSessions(cfg, w) }; continue; }
     const mk = (k, name, topic, idx, unit) => {
       const lo = loKeys[(w + idx) % loKeys.length];
       return { name, topic, outs: [buildOutcome(`${cfg.code}-${w}${k}`, lo, cfg.outFor(lo, w, k), w * 31 + idx * 7 + cfg.code.length, unit)] };
