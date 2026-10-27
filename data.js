@@ -15,11 +15,18 @@ const ACT_META = {
   "Artefact upload": { title: "Artefact upload", tile: "Artefact", color: "#cfe3ea" }
 };
 const PROMPTS = {
-  "Discussion Activity": ["What details turn a profile into a believable person?", "Who is missing from our thinking?", "Discuss in pairs: needs vs wants.", "Which assumption would you test first?", "Summarise your group view."],
+  "Discussion Activity": ["Discuss with your peers. Use your cards to share what you think."],
   "Concept Development": ["Define the idea in your own words.", "Which user needs matter most?", "What would make it believable?", "Where could it mislead a team?", "Sketch one goal."],
   "Q&A Session": ["Ask anything about this week.", "Upvote questions you share.", "Clarify the top question.", "Answer a peer question.", "Final open questions."],
   "Artefact upload": ["Upload your persona canvas.", "Upload a photo of your sketch.", "Add a caption explaining it.", "Tag the learning outcome it shows.", "Review a peer's upload."]
 };
+const DISCUSS_CARDS = [
+  { k: 'agree', n: '01', label: 'Agree', img: 'assets/cards/agree.png' },
+  { k: 'disagree', n: '02', label: 'Disagree', img: 'assets/cards/disagree.png' },
+  { k: 'turn', n: '03', label: 'Take a turn', img: 'assets/cards/turn.png' },
+  { k: 'clarify', n: '04', label: 'Clarify', img: 'assets/cards/clarify.png' },
+  { k: 'idea', n: '05', label: 'Share an idea', img: 'assets/cards/idea.png' }
+];
 const ACTIVITY_TYPES = Object.keys(PROMPTS);
 const EMOJIS = [
   { k: 'und', e: '✅', l: 'Understood', c: 'var(--tint)' },
@@ -101,7 +108,7 @@ function makeSubject(cfg) {
     name: cfg.name, code: cfg.code, badge: cfg.badge, term: cfg.term, ulo: cfg.ulo, assess: cfg.assess, liveWeek: cfg.liveWeek, topics: cfg.topics, files: cfg.files || {},
     weeks: buildWeeks(cfg), upload: null, uploads: [], slideIdx: 0, attach: {}, taught: Object.keys(cfg.topics).length,
     reactions: Object.fromEntries(EMOJIS.map((e, i) => [e.k, [14, 3, 4, 6, 9][i]])),
-    qs: cfg.qs,
+    qs: cfg.qs, cards: { agree: 7, disagree: 3, turn: 4, clarify: 5, idea: 6 },
     artefacts: [['Amira Khan', 'Persona canvas', '🗂️'], ['Ben Tran', 'Empathy map', '🧠'], ['Chloe Rossi', 'Journey sketch', '🛤️'], ['Dev Patel', 'Interview notes', '📝'], ['Elena Sosa', 'Concept poster', '🖼️'], ['Farid Ali', 'Prototype photo', '📷']]
   };
   return s;

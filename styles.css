@@ -628,3 +628,23 @@ button.qtxt{padding-top:12px}
 .reactemo i::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 10px);left:50%;transform:translate(-50%,4px);white-space:nowrap;padding:6px 10px;border-radius:8px;background:#26302a;color:#fff;font-size:12px;font-weight:600;font-style:normal;line-height:1.2;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,.22)}
 .reactemo i::before{content:"";position:absolute;bottom:calc(100% + 5px);left:50%;transform:translate(-50%,4px);border:5px solid transparent;border-top-color:#26302a;border-bottom:0;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:200}
 .reactemo i:hover::after,.reactemo i:hover::before{opacity:1;transform:translate(-50%,0)}
+
+/* ===== Discussion Activity: five peer-discussion cards with live play counts ===== */
+.actcard.discuss{display:flex;flex-direction:column}
+.actcard.discuss .ahead{border-bottom:0;padding:2cqw 4cqw .6cqw}
+.actcard.discuss h2{font-size:clamp(18px,2.9cqw,36px);margin:.5cqw 0 0}
+.actcard.discuss .dsub{margin:.3cqw 0 0;font-size:clamp(12px,1.6cqw,20px);color:var(--ink-2)}
+.dwrap{flex:1;min-height:0;display:flex;align-items:stretch;justify-content:center;padding:0 4cqw 4.8cqw}
+.dcards{display:flex;gap:1.6cqw;justify-content:center;align-items:stretch;min-height:0;height:100%}
+.dcard{position:relative;height:100%;aspect-ratio:115/247;border-radius:14px;overflow:visible;transition:transform .2s;cursor:default}
+.dcard img{display:block;width:100%;height:100%;object-fit:cover;border-radius:13px;box-shadow:0 4px 12px rgba(30,40,30,.14)}
+.dcard:hover{transform:translateY(-4px)}
+.dcount{position:absolute;right:-6px;top:-6px;min-width:26px;height:26px;border-radius:999px;background:var(--live);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;padding:0 6px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.dcard.bump .dcount{animation:ballPop .6s cubic-bezier(.2,.9,.3,1.4)}
+.dcard::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translate(-50%,4px);white-space:nowrap;padding:6px 10px;border-radius:8px;background:#26302a;color:#fff;font-size:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:20}
+.dcard:hover::after{opacity:1;transform:translate(-50%,0)}
+
+/* cards: as large as fit both the width and the height of the activity card */
+.dwrap{container-type:size;--gap:12px;padding:6px 4cqw 4.6cqw}
+.dcards{height:auto;gap:var(--gap);align-items:center;width:100%;min-height:0}
+.dcard{--cw:min(calc((100cqw - 4 * var(--gap)) / 5), calc(100cqh * 115 / 247));width:var(--cw);height:auto;flex:none}

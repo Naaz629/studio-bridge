@@ -86,16 +86,23 @@ function navOverlay(idx, total, canPrev, canNext) {
   const n = Math.min(total, 12), start = Math.max(0, Math.min(idx - 5, total - n));
   let dots = '';
   for (let i = start; i < start + n; i++) dots += i === idx ? `<i class="on"><b>${i + 1}</b></i>` : '<i></i>';
-  return `<button class="navarrow l" data-a="prev" aria-label="Previous" ${canPrev ? '' : 'disabled'}>${ARROW_L}</button><button class="navarrow r" data-a="next" aria-label="Next" ${canNext ? '' : 'disabled'}>${ARROW_R}</button><div class="dotsov" aria-hidden="true">${dots}</div>`;
+  return `<button class="navarrow l" data-a="prev" aria-label="Previous" ${canPrev ? '' : 'disabled'}>${ARROW_L}</button><button class="navarrow r" data-a="next" aria-label="Next" ${canNext ? '' : 'disabled'}>${ARROW_R}</button>${total > 1 ? `<div class="dotsov" aria-hidden="true">${dots}</div>` : ''}`;
 }
 function slideCard(sl, s) {
   const f = flowOf(s), it = f[s.pos], cur = sl[Math.min(it.i, sl.length - 1)];
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
   return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}</div></div>`;
 }
+function discussionCard(s, f, m, p) {
+  const cards = DISCUSS_CARDS.map(c => `<div class="dcard" data-card="${c.k}" data-tip="${c.label} · ${s.cards[c.k]} students"><img src="${c.img}" alt="${c.label}"><span class="dcount">${s.cards[c.k]}</span></div>`).join('');
+  return `<div class="card2 actcard discuss" style="background:${m.color}"><div class="ahead"><div><small>DISCUSSION ACTIVITY</small><h2>Discuss with your peers.</h2><p class="dsub">Use your cards to share what you think.</p></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  <div class="dwrap"><div class="dcards">${cards}</div></div>
+  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+}
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = PROMPTS[A.type];
-  return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>${A.type === 'Discussion Activity' ? 'DISCUSSION ACTIVITY' : 'ACTIVITY'}</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
+  return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="abody"><small>QUESTION ${A.q + 1} OF ${p.length}</small><h3>${esc(p[A.q])}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${8 + A.q * 3} students have responded</div></div>
   ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
 }
@@ -224,6 +231,17 @@ document.addEventListener('dragstart', e => { const a = e.target.closest('[data-
 document.addEventListener('dragend', () => { L.dragging = false; document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); });
 document.addEventListener('dragover', e => { const d = e.target.closest('[data-ins]'); if (d) { e.preventDefault(); document.querySelectorAll('.over').forEach(x => x.classList.remove('over')); d.classList.add('over'); } });
 document.addEventListener('drop', e => { const d = e.target.closest('[data-ins]'); if (!d) return; e.preventDefault(); L.dragging = false; insertAct(+d.dataset.ins, e.dataTransfer.getData('text/plain')); });
+
+/* simulated live class: students playing discussion cards */
+setInterval(() => {
+  if (V !== 'live' || !A || A.type !== 'Discussion Activity') return;
+  const s = S(), c = DISCUSS_CARDS[Math.floor(Math.random() * DISCUSS_CARDS.length)];
+  s.cards[c.k]++;
+  const el = document.querySelector(`.dcard[data-card="${c.k}"]`); if (!el) return;
+  el.dataset.tip = `${c.label} · ${s.cards[c.k]} students`;
+  el.querySelector('.dcount').textContent = s.cards[c.k];
+  if (!REDUCED) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+}, 2200);
 
 /* simulated live class: reactions and new questions */
 const busy = () => V !== 'live' || L.reply || L.dragging || document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.closest?.('.inl');
