@@ -531,3 +531,14 @@ button.qtxt{flex:1;min-width:0;text-align:left;display:flex;flex-direction:colum
 button.qtxt{padding-top:12px}
 .qr .qt{padding-top:0}
 .qd{padding-left:56px}
+
+/* ===== Q&A column and the bar's Activity group share one width, so their left borders line up ===== */
+.win{--sidew:322px;--emojiw:179px}
+.rightcol{box-sizing:border-box;width:var(--sidew)}
+.rightcol>*{min-width:calc(var(--sidew) - 34px)}
+.sess2.qclosed .rightcol{width:0}
+.reactlbl{flex:none;box-sizing:border-box;width:var(--emojiw);justify-content:center}
+#qbtn{flex:none;box-sizing:border-box;width:calc(var(--sidew) - var(--emojiw));justify-content:center}
+.botbar .barrow,.botbar.open .barrow{gap:0}
+.botbar .barrow .ptab.flip{margin-right:16px}
+.rightcol>*{min-width:0}
