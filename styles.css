@@ -475,3 +475,12 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .tile .tx{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;font-size:10px;opacity:0;background:rgba(0,0,0,.12)}
 .tile:hover .tx{opacity:1}
 .tile.act{border-style:solid}
+
+/* ===== Session plan: one control toggles a smooth collapse / expand ===== */
+.plan2{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease,border-color .3s}
+.plan2.collapsed{grid-template-rows:0fr;border-top-color:transparent}
+.planclip{overflow:hidden;min-height:0}
+.ptab,.planbtn{cursor:pointer}
+button.ptab.flip{gap:10px;font:inherit;font-size:13px;font-weight:600;color:var(--ink)}
+.ptab .caret,.planbtn .caret{font-style:normal;font-size:11px;color:var(--muted);margin-left:2px}
+.planbtn{gap:8px;display:flex;align-items:center}

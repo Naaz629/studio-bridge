@@ -66,7 +66,7 @@ function botbar() {
   const b = $('#botbar'), s = S();
   b.style.display = V === 'live' ? '' : 'none';
   b.className = 'botbar' + (L.plan ? ' open' : '');
-  b.innerHTML = `<div class="barrow">${L.plan ? `<div class="ptab flip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Session plan</span><button class="px" data-a="toggleplan" aria-label="Close session plan">✕</button></div>` : '<button class="bb planbtn" data-a="toggleplan" aria-pressed="false">Session plan ▴</button>'}<span class="spacer"></span>
+  b.innerHTML = `<div class="barrow"><button class="${L.plan ? 'ptab flip' : 'bb planbtn'}" id="planbtn" data-a="toggleplan" aria-expanded="${L.plan}" aria-label="Session plan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Session plan</span><i class="caret">${L.plan ? '▾' : '▴'}</i></button><span class="spacer"></span>
   <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
   <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i>${e.e}</i>`).join("")}</span></span></div>`;
 }
@@ -109,13 +109,13 @@ function planStrip(sl, s) {
     if (it.k === 'a') { const m = ACT_META[it.act]; return gap(p) + `<div class="tile act ${p === s.pos ? 'on' : ''}" style="background:${m.color}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>${esc(m.tile)}</span><button class="tx" data-a="rmflow" data-i="${p}" aria-label="Remove activity">✕</button></div>`; }
     return gap(p) + `<div class="tile ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}"><small>${pad(p + 1)}</small><span>Slide ${it.i + 1}/${sl.length}</span></div>`;
   }).join('') + gap(f.length);
-  return `<section class="plan2"><div class="planbody"><h2 class="phead">Week ${s.liveWeek} studio flow</h2><div class="tiles">${tiles}</div>
-  <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">Drag an activity between slides to add it to the flow</span></div></div></section>`;
+  return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><h2 class="phead">Week ${s.liveWeek} studio flow</h2><div class="tiles">${tiles}</div>
+  <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">Drag an activity between slides to add it to the flow</span></div></div></div></section>`;
 }
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   return `<div class="sess2 ${L.qopen ? '' : 'qclosed'}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div><span class="livetag"><i></i>LIVE SESSION</span></div>
-  <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${L.plan ? planStrip(sl, s) : ''}</section>
+  <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${planStrip(sl, s)}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside></div>`;
 }
 function renderQP() {
@@ -189,7 +189,7 @@ document.addEventListener('click', e => {
   switch (act) {
     case 'subj': L.subj = !L.subj; L.menu = false; break;
     case 'pick': si = +a.dataset.i; L.subj = false; syncA(S()); if (!S().weeks[O.w]) O.w = S().liveWeek in S().weeks ? S().liveWeek : +Object.keys(S().weeks)[0]; O.open = null; toast('Subject: ' + S().name); break;
-    case 'toggleplan': L.plan = !L.plan; botbar(); return;
+    case 'toggleplan': L.plan = !L.plan; botbar(); document.querySelector('.plan2')?.classList.toggle('collapsed', !L.plan); return;
     case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev': if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1); break;
