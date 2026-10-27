@@ -76,9 +76,9 @@ function spawnEmoji(k) {
   const em = EMOJIS.find(x => x.k === k); if (!em) return;
   const el = document.createElement('span');
   el.className = 'fe'; el.textContent = em.e;
-  el.style.setProperty('--x', Math.round(Math.random() * 80) + '%');
-  el.style.setProperty('--sway', (Math.random() * 60 - 30).toFixed(0) + 'px');
-  el.style.setProperty('--dur', (2.8 + Math.random() * 1.6).toFixed(2) + 's');
+  el.style.setProperty('--x', Math.round(8 + Math.random() * 56) + '%');
+  el.style.setProperty('--y', Math.round(Math.random() * 18) + '%');
+  el.style.setProperty('--dur', (2 + Math.random() * 0.5).toFixed(2) + 's');
   el.addEventListener('animationend', () => el.remove());
   layer.appendChild(el);
 }
