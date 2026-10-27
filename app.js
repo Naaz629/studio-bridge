@@ -122,14 +122,13 @@ function renderQP() {
   const el = $('#qp'); if (!el) return;
   const s = S(), list = [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   el.innerHTML = `<div class="qh"><small>Activity</small><h2>Questions &amp; answers</h2></div>
-  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id, en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${green ? 'seen' : ''}">
+  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id, en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ">
     <div class="qwrap"><button class="qrow" data-a="qopen" data-q="${q.id}"><span class="qn">${pad(i + 1)}</span><span class="qtxt"><span class="qt">${q.st !== 'open' ? '✓ ' : ''}${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</span></button>
     ${q.up ? `<span class="asked" title="${q.up} students asked">${q.up}</span>` : ''}</div>
     ${open ? `<div class="qd">
       <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.same} same question</div>
-      ${q.st === 'verbal' ? `<div class="box verbal">🎙 <span><b>Answered verbally in class</b><small>You responded at ${esc(q.at)}</small></span></div>` : ''}
       ${q.ans ? `<div class="box ans"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}
-      ${q.st === 'open' ? `<form class="inl" data-q="${q.id}"><input placeholder="Type your answer…" aria-label="Answer"><button class="sm p">Post</button></form><div class="qacts"><button class="sm" data-a="verbal" data-q="${q.id}">🎙 Answered verbally</button></div>` : `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>`}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
+      ${q.st === 'open' ? `<form class="inl" data-q="${q.id}"><input placeholder="Type your answer…" aria-label="Answer"><button class="sm p">Post</button></form>` : `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>`}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
   const bd = $('#bdg'); if (bd) bd.textContent = unanswered();
 }
 
@@ -199,7 +198,6 @@ document.addEventListener('click', e => {
     case 'actclose': { const f = flowOf(s); goTo(s, s.pos < f.length - 1 ? s.pos + 1 : s.pos - 1); break; }
     case 'upload': L.menu = false; return $('#slideFile').click();
     case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
-    case 'verbal': q.st = 'verbal'; q.at = now(); toast('Marked as answered verbally · students notified'); renderQP(); return;
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;

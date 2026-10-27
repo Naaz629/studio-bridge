@@ -122,7 +122,7 @@ const SUBJECTS = [
     assess: [[3, 'WIP update 1', ['LO1', 'LO4']], [5, 'Project proposal & budget', ['LO1', 'LO2']], [8, 'Portfolio', ['LO4', 'LO5']], [9, 'WIP update 2', ['LO3', 'LO4']], [12, 'Group reflection', ['LO6']], [13, 'Final project', ['LO1', 'LO3', 'LO4', 'LO5']]],
     outFor: (lo, w, k) => ({ LO1: 'Plan the next step of the project against the brief', LO2: 'Justify the method chosen for this problem space', LO3: 'Use evidence from more than one source to decide', LO4: 'Document research-led work clearly', LO5: 'Present evidence-based reasoning to the client', LO6: 'Reflect on team and personal accountability' }[lo]),
     qs: [
-      { id: 1, who: 'Yuki Tanaka', av: 'sand', ago: 6, text: 'Can our WIP update include prototypes that are not finished?', up: 9, same: 4, st: 'verbal', at: '10:22 AM' },
+      { id: 1, who: 'Yuki Tanaka', av: 'sand', ago: 6, text: 'Can our WIP update include prototypes that are not finished?', up: 9, same: 4, st: 'ans', ans: 'Yes, an unfinished prototype is fine for a WIP update as long as you explain what is still to be tested.' },
       { id: 2, who: 'Maya Chen', av: '', ago: 2, text: 'How is the group reflection marked against LO6?', up: 12, same: 5, st: 'ans', ans: 'Reflections are assessed on whether you critique your own and your peers\' practice against the ethics and values of the discipline.' },
       { id: 3, who: 'Anonymous', av: 'lav', ago: 1, text: '我们的预算需要包括哪些内容？', tr: 'What should our budget include?', up: 7, same: 4, st: 'open' },
       { id: 4, who: 'Leo Park', av: '', ago: 0, text: 'Should our evaluation criteria be agreed with the client first?', up: 3, same: 1, st: 'open' }
@@ -135,7 +135,7 @@ const SUBJECTS = [
     assess: [[7, 'Research analysis', ['LO2', 'LO3']], [9, 'Reflection 2', ['LO2', 'LO3', 'LO4']], [12, 'Client pitch', ['LO1', 'LO2', 'LO3', 'LO4']]],
     outFor: (lo, w, k) => ({ LO1: 'Identify whose behaviour and values an innovation affects', LO2: 'Explain how change creates the need for innovation', LO3: 'Choose a method that fits the challenge', LO4: 'Plan how an idea could be implemented' }[lo]),
     qs: [
-      { id: 1, who: 'Yuki Tanaka', av: 'sand', ago: 6, text: 'Can one finding lead to multiple insights?', up: 9, same: 3, st: 'verbal', at: '10:22 AM' },
+      { id: 1, who: 'Yuki Tanaka', av: 'sand', ago: 6, text: 'Can one finding lead to multiple insights?', up: 9, same: 3, st: 'ans', ans: 'Yes, an unfinished prototype is fine for a WIP update as long as you explain what is still to be tested.' },
       { id: 2, who: 'Maya Chen', av: '', ago: 2, text: 'How is an insight different from a finding?', up: 12, same: 5, st: 'ans', ans: 'A finding describes what the evidence shows. An insight explains why it matters.' },
       { id: 3, who: 'Leo Park', av: '', ago: 0, text: 'Should our HMW question mention the technology?', up: 3, same: 1, st: 'open' }
     ]

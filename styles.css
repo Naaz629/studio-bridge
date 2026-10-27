@@ -495,3 +495,11 @@ button.ptab.flip{gap:10px;font:inherit;font-size:13px;font-weight:600;color:var(
 .actcard .abody textarea{flex:1;min-height:0;font-size:clamp(12px,1.4cqw,18px);padding:1.2cqw 1.4cqw}
 .actcard .abody .meta{font-size:clamp(10px,1cqw,13px)}
 .stagebox .actcard{box-sizing:border-box}
+
+/* ===== question numbers: bigger, white with black border; green once answered ===== */
+.qrow{gap:14px;align-items:flex-start}
+.qn{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;padding:0;font-size:16px;font-weight:600;line-height:1;background:#fff;border:1.5px solid #111;color:#111;transition:background .25s,border-color .25s,color .25s}
+.qr.done .qn{background:#22c55e;border-color:#22c55e;color:#fff}
+.qr .qt{padding-top:6px}
+.qr.seen .qn{color:#111;font-weight:600}
+.qr.done.seen .qn{color:#fff}
