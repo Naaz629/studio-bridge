@@ -18,7 +18,7 @@ const BLOOM = [
 
 function cleanTopic(t) {
   return String(t || '')
-    .replace(/^Week\s*\d+\s*[:\-–]\s*/i, '')
+    .replace(/^Week\s*\d+\s*[:\-–]?\s*/i, '')
     .replace(/^(Tutorial|Masterclass|Lecture)\s*[:\-–]\s*/i, '')
     .replace(/\.(pdf|pptx?|key|png|jpe?g|webp)$/i, '')
     .replace(/[_]+/g, ' ')
