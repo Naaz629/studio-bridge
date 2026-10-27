@@ -462,3 +462,7 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .dotsov i.on.open b{font-size:14px}
 .runov{position:absolute;left:14px;bottom:14px;display:flex;gap:8px;z-index:3}
 .actcard .abody{padding-bottom:5cqw}
+
+/* arrow circles: translucent black (20% opacity) */
+.navarrow{background:rgba(0,0,0,.2);color:#fff;box-shadow:none;backdrop-filter:none}
+.navarrow:hover:not(:disabled){background:rgba(0,0,0,.3)}
