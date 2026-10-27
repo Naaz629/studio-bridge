@@ -32,7 +32,17 @@ function render() {
   $('#crumb').innerHTML = V === 'live' ? `<b>Session</b><span>/</span><span class="sub">${esc(s0.name)} · Week ${s0.liveWeek}</span>` : `<b>Overview</b><span>/</span><span class="sub">${esc(s0.name)} · Week ${O.w}</span>`;
   $('#view').innerHTML = V === 'live' ? live() : overview();
   courseBtn(); mainMenu(); botbar();
-  if (V === 'live') renderQP();
+  if (V === 'live') { renderQP(); pulseDots(); }
+}
+let pulseKey = '', pulseTimer = null;
+function pulseDots() {
+  const s = S(), key = si + '|' + s.slideIdx + '|' + (A ? A.type + A.q : '');
+  if (key === pulseKey) return;
+  pulseKey = key;
+  const on = document.querySelector('.dotsov i.on'); if (!on) return;
+  clearTimeout(pulseTimer);
+  setTimeout(() => on.classList.add('open'), 40);
+  pulseTimer = setTimeout(() => document.querySelector('.dotsov i.on')?.classList.remove('open'), 2800);
 }
 function courseBtn() {
   const s = S();
@@ -65,19 +75,25 @@ function spawnEmoji(k) {
 }
 
 /* ---------- live view ---------- */
+const ARROW_L = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>';
+const ARROW_R = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
+function navOverlay(idx, total, canPrev, canNext) {
+  const n = Math.min(total, 12), start = Math.max(0, Math.min(idx - 5, total - n));
+  let dots = '';
+  for (let i = start; i < start + n; i++) dots += i === idx ? `<i class="on"><b>${i + 1}</b></i>` : '<i></i>';
+  return `<button class="navarrow l" data-a="prev" aria-label="Previous" ${canPrev ? '' : 'disabled'}>${ARROW_L}</button><button class="navarrow r" data-a="next" aria-label="Next" ${canNext ? '' : 'disabled'}>${ARROW_R}</button><div class="dotsov" aria-hidden="true">${dots}</div>`;
+}
 function slideCard(sl, s) {
   const cur = sl[Math.min(s.slideIdx, sl.length - 1)];
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
-  return `<div class="slidewrap2"><div class="slidepage">${body}</div>
-  <div class="snav"><button class="lk" data-a="prev" ${s.slideIdx === 0 ? 'disabled' : ''}>Previous</button>
-  <span class="snavmid">${(s.attach[s.slideIdx] || []).map(a => `<button class="run" style="background:${ACT_META[a].color}" data-a="run" data-t="${esc(a)}">▶ ${esc(a)}</button>`).join('')}<span class="dotsrow">${sl.slice(0, 12).map((_, i) => `<i class="${i === s.slideIdx ? 'on' : ''}"></i>`).join('')}</span></span>
-  <button class="lk" data-a="next" ${s.slideIdx >= sl.length - 1 ? 'disabled' : ''}>Next</button></div></div>`;
+  const runs = (s.attach[s.slideIdx] || []).map(a => `<button class="run" style="background:${ACT_META[a].color}" data-a="run" data-t="${esc(a)}">▶ ${esc(a)}</button>`).join('');
+  return `<div class="slidewrap2"><div class="slidepage">${body}${runs ? `<div class="runov">${runs}</div>` : ''}${navOverlay(s.slideIdx, sl.length, s.slideIdx > 0, s.slideIdx < sl.length - 1)}</div></div>`;
 }
 function actCard() {
   const m = ACT_META[A.type], p = PROMPTS[A.type];
   return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>${A.type === 'Discussion Activity' ? 'DISCUSSION ACTIVITY' : 'ACTIVITY'}</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="abody"><small>QUESTION ${A.q + 1} OF ${p.length}</small><h3>${esc(p[A.q])}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${8 + A.q * 3} students have responded</div></div>
-  <div class="cfoot"><button class="lk" data-a="prev" ${A.q === 0 ? 'disabled' : ''}>Previous</button><span class="dotsrow">${p.map((_, i) => `<i class="${i === A.q ? 'on' : ''}"></i>`).join('')}</span><button class="lk" data-a="next" ${A.q >= p.length - 1 ? 'disabled' : ''}>Next</button></div></div>`;
+  ${navOverlay(A.q, p.length, A.q > 0, A.q < p.length - 1)}</div>`;
 }
 function planStrip(sl, s) {
   return `<section class="plan2"><div class="planbody"><h2 class="phead">Week ${s.liveWeek} studio flow</h2><div class="tiles">${sl.map((x, i) => { const at = (s.attach[i] || [])[0]; const m = at && ACT_META[at]; return `<div class="tile ${i === s.slideIdx ? 'on' : ''}" ${m ? `style="background:${m.color}"` : ''} data-a="tile" data-i="${i}" data-drop="${i}"><small>${pad(i + 1)}</small><span>${m ? esc(m.tile) : `Slide ${i + 1}/${sl.length}`}</span></div>`; }).join('')}</div>
