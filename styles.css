@@ -416,3 +416,10 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 
 /* heading back at the top of the session plan panel */
 .phead{margin:0;font-family:var(--serif);font-weight:400;font-size:19px;color:var(--ink)}
+
+/* ===== 16:9 blank white slide filling a pale backdrop ===== */
+.stagebox{background:#eff0f6;padding:clamp(14px,2.4vw,34px)}
+.slidepage{width:min(100cqw,calc((100cqh - 52px) * 1.77778));aspect-ratio:16/9;box-shadow:0 14px 44px rgba(80,86,130,.16),0 2px 6px rgba(80,86,130,.08);border-radius:0}
+.slidewrap2 .snav{width:min(100cqw,calc((100cqh - 52px) * 1.77778))}
+.blank{flex:1;display:grid;place-items:center;font-size:clamp(11px,1.5cqw,16px);color:#b4b6c3}
+.stagebox .actcard{aspect-ratio:auto;width:min(100cqw,calc((100cqh - 52px) * 1.77778));max-height:100cqh}
