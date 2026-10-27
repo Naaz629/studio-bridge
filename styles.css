@@ -423,3 +423,18 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .slidewrap2 .snav{width:min(100cqw,calc((100cqh - 52px) * 1.77778))}
 .blank{flex:1;display:grid;place-items:center;font-size:clamp(11px,1.5cqw,16px);color:#b4b6c3}
 .stagebox .actcard{aspect-ratio:auto;width:min(100cqw,calc((100cqh - 52px) * 1.77778));max-height:100cqh}
+
+/* ===== fill the screen: no outer margin, tight chrome, biggest possible slide ===== */
+.stage{padding:0;min-height:100vh;display:block}
+.win{max-width:none;width:100%;height:100vh;min-height:0;border-radius:0;border:0;box-shadow:none}
+.left{padding:12px 14px 10px;gap:8px}
+.wk>div{display:flex;align-items:baseline;gap:12px}
+.wk h1{font-size:22px;margin:0}
+.livetag{padding-top:0}
+.stagebox{padding:10px;border-radius:10px}
+.slidewrap2{gap:6px}
+.slidewrap2 .snav{height:34px}
+.slidepage{width:min(100cqw,calc((100cqh - 40px) * 1.77778))}
+.slidewrap2 .snav{width:min(100cqw,calc((100cqh - 40px) * 1.77778))}
+.stagebox .actcard{width:min(100cqw,calc((100cqh - 40px) * 1.77778))}
+.rightcol{padding:16px 16px 14px}
