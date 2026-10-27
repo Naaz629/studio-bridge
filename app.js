@@ -49,7 +49,7 @@ function botbar() {
   b.innerHTML = `${L.plan ? planStrip(slidesFor(s), s) : ''}
   <div class="barrow">${L.plan ? '' : '<button class="bb planbtn" data-a="toggleplan">Session plan ▴</button>'}<span class="spacer"></span>
   <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
-  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => e.e).join(' ')}</span></span></div>`;
+  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i>${e.e}</i>`).join("")}</span></span></div>`;
 }
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function spawnEmoji(k) {

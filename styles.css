@@ -359,3 +359,8 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 #floatlayer{position:absolute;right:0;bottom:52px;width:240px;height:60%;pointer-events:none;overflow:hidden;z-index:35}
 .fe{position:absolute;bottom:0;left:var(--x);font-size:30px;line-height:1;animation:feRise var(--dur) ease-out forwards;will-change:transform,opacity}
 @keyframes feRise{0%{transform:translate(0,0) scale(.6);opacity:0}12%{opacity:1;transform:translate(0,-30px) scale(1)}55%{transform:translate(var(--sway),-200px) scale(1.05)}100%{transform:translate(calc(var(--sway) * -1),-420px) scale(.9);opacity:0}}
+
+/* overlapping emoji stack */
+.reactemo{display:flex;align-items:center;letter-spacing:0}
+.reactemo i{width:30px;height:30px;border-radius:50%;background:var(--card);border:2px solid var(--panel);box-shadow:0 1px 2px rgba(38,48,38,.15);display:grid;place-items:center;font-style:normal;font-size:16px;margin-left:-10px}
+.reactemo i:first-child{margin-left:0}
