@@ -31,7 +31,8 @@
       "styles.css",
       "app.js",
       "data.js",
-      "assets/**"
+      "assets/**",
+      "vendor/**"
     ]
   }
 }
