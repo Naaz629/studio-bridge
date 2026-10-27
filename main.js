@@ -7,6 +7,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1280, height: 820, minWidth: 1000, minHeight: 640,
     backgroundColor: '#f5f5f7',
+    icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     ...(isMac
       ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 16 }, vibrancy: 'sidebar' }
       : { frame: false }),
@@ -22,6 +23,7 @@ ipcMain.on('win', (e, action) => {
   else if (action === 'min') w.minimize();
   else if (action === 'max') w.isMaximized() ? w.unmaximize() : w.maximize();
 });
+app.setAppUserModelId('edu.studio.bridge');
 app.whenReady().then(() => {
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });

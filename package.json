@@ -7,6 +7,31 @@
     "start": "electron .",
     "dist:mac": "electron-builder --mac"
   },
-  "devDependencies": { "electron": "^33.0.0", "electron-builder": "^25.0.0" },
-  "build": { "appId": "edu.studio.bridge", "productName": "Studio Bridge", "mac": { "category": "public.app-category.education", "target": "dmg" } }
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "edu.studio.bridge",
+    "productName": "Studio Bridge",
+    "mac": {
+      "category": "public.app-category.education",
+      "target": "dmg",
+      "icon": "assets/icon.png"
+    },
+    "icon": "assets/icon.png",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "styles.css",
+      "app.js",
+      "data.js",
+      "assets/**"
+    ]
+  }
 }
