@@ -47,8 +47,7 @@ function botbar() {
   const b = $('#botbar'), s = S();
   b.style.display = V === 'live' ? '' : 'none';
   b.className = 'botbar' + (L.plan ? ' open' : '');
-  b.innerHTML = `${L.plan ? planStrip(slidesFor(s), s) : ''}
-  <div class="barrow">${L.plan ? `<div class="ptab flip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Session plan</span><button class="px" data-a="toggleplan" aria-label="Close session plan">✕</button></div>` : '<button class="bb planbtn" data-a="toggleplan" aria-pressed="false">Session plan ▴</button>'}<span class="spacer"></span>
+  b.innerHTML = `<div class="barrow">${L.plan ? `<div class="ptab flip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Session plan</span><button class="px" data-a="toggleplan" aria-label="Close session plan">✕</button></div>` : '<button class="bb planbtn" data-a="toggleplan" aria-pressed="false">Session plan ▴</button>'}<span class="spacer"></span>
   <button class="bb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}">Activity <span class="bdg" id="bdg">${unanswered()}</span></button>
   <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i>${e.e}</i>`).join("")}</span></span></div>`;
 }
@@ -87,7 +86,7 @@ function planStrip(sl, s) {
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek];
   return `<div class="sess2 ${L.qopen ? '' : 'qclosed'}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div><span class="livetag"><i></i>LIVE SESSION</span></div>
-  <div class="stagebox" data-drop="${s.slideIdx}">${A ? actCard() : slideCard(sl, s)}</div></section>
+  <div class="stagebox" data-drop="${s.slideIdx}">${A ? actCard() : slideCard(sl, s)}</div>${L.plan ? planStrip(sl, s) : ''}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside></div>`;
 }
 function renderQP() {

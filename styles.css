@@ -438,3 +438,11 @@ h1.serif{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:
 .slidewrap2 .snav{width:min(100cqw,calc((100cqh - 40px) * 1.77778))}
 .stagebox .actcard{width:min(100cqw,calc((100cqh - 40px) * 1.77778))}
 .rightcol{padding:16px 16px 14px}
+
+/* ===== Q&A column runs down to the bar; the plan sits only under the slide ===== */
+.win{--dock:#fffaf6;--strip:#efe6df}
+.left .plan2{margin:0 -14px -10px;background:var(--dock);border-top:1px solid var(--line);flex:none}
+.left .planbody{padding:12px 24px 12px}
+.botbar{height:auto}
+.botbar.open .barrow{background:var(--strip)}
+.rightcol{align-self:stretch}
