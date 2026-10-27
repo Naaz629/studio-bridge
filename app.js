@@ -159,7 +159,7 @@ function attach(i, type) {
 }
 function renderSlide() {
   const s = subj(), sl = s.slides[s.current];
-  $('#weekTitle').textContent = `Week ${state.week}: Persona`;
+  $('#weekTitle').textContent = s.isGrad ? `Week ${state.week}: ${GRAD.topics[state.week][0]}` : `Week ${state.week}: Persona`;
   $('#slideTitle').textContent = sl.title;
   $('#slideBody').textContent = sl.body + (sl.activities.length ? ` · Activities: ${sl.activities.join(', ')}` : '');
   $('#slideCount').textContent = `Slide ${s.current + 1}/${s.slides.length}`;
@@ -235,8 +235,8 @@ $$('[data-open=qa]').forEach(b => b.onclick = openQA);
 /* ---------- overview ---------- */
 function renderOverview() {
   const sel = $('#weekSelect');
-  sel.innerHTML = Array.from({ length: 8 }, (_, i) => `<option value="${i + 1}" ${state.week === i + 1 ? 'selected' : ''}>Week ${i + 1}</option>`).join('');
-  const w = subj().weeks[state.week];
+  sel.innerHTML = Array.from({ length: subj().isGrad ? 13 : 8 }, (_, i) => `<option value="${i + 1}" ${state.week === i + 1 ? 'selected' : ''}>Week ${i + 1}</option>`).join('');
+  const w = subj().weeks[Math.min(state.week, subj().isGrad ? 13 : 8)];
   $('#ov-insight').innerHTML = w.los.map((lo, i) => {
     const cls = lo.pct >= 70 ? 'ok' : lo.pct >= 40 ? 'mid' : 'low';
     const txt = lo.pct >= 70 ? 'Understood' : lo.pct >= 40 ? 'Partly understood' : 'Not yet understood';
@@ -247,12 +247,12 @@ function renderOverview() {
   renderArtefacts();
 }
 function renderArtefacts() {
-  const w = subj().weeks[state.week];
+  const w = subj().weeks[Math.min(state.week, subj().isGrad ? 13 : 8)];
   $('#ov-artefacts').innerHTML = `<div class="art-tools"><label class="switch"><input type="checkbox" id="anonToggle" ${state.anon ? 'checked' : ''}> Anonymise student names</label><span class="muted small">${w.artefacts.length} uploads · Week ${state.week}</span></div>
     <div class="art-grid">${w.artefacts.map((a, i) => `<div class="art"><div class="thumb">${a.icon}</div><div class="meta"><b>${esc(a.title)}</b><div class="muted small">${state.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(a.name)}</div></div></div>`).join('')}</div>`;
   $('#anonToggle').onchange = e => { state.anon = e.target.checked; renderArtefacts(); };
 }
-$('#weekSelect').onchange = e => { state.week = +e.target.value; renderOverview(); renderSlide(); };
+$('#weekSelect').onchange = e => { state.week = +e.target.value; syncGradWeek(); renderOverview(); renderSlide(); renderPlan(); };
 $$('#ovTabs button').forEach(b => b.onclick = () => {
   $$('#ovTabs button').forEach(x => x.classList.toggle('active', x === b));
   $('#ov-insight').hidden = b.dataset.ov !== 'insight';
@@ -260,8 +260,9 @@ $$('#ovTabs button').forEach(b => b.onclick = () => {
 });
 
 /* ---------- boot ---------- */
-function renderAll() { renderSubjectMenu(); renderEmoji(); renderPlan(); renderSlide(); renderQaBadge(); if (!$('#view-overview').hidden) renderOverview(); }
-renderAll();
+function syncGradWeek() { const s = subj(); if (s.isGrad && s.gradWeek !== state.week) { s.gradWeek = state.week; s.slides = gradSlides(state.week); s.current = 0; } }
+function renderAll() { syncGradWeek(); renderSubjectMenu(); renderEmoji(); renderPlan(); renderSlide(); renderQaBadge(); if (!$('#view-overview').hidden) renderOverview(); }
+function boot() { state.subjects.unshift(makeGradStudio()); state.subjectIdx = 0; renderAll(); }
 
 /* ---------- window controls (non-mac) ---------- */
 if (window.shell && window.shell.platform !== 'darwin') {
