@@ -122,7 +122,7 @@ function renderQP() {
   const el = $('#qp'); if (!el) return;
   const s = S(), list = [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   el.innerHTML = `<div class="qh"><small>Activity</small><h2>Questions &amp; answers</h2></div>
-  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id, en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ">
+  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id, en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''}">
     <div class="qwrap"><button class="qrow" data-a="qopen" data-q="${q.id}"><span class="qn">${pad(i + 1)}</span><span class="qtxt"><span class="qt">${q.st !== 'open' ? '✓ ' : ''}${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</span></button>
     ${q.up ? `<span class="asked" title="${q.up} students asked">${q.up}</span>` : ''}</div>
     ${open ? `<div class="qd">
