@@ -241,7 +241,7 @@ function loPanel(o) {
        <div class="anslist">${pg.answers.map((a, i) => `<div class="ans2 ${a.ok ? 'good' : 'gap'}"><span class="ansmark">${a.ok ? '✓' : '!'}</span><div><b>${esc(who(a.who, i))}</b><p>${esc(a.en || a.t)}</p>${a.lang ? `<small>Translated from ${a.lang}: “${esc(a.t)}”</small>` : ''}</div></div>`).join('')}</div>`
     : `<div class="qahead"><b>${esc(pg.title)}</b><span>${esc(pg.topic)}</span></div>
        <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}</small>` : ''}</div></div>`; }).join('')}</div>`;
-  return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><span>Week ${O.w}</span><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
+  return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
   <section class="losec"><h4>Class insight</h4>${insBody}</section>
   <section class="losec"><h4>Most students are stuck on</h4><div class="stuckrow"><div><b>${esc(topic)}</b><p>${esc(why)}</p></div><div class="stuckn"><b>${stuckN}</b><small>of ${o.total} ${o.unit}</small></div></div></section>
