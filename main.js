@@ -48,6 +48,14 @@ function createWindow() {
             const o = r.html ? parseUnitOutline(r.html, r.url) : null;
             out.unit = { refusedOtherSite: bad.error, refusedJunk: bad2.error, fetched: !!r.html, bytes: r.html ? r.html.length : 0, code: o && o.code, name: o && o.name, term: o && o.term, weeks: o && Object.keys(o.weeks).length, outcomes: o && Object.keys(o.ulo).length, assessments: o && o.assess.length, week6: o && JSON.stringify(o.weeks[6].tut) };
           }
+          if (${JSON.stringify(!!process.env.STUDIO_TEST_INSIGHT)}) {
+            const sleep2 = ms => new Promise(r => setTimeout(r, ms));
+            O.w = 6; O.s = 'tut'; V = 'ov'; O.open = null; render();
+            const o = weekOutcomes().outs[0]; O.open = o.id; render();
+            const t0 = Date.now(); while ((o.insight || {}).state === 'pending' && Date.now() - t0 < 170000) await sleep2(1000);
+            const panel = document.querySelector('.lopanel');
+            out.insight = { seconds: Math.round((Date.now() - t0) / 1000), state: o.insight && o.insight.state, summary: o.insight && o.insight.summary, stuck: o.insight && o.insight.stuck, why: o.insight && o.insight.why, error: o.insight && o.insight.error, shownInPanel: panel ? panel.querySelector('.insight-text').textContent : null, stuckNumber: panel ? panel.querySelector('.stuckn b').textContent : null };
+          }
           return out;
         })()`;
         report = await win.webContents.executeJavaScript(code);
@@ -238,6 +246,57 @@ ipcMain.handle('unit:fetch', async (e, raw) => {
     if (!r.ok) return { error: 'The page returned an error (' + r.status + ').' };
     return { html: await r.text(), url: u.href };
   } catch { return { error: 'Could not reach the page. Check the internet connection.' }; }
+});
+/* a short structured answer from whichever AI is switched on (used for the class insight) */
+async function aiAsk(system, user, schema) {
+  const cfg = aiLoad();
+  try {
+    if (cfg.provider === 'ollama') {
+      const url = (process.env.STUDIO_OLLAMA_URL || cfg.ollamaUrl).replace(/[/]$/, '');
+      const res = await fetch(url + '/api/chat', { method: 'POST', signal: AbortSignal.timeout(180000), headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model: cfg.ollamaModel, stream: false, format: schema, options: { temperature: 0.3 }, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] }) });
+      if (res.status === 404) return { error: `The model "${cfg.ollamaModel}" is not downloaded yet.` };
+      if (!res.ok) return { error: `Ollama returned an error (${res.status}).` };
+      const j = pickJSON(((await res.json()).message || {}).content);
+      return j ? { json: j } : { error: 'The local model did not reply in the expected format.' };
+    }
+    if (cfg.provider === 'anthropic' && cfg.key) {
+      const base = (process.env.STUDIO_AI_URL || 'https://api.anthropic.com').replace(/[/]$/, '');
+      const res = await fetch(base + '/v1/messages', { method: 'POST', signal: AbortSignal.timeout(60000),
+        headers: { 'content-type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: cfg.model, max_tokens: 600, system, messages: [{ role: 'user', content: user }] }) });
+      if (!res.ok) return { error: res.status === 401 ? 'The API key was rejected.' : `The AI service returned an error (${res.status}).` };
+      const j = pickJSON(((await res.json()).content || []).map(c => c.text || '').join(''));
+      return j ? { json: j } : { error: 'The AI reply was not in the expected format.' };
+    }
+    return { off: true, error: 'AI is turned off.' };
+  } catch (e) {
+    return { error: e.name === 'TimeoutError' ? 'The AI took too long to answer.' : cfg.provider === 'ollama' ? 'Ollama is not running. Start the Ollama app, then try again.' : 'Could not reach the AI service.' };
+  }
+}
+const INSIGHT_SYSTEM = `You help a university design tutor read class results for ONE learning outcome. Use plain, simple English and short sentences. Use only the data you are given. Never name individual students.
+Reply with JSON only: {"summary":"...","stuck":"...","why":"..."}
+- summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the numbers. Say how many students are stuck at the weakest level.
+- stuck: the idea most students are stuck on, as a short phrase (at most 8 words). It MUST be about the weakest level named in the data.
+- why: one short sentence on the most likely reason, based on the notes and the student answers.`;
+const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' } } };
+ipcMain.handle('ai:insight', async (e, p = {}) => {
+  const lv = (p.levels || []).map(l => `- ${l.label}: ${l.n} of ${p.total} students (${l.src})`).join(String.fromCharCode(10));
+  const notes = (p.notes || []).slice(0, 8).map(n => '- ' + String(n).slice(0, 140)).join(String.fromCharCode(10));
+  const takes = (p.takes || []).slice(0, 4).map(n => '- "' + String(n).slice(0, 160) + '"').join(String.fromCharCode(10));
+  const user = `Learning outcome (${p.lo}): ${p.out}
+Week ${p.week}. Class size: ${p.total}.
+Weakest level: ${p.weakest} (${p.stuckN} of ${p.total} students are stuck here).
+How many students got it right at each level:
+${lv}
+What the tutor noticed:
+${notes}
+What some students wrote:
+${takes}`;
+  const r = await aiAsk(INSIGHT_SYSTEM, user, INSIGHT_SCHEMA);
+  if (!r.json) return r;
+  const clip = (t, n) => String(t || '').trim().slice(0, n);
+  return { summary: clip(r.json.summary, 360), stuck: clip(r.json.stuck, 80), why: clip(r.json.why, 220) };
 });
 ipcMain.handle('ai:status', () => aiStatus());
 ipcMain.handle('ai:save', (e, opts) => aiSave(opts));

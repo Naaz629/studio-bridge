@@ -786,3 +786,21 @@ button.qtxt{padding-top:12px}
 .take{border-top:1px solid var(--line);padding-top:6px}.take:first-of-type{border-top:0;padding-top:0}
 .take b{font-size:12px}.take p{margin:2px 0 0;font-size:12.5px;line-height:1.45}.take small{color:var(--muted);font-size:10.5px}
 @media (max-width:1000px){.ovgrid{grid-template-columns:1fr}.locard{left:4%;width:92%}}
+
+/* ===== LO panel docked on the right of the Overview ===== */
+.ovgrid{grid-template-rows:minmax(0,1fr)}
+.ovpanel,.lopanel{min-height:0;overflow:auto}
+.lopanel{border:2px solid #4f7036;background:#c6e8a8;border-radius:14px;padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px;min-width:0;animation:rise .2s ease}
+.lopanel .lochead{display:flex;align-items:center;gap:14px}
+.lopanel .lochead b{font-size:20px;font-family:var(--serif);font-weight:400}.lopanel .lochead span{margin-left:auto;font-family:var(--serif);font-size:16px}
+.lopanel .losec h4{text-align:left}
+.insight-text{margin:0;font-size:14px;line-height:1.55}
+.stuckrow{display:flex;gap:16px;align-items:center;justify-content:space-between}
+.stuckrow b{font-size:15px}.stuckrow p{margin:3px 0 0;font-size:13px;line-height:1.45;color:var(--ink-2)}
+.stuckn{flex:none;display:flex;flex-direction:column;align-items:center;min-width:78px;background:var(--live);color:#fff;border-radius:14px;padding:8px 10px}
+.stuckn b{font-size:28px;line-height:1;font-family:var(--serif);font-weight:400}.stuckn small{font-size:10px;opacity:.9;margin-top:2px;text-align:center}
+.qasec{padding:0}
+.qatoggle{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 14px;font-family:var(--serif);font-size:17px;text-align:left}
+.qatoggle:hover{background:rgba(255,255,255,.6);border-radius:8px}
+.qabody{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px}
+.qabody h5{margin:8px 0 0;font-family:var(--serif);font-weight:400;font-size:16px}

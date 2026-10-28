@@ -15,7 +15,7 @@ let V = 'live';
 let si = 0; // subject index
 const S = () => SUBJECTS[si];
 const L = { open: null, reply: null, plan: true, qopen: true, react: false, subj: false, menu: false, dragging: false };
-const O = { w: 6, s: 'tut', open: null, q: '', tab: 'lo', anon: false };
+const O = { qa: false, w: 6, s: 'tut', open: null, q: '', tab: 'lo', anon: false };
 let A = null; // running activity { type, q }
 let qid = 100;
 
@@ -176,20 +176,45 @@ function loBox(o, open) {
     <span class="lomini">${lv.map(([k, [n]]) => `<span class="lm" title="${LVL[k][0]}: ${n} of ${o.total}"><i style="width:${Math.round(n / o.total * 100)}%;background:${ST[lvState(n, o.total)][1]}"></i></span>`).join('')}</span>
   </button></div>`;
 }
-function loCard(o) {
-  const s = S(), anon = O.anon, nm = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
+/* the learning-outcome panel docks on the right of the Overview (no overlay): an AI class insight, who is stuck and why, then a section that opens to the questions and answers */
+const STUCK_PHRASE = { k: 'Recalling the main idea', a: 'Using the idea in their own project', e: 'Explaining why it matters' };
+function loTakes(o) { return shuffled(SAMPLES.map((_, k) => k), hash(o.id)).slice(0, 3); }
+function ensureInsight(o) {
+  if (o.insight) return o.insight;
+  const ai = window.shell && window.shell.ai;
+  if (!ai || !ai.insight) return (o.insight = { state: 'off', error: 'The AI summary runs in the desktop app.' });
+  o.insight = { state: 'pending' };
   const lv = Object.entries(o.lv);
-  const takes = shuffled(SAMPLES.map((_, k) => k), hash(o.id)).slice(0, 3);
-  return `<aside class="locard" role="dialog" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><span>Week ${O.w}</span><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
-  <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
-  <section class="losec"><h4>Questions &amp; Answer</h4>
+  const weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
+  ai.insight({ weakest: LVL[weak[0]][0] + ' (' + LVL[weak[0]][1].toLowerCase() + ')', stuckN: o.total - weak[1][0], lo: o.lo, out: S().ulo[o.lo] || o.out, week: O.w, total: o.total,
+    levels: lv.map(([k, [n, src]]) => ({ label: LVL[k][0], n, src })),
+    notes: [...new Set(o.who.map(w => w[2]))], takes: loTakes(o).map(k => SAMPLES[k].en || SAMPLES[k].t) })
+    .then(r => { o.insight = r.summary ? { state: 'ready', summary: r.summary, stuck: r.stuck, why: r.why } : { state: r.off ? 'off' : 'error', error: r.error }; })
+    .catch(e => { o.insight = { state: 'error', error: e.message }; })
+    .then(() => { if (V === 'ov' && O.open === o.id) render(); });
+  return o.insight;
+}
+function loPanel(o) {
+  const s = S(), anon = O.anon, nm = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
+  const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
+  const stuckN = o.total - weak[1][0], ins = ensureInsight(o);
+  const topic = ins.state === 'ready' && ins.stuck ? ins.stuck : STUCK_PHRASE[weak[0]];
+  const why = ins.state === 'ready' && ins.why ? ins.why : o.gap;
+  const insBody = ins.state === 'pending' ? '<p class="aiflag busy">✦ The AI is reading the class results…</p>'
+    : ins.state === 'ready' ? `<p class="insight-text">${esc(ins.summary)}</p><small class="muted">✦ AI summary · based on this week's results</small>`
+    : `<p class="insight-text muted">${ins.state === 'off' ? 'AI is turned off, so there is no written summary.' : 'The AI could not write the summary: ' + esc(ins.error || '')}</p><div class="qacts">${ins.state === 'off' ? '<button class="sm p" data-a="aisettings">✦ Choose AI</button>' : '<button class="sm p" data-a="oinsightretry">↻ Try again</button>'}</div>`;
+  const takes = loTakes(o);
+  const qa = O.qa ? `<div class="qabody">
     ${lv.map(([k, [n, src]]) => `<div class="qarow"><span class="qk">${LVL[k][0]}</span><span class="qbar"><i style="width:${Math.round(n / o.total * 100)}%;background:${ST[lvState(n, o.total)][1]}"></i></span><span class="qn2">${n}/${o.total}</span><small>${esc(src)}</small></div>`).join('')}
-    <p class="logap"><b>Where it breaks:</b> ${esc(o.gap)}</p>
     <div class="lostu">${o.who.map(([n, l, note], i) => `<div><b>${esc(nm(n, i))}</b> <span class="lvtag">Stuck at: ${LVL[l][0]}</span><small>${esc(note)}</small></div>`).join('')}</div>
-  </section>
-  <section class="losec"><h4>Your take</h4>
+    <h5>Your take</h5>
     ${takes.map((k, i) => { const sm = SAMPLES[k]; return `<div class="take"><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}</small>` : ''}</div>`; }).join('')}
-  </section></aside>`;
+  </div>` : '';
+  return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><span>Week ${O.w}</span><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
+  <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
+  <section class="losec"><h4>Class insight</h4>${insBody}</section>
+  <section class="losec"><h4>Most students are stuck on</h4><div class="stuckrow"><div><b>${esc(topic)}</b><p>${esc(why)}</p></div><div class="stuckn"><b>${stuckN}</b><small>of ${o.total} ${o.unit}</small></div></div></section>
+  <section class="losec qasec"><button class="qatoggle" data-a="oqa" aria-expanded="${!!O.qa}"><span>Questions &amp; Answer</span><i>${O.qa ? '▴' : '▾'}</i></button>${qa}</section></aside>`;
 }
 function overview() {
   const s = S(), { W, key, outs } = weekOutcomes();
@@ -200,9 +225,8 @@ function overview() {
     <div class="ovgrid">
       <section class="ovpanel"><div class="ovhead"><h2>Student Activity</h2><div class="seg2">${Object.entries(W.sessions).map(([k, v]) => `<button data-ss="${k}" aria-pressed="${k === key}">${v.name}</button>`).join('')}</div></div>
         <div class="loscroll">${outs.map(o => loBox(o, open && open.id === o.id)).join('')}</div></section>
-      <section class="ovpanel"><div class="ovhead"><h2>Artefacts</h2></div>${artefactsHTML()}</section>
+      ${open ? loPanel(open) : `<section class="ovpanel"><div class="ovhead"><h2>Artefacts</h2></div>${artefactsHTML()}</section>`}
     </div>
-    ${open ? loCard(open) : ''}
   </div>`;
 }
 
@@ -393,7 +417,9 @@ document.addEventListener('click', e => {
     case 'aicheck': checkOllama(); return;
     case 'olpick': { const i = document.getElementById('olModel'); if (i) { i.value = a.dataset.m; checkOllama(); } return; }
     case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('Saved key removed.'); }); return;
-    case 'olo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
+    case 'olo': O.open = O.open === a.dataset.o ? null : a.dataset.o; O.qa = false; break;
+    case 'oqa': O.qa = !O.qa; break;
+    case 'oinsightretry': { const o = weekOutcomes().outs.find(x => x.id === O.open); if (o) o.insight = null; break; }
     case 'oloclose': O.open = null; break;
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
     case 'otab': O.tab = a.dataset.t; break;
