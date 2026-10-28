@@ -169,12 +169,11 @@ function weekOutcomes() {
   return { W, key, outs: W.sessions[key].outs };
 }
 function loBox(o, open) {
-  const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m), st = lvState(weak[1][0], o.total);
+  const lv = Object.entries(o.lv);
   return `<div class="lowrap"><div class="lolabel">${esc(o.lo)}</div>
   <button class="lobox ${open ? 'open' : ''}" data-a="olo" data-o="${esc(o.id)}" aria-expanded="${open}">
     <span class="lotext">${esc(S().ulo[o.lo] || o.out)}</span>
     <span class="lomini">${lv.map(([k, [n]]) => `<span class="lm" title="${LVL[k][0]}: ${n} of ${o.total}"><i style="width:${Math.round(n / o.total * 100)}%;background:${ST[lvState(n, o.total)][1]}"></i></span>`).join('')}</span>
-    <span class="lost" style="background:${ST[st][2]};color:${ST[st][1]}">${ST[st][0]}</span>
   </button></div>`;
 }
 function loCard(o) {
