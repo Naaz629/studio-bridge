@@ -744,3 +744,45 @@ button.qtxt{padding-top:12px}
 .planbody .tile.slide:has(img) .tthumb{position:static;display:block;background:none;height:100%}
 .planbody .tile.slide:has(img) .tthumb img{display:block;height:100%;width:auto;object-fit:fill;background:none}
 .planbody .tile.slide:has(img) .tnum{display:none}
+
+/* ===== Overview: Student Activity + Artefacts, LO card opens over both ===== */
+.ovw{display:none}
+.ovw2{position:relative;flex:1;min-height:0;overflow:auto;padding:16px 28px 28px;display:flex;flex-direction:column;gap:12px}
+.ovtop{display:flex;justify-content:space-between;align-items:center}
+.ovunit{font-size:12px;color:var(--muted);letter-spacing:.04em}
+.ovtop select{border:0;background:transparent;font-family:var(--serif);font-size:20px;font-weight:400;cursor:pointer;padding:4px 8px;border-radius:8px}
+.ovtop select:hover{background:var(--tint)}
+.ovgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:28px;flex:1;min-height:0}
+.ovpanel{border:2px solid var(--ink);border-radius:14px;background:var(--card);padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-height:420px;min-width:0}
+.ovhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ovhead h2{margin:0;font-family:var(--serif);font-weight:400;font-size:22px}
+.loscroll{display:flex;flex-direction:column;gap:12px;overflow:auto;min-height:0}
+.lowrap{display:flex;flex-direction:column;gap:4px}
+.lolabel{font-weight:700;font-size:13px;letter-spacing:.04em}
+.lobox{display:grid;grid-template-columns:1fr auto;grid-template-areas:"t s" "m m";gap:10px 12px;align-items:start;text-align:left;border:2px solid var(--ink);border-radius:12px;padding:12px 14px;background:#fff;min-height:112px;transition:background .15s,transform .15s}
+.lobox:hover{background:var(--tint)}.lobox.open{background:#dff0c8}
+.lotext{grid-area:t;font-size:13px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.lobox .lost{grid-area:s;margin:0}
+.lomini{grid-area:m;display:flex;gap:6px;align-self:end}
+.lm{flex:1;height:7px;background:var(--line);border-radius:99px;overflow:hidden}.lm i{display:block;height:100%}
+.ovpanel .art-tools{margin-top:2px}
+.ovpanel .art-grid{overflow:auto;min-height:0;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+/* the green card that overlaps both panels */
+.locard{position:absolute;z-index:20;top:84px;left:max(18%,calc(50% - 280px));width:min(560px,56%);max-height:calc(100% - 110px);overflow:auto;background:#b9e39b;border:2px solid #4f7036;border-radius:6px;box-shadow:0 18px 44px rgba(40,60,30,.28);padding:14px 18px 18px;display:flex;flex-direction:column;gap:10px;animation:rise .22s ease}
+.lochead{display:flex;align-items:center;gap:14px}
+.lochead b{font-size:18px;font-family:var(--serif);font-weight:400}.lochead span{margin-left:auto;font-family:var(--serif);font-size:16px}
+.lochead .x{width:28px;height:28px;border-radius:8px}.lochead .x:hover{background:rgba(0,0,0,.08)}
+.lodesc{margin:0;font-size:12.5px;line-height:1.45;color:#2d3d22}
+.losec{background:rgba(255,255,255,.82);border:1.5px solid #4f7036;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.losec h4{margin:0;font-family:var(--serif);font-weight:400;font-size:17px;text-align:center}
+.qarow{display:grid;grid-template-columns:78px 1fr 46px;gap:4px 10px;align-items:center;font-size:12px}
+.qarow small{grid-column:2/4;color:var(--muted);font-size:10.5px;margin-top:-2px}
+.qbar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}.qbar i{display:block;height:100%}
+.qn2{font-weight:700;text-align:right}
+.logap{margin:2px 0 0;font-size:12px;line-height:1.45}
+.lostu{display:flex;flex-direction:column;gap:6px}
+.lostu>div{font-size:12px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center;border-top:1px solid var(--line);padding-top:6px}
+.lostu small{flex-basis:100%;color:var(--muted)}
+.take{border-top:1px solid var(--line);padding-top:6px}.take:first-of-type{border-top:0;padding-top:0}
+.take b{font-size:12px}.take p{margin:2px 0 0;font-size:12.5px;line-height:1.45}.take small{color:var(--muted);font-size:10.5px}
+@media (max-width:1000px){.ovgrid{grid-template-columns:1fr}.locard{left:4%;width:92%}}

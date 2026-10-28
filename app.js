@@ -162,15 +162,49 @@ function artefactsHTML() {
   return `<div class="art-tools"><label class="switch"><input type="checkbox" data-a="anon" ${O.anon ? 'checked' : ''}> Show anonymously</label><span class="meta">${s.artefacts.length} uploads · Week ${O.w}</span></div>
   <div class="art-grid">${s.artefacts.map(([nm, t, ic], i) => `<div class="art"><div class="thumb">${ic}</div><div class="am"><b>${esc(t)}</b><div class="meta">${O.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(nm)}</div></div></div>`).join('')}</div>`;
 }
+/* Overview: Student Activity (one box per learning outcome) beside Artefacts; an LO opens a green card with its Questions & Answer and Your take */
+function weekOutcomes() {
+  const s = S(), W = s.weeks[O.w] || s.weeks[Object.keys(s.weeks)[0]];
+  const key = W.sessions[O.s] ? O.s : Object.keys(W.sessions)[0];
+  return { W, key, outs: W.sessions[key].outs };
+}
+function loBox(o, open) {
+  const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m), st = lvState(weak[1][0], o.total);
+  return `<div class="lowrap"><div class="lolabel">${esc(o.lo)}</div>
+  <button class="lobox ${open ? 'open' : ''}" data-a="olo" data-o="${esc(o.id)}" aria-expanded="${open}">
+    <span class="lotext">${esc(S().ulo[o.lo] || o.out)}</span>
+    <span class="lomini">${lv.map(([k, [n]]) => `<span class="lm" title="${LVL[k][0]}: ${n} of ${o.total}"><i style="width:${Math.round(n / o.total * 100)}%;background:${ST[lvState(n, o.total)][1]}"></i></span>`).join('')}</span>
+    <span class="lost" style="background:${ST[st][2]};color:${ST[st][1]}">${ST[st][0]}</span>
+  </button></div>`;
+}
+function loCard(o) {
+  const s = S(), anon = O.anon, nm = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
+  const lv = Object.entries(o.lv);
+  const takes = shuffled(SAMPLES.map((_, k) => k), hash(o.id)).slice(0, 3);
+  return `<aside class="locard" role="dialog" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><span>Week ${O.w}</span><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
+  <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
+  <section class="losec"><h4>Questions &amp; Answer</h4>
+    ${lv.map(([k, [n, src]]) => `<div class="qarow"><span class="qk">${LVL[k][0]}</span><span class="qbar"><i style="width:${Math.round(n / o.total * 100)}%;background:${ST[lvState(n, o.total)][1]}"></i></span><span class="qn2">${n}/${o.total}</span><small>${esc(src)}</small></div>`).join('')}
+    <p class="logap"><b>Where it breaks:</b> ${esc(o.gap)}</p>
+    <div class="lostu">${o.who.map(([n, l, note], i) => `<div><b>${esc(nm(n, i))}</b> <span class="lvtag">Stuck at: ${LVL[l][0]}</span><small>${esc(note)}</small></div>`).join('')}</div>
+  </section>
+  <section class="losec"><h4>Your take</h4>
+    ${takes.map((k, i) => { const sm = SAMPLES[k]; return `<div class="take"><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}</small>` : ''}</div>`; }).join('')}
+  </section></aside>`;
+}
 function overview() {
-  const s = S(), W = s.weeks[O.w] || s.weeks[Object.keys(s.weeks)[0]], S2 = W.sessions[O.s] || W.sessions[Object.keys(W.sessions)[0]];
-  return `<div class="ovw"><div class="ovh"><div><div class="eyebrow">Learning outcomes · Week ${O.w}</div><h1 class="serif">${esc(W.title)}</h1><p class="sub">Each session is checked against its unit outcomes: can students <b>know</b>, <b>apply</b> and <b>explain</b> it?</p></div>
-  <select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w}</option>`).join('')}</select></div>
-  <div class="seg2"><button data-a="otab" data-t="lo" aria-pressed="${O.tab === 'lo'}">Class insight</button><button data-a="otab" data-t="art" aria-pressed="${O.tab === 'art'}">Artefacts</button></div>
-  ${O.tab === 'art' ? artefactsHTML() : `
-  <div class="semester card"><div class="k2">Unit outcomes this semester</div><div class="los">${Object.keys(s.ulo).map(lo => { const t = W.trend[lo], na = nextAssess(lo); return `<div class="sem"><div class="semt"><span class="lochip">${lo}</span><span class="lost" style="background:${ST[t][2]};color:${ST[t][1]}">${ST[t][0]}</span></div><p>${esc(s.ulo[lo])}</p><small>${na ? `Next tested: <b>${esc(na[1])}</b> · Week ${na[0]}` : 'No more assessments'}</small></div>`; }).join('')}</div></div>
-  <div class="sesstabs" role="tablist">${Object.entries(W.sessions).map(([k, v]) => `<button role="tab" aria-selected="${O.s === k}" data-ss="${k}"><b>${v.name}</b><small>${v.outs.map(o => o.lo).join(' · ')}</small></button>`).join('')}</div>
-  <p class="topic"><b>${S2.name}:</b> ${esc(S2.topic)}</p><div class="loList">${S2.outs.map(outcomeCard).join('')}</div>`}</div>`;
+  const s = S(), { W, key, outs } = weekOutcomes();
+  if (O.s !== key) O.s = key;
+  const open = outs.find(o => o.id === O.open);
+  return `<div class="ovw2">
+    <div class="ovtop"><span class="ovunit">${esc(s.name)} · ${esc(s.code)}</span><select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w}</option>`).join('')}</select></div>
+    <div class="ovgrid">
+      <section class="ovpanel"><div class="ovhead"><h2>Student Activity</h2><div class="seg2">${Object.entries(W.sessions).map(([k, v]) => `<button data-ss="${k}" aria-pressed="${k === key}">${v.name}</button>`).join('')}</div></div>
+        <div class="loscroll">${outs.map(o => loBox(o, open && open.id === o.id)).join('')}</div></section>
+      <section class="ovpanel"><div class="ovhead"><h2>Artefacts</h2></div>${artefactsHTML()}</section>
+    </div>
+    ${open ? loCard(open) : ''}
+  </div>`;
 }
 
 
@@ -360,6 +394,8 @@ document.addEventListener('click', e => {
     case 'aicheck': checkOllama(); return;
     case 'olpick': { const i = document.getElementById('olModel'); if (i) { i.value = a.dataset.m; checkOllama(); } return; }
     case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('Saved key removed.'); }); return;
+    case 'olo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
+    case 'oloclose': O.open = null; break;
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
     case 'otab': O.tab = a.dataset.t; break;
     case 'anon': O.anon = a.checked; break;
