@@ -15,7 +15,7 @@ let V = 'live';
 let si = 0; // subject index
 const S = () => SUBJECTS[si];
 const L = { open: null, reply: null, plan: true, qopen: true, react: false, subj: false, menu: false, dragging: false };
-const O = { qa: false, w: 6, s: 'tut', open: null, q: '', tab: 'lo', anon: false };
+const O = { qp: 0, w: 6, s: 'tut', open: null, q: '', tab: 'lo', anon: false };
 let A = null; // running activity { type, q }
 let qid = 100;
 
@@ -194,8 +194,39 @@ function ensureInsight(o) {
     .then(() => { if (V === 'ov' && O.open === o.id) render(); });
   return o.insight;
 }
+/* sample class answers for one outcome (until students are connected): each level is a question topic with students' answers under it */
+const ANS_GOOD = {
+  k: [{ t: 'A finding says what the evidence shows.' }, { t: 'It is the main idea from the slide.' }, { t: 'We use evidence, not guesses.' }, { t: 'It is what we saw in the interviews.' }],
+  a: [{ t: 'In my project, users skip long readings, so we made them shorter.' }, { t: '我们用访谈证据重写了问题。', en: 'We rewrote the problem using interview evidence.', lang: 'Chinese' }, { t: 'I tested it with two users from my team.' }, { t: 'We used it to fix our brief.' }],
+  e: [{ t: 'It matters because it shows what users really need.' }, { t: 'It stops us building the wrong thing.' }, { t: 'Because evidence makes our choice stronger.' }, { t: 'Es importante porque muestra la necesidad real.', en: 'It is important because it shows the real need.', lang: 'Spanish' }]
+};
+const ANS_BAD = {
+  k: [{ t: 'Not sure.' }, { t: 'I missed this one.' }, { t: 'I think it is a kind of survey?' }],
+  a: [{ t: 'I could not link it to my project.' }, { t: 'We have not tried it yet.' }, { t: 'No example yet.' }],
+  e: [{ t: 'It is important.' }, { t: 'Because the tutor said so.' }, { t: 'Es importante para el proyecto.', en: 'It is important for the project.', lang: 'Spanish' }]
+};
+const QTOPIC = { k: 'Recalling the main idea', a: 'Using it in your own project', e: 'Explaining why it matters' };
+function loAnswers(o) {
+  if (o.answers) return o.answers;
+  const r = seeded(hash(o.id + 'ans')), team = o.unit === 'teams', out = {};
+  const pool = team ? Array.from({ length: 10 }, (_, i) => 'Team ' + (i + 1)) : NAMES;
+  for (const [k, [n]] of Object.entries(o.lv)) {
+    const shown = Math.min(8, o.total), good = Math.round(n / o.total * shown), names = shuffled(pool.map((_, i) => i), hash(o.id + k));
+    out[k] = Array.from({ length: shown }, (_, i) => {
+      const ok = i < good, bank = (ok ? ANS_GOOD : ANS_BAD)[k];
+      return Object.assign({ who: pool[names[i % pool.length]], ok }, bank[Math.floor(r() * bank.length)]);
+    }).sort(() => r() - .5);
+  }
+  return (o.answers = out);
+}
+function qaPages(o) {
+  const lv = Object.entries(o.lv), ans = loAnswers(o);
+  const pages = lv.map(([k, [n, src]]) => ({ k, title: LVL[k][0], topic: QTOPIC[k], src, n, total: o.total, answers: ans[k] }));
+  pages.push({ k: 'take', title: 'Your take', topic: 'What students wrote in their own words', src: 'Class discussion', answers: null });
+  return pages;
+}
 function loPanel(o) {
-  const s = S(), anon = O.anon, nm = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
+  const s = S(), anon = O.anon;
   const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
   const stuckN = o.total - weak[1][0], ins = ensureInsight(o);
   const topic = ins.state === 'ready' && ins.stuck ? ins.stuck : STUCK_PHRASE[weak[0]];
@@ -203,18 +234,18 @@ function loPanel(o) {
   const insBody = ins.state === 'pending' ? '<p class="aiflag busy">✦ The AI is reading the class results…</p>'
     : ins.state === 'ready' ? `<p class="insight-text">${esc(ins.summary)}</p><small class="muted">✦ AI summary · based on this week's results</small>`
     : `<p class="insight-text muted">${ins.state === 'off' ? 'AI is turned off, so there is no written summary.' : 'The AI could not write the summary: ' + esc(ins.error || '')}</p><div class="qacts">${ins.state === 'off' ? '<button class="sm p" data-a="aisettings">✦ Choose AI</button>' : '<button class="sm p" data-a="oinsightretry">↻ Try again</button>'}</div>`;
-  const takes = loTakes(o);
-  const qa = O.qa ? `<div class="qabody">
-    ${lv.map(([k, [n, src]]) => `<div class="qarow"><span class="qk">${LVL[k][0]}</span><span class="qbar"><i style="width:${Math.round(n / o.total * 100)}%;background:${ST[lvState(n, o.total)][1]}"></i></span><span class="qn2">${n}/${o.total}</span><small>${esc(src)}</small></div>`).join('')}
-    <div class="lostu">${o.who.map(([n, l, note], i) => `<div><b>${esc(nm(n, i))}</b> <span class="lvtag">Stuck at: ${LVL[l][0]}</span><small>${esc(note)}</small></div>`).join('')}</div>
-    <h5>Your take</h5>
-    ${takes.map((k, i) => { const sm = SAMPLES[k]; return `<div class="take"><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}</small>` : ''}</div>`; }).join('')}
-  </div>` : '';
+  const pages = qaPages(o), pi = Math.max(0, Math.min(O.qp || 0, pages.length - 1)), pg = pages[pi];
+  const who = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
+  const body = pg.answers
+    ? `<div class="qahead"><b>${esc(pg.title)}</b><span>${esc(pg.topic)}</span><small>${esc(pg.src)} · ${pg.n} of ${pg.total} got it right</small></div>
+       <div class="anslist">${pg.answers.map((a, i) => `<div class="ans2 ${a.ok ? 'good' : 'gap'}"><span class="ansmark">${a.ok ? '✓' : '!'}</span><div><b>${esc(who(a.who, i))}</b><p>${esc(a.en || a.t)}</p>${a.lang ? `<small>Translated from ${a.lang}: “${esc(a.t)}”</small>` : ''}</div></div>`).join('')}</div>`
+    : `<div class="qahead"><b>${esc(pg.title)}</b><span>${esc(pg.topic)}</span></div>
+       <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}</small>` : ''}</div></div>`; }).join('')}</div>`;
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><span>Week ${O.w}</span><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
   <section class="losec"><h4>Class insight</h4>${insBody}</section>
   <section class="losec"><h4>Most students are stuck on</h4><div class="stuckrow"><div><b>${esc(topic)}</b><p>${esc(why)}</p></div><div class="stuckn"><b>${stuckN}</b><small>of ${o.total} ${o.unit}</small></div></div></section>
-  <section class="losec qasec"><button class="qatoggle" data-a="oqa" aria-expanded="${!!O.qa}"><span>Questions &amp; Answer</span><i>${O.qa ? '▴' : '▾'}</i></button>${qa}</section></aside>`;
+  <section class="losec qasec"><div class="qanav"><button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button><h4>Questions &amp; Answer</h4><span class="qacount">${pi + 1} / ${pages.length}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === pages.length - 1 ? 'disabled' : ''}>›</button></div>${body}</section></aside>`;
 }
 function overview() {
   const s = S(), { W, key, outs } = weekOutcomes();
@@ -417,8 +448,9 @@ document.addEventListener('click', e => {
     case 'aicheck': checkOllama(); return;
     case 'olpick': { const i = document.getElementById('olModel'); if (i) { i.value = a.dataset.m; checkOllama(); } return; }
     case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('Saved key removed.'); }); return;
-    case 'olo': O.open = O.open === a.dataset.o ? null : a.dataset.o; O.qa = false; break;
-    case 'oqa': O.qa = !O.qa; break;
+    case 'olo': O.open = O.open === a.dataset.o ? null : a.dataset.o; O.qp = 0; break;
+    case 'oqprev': O.qp = Math.max(0, (O.qp || 0) - 1); break;
+    case 'oqnext': O.qp = (O.qp || 0) + 1; break;
     case 'oinsightretry': { const o = weekOutcomes().outs.find(x => x.id === O.open); if (o) o.insight = null; break; }
     case 'oloclose': O.open = null; break;
     case 'openlo': O.open = O.open === a.dataset.o ? null : a.dataset.o; break;
@@ -430,6 +462,12 @@ document.addEventListener('click', e => {
   render();
 });
 $('#burger').addEventListener('click', e => { e.stopPropagation(); L.menu = !L.menu; L.subj = false; courseBtn(); mainMenu(); });
+document.addEventListener('keydown', e => {
+  if (V !== 'ov' || !O.open || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+  const o = weekOutcomes().outs.find(x => x.id === O.open); if (!o) return;
+  O.qp = Math.max(0, Math.min(qaPages(o).length - 1, (O.qp || 0) + (e.key === 'ArrowRight' ? 1 : -1))); render(); e.preventDefault();
+});
 document.addEventListener('submit', e => {
   e.preventDefault(); const q = S().qs.find(x => x.id == e.target.dataset.q), v = e.target.querySelector('input').value.trim();
   if (!v) return; q.ans = v; q.st = 'ans'; L.reply = null; toast('Answer posted to the class'); renderQP();
