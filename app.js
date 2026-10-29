@@ -457,11 +457,26 @@ document.addEventListener('click', e => {
     case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev':
-      if (A && A.type === 'Artefact upload') { const n = artItems(s).length; A.q = ((A.q || 0) - 1 + n) % n; A.hold = Date.now(); }
+      if (A && A.type === 'Artefact upload') { const n = artItems(s).length; A.q = Math.max(0, (A.q || 0) - 1); A.hold = Date.now(); }
       else if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1);
       break;
     case 'next':
-      if (A && A.type === 'Artefact upload') { const n = artItems(s).length; A.q = ((A.q || 0) + 1) % n; A.hold = Date.now(); }
+      if (A && A.type === 'Artefact upload') {
+        const n = artItems(s).length; A.hold = Date.now();
+        if ((A.q || 0) < n - 1) A.q = (A.q || 0) + 1;
+        else if (!L.warnNext) {
+          /* last artefact: warn once before moving on to the next slide */
+          L.warnNext = true; toast('This is the last artefact. Press the arrow again to move to the next slide.');
+          document.querySelectorAll('.navarrow.r').forEach(b => b.classList.add('warn'));
+          clearTimeout(L.warnT); L.warnT = setTimeout(() => { L.warnNext = false; document.querySelectorAll('.navarrow.r').forEach(b => b.classList.remove('warn')); }, 6000);
+          return;
+        } else {
+          L.warnNext = false;
+          const f = flowOf(s); let np = s.pos + 1; while (np < f.length && f[np].k === 'a') np++;
+          if (np >= f.length) { toast('This is the last slide.'); return; }
+          goTo(s, np);
+        }
+      }
       else if (A && A.q < actQs().length - 1) A.q++;
       else if (A && A.type !== 'Artefact upload' && s.pos < flowOf(s).length - 1 && !L.warnNext) {
         /* last question: warn once so nobody skips to the next slide by accident */
