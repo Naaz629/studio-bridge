@@ -830,3 +830,7 @@ button.qtxt{padding-top:12px}
 .cdeditbtn{position:absolute;right:18px;bottom:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.8);border:1px solid var(--line);font-size:16px;display:grid;place-items:center;z-index:2}
 .cdeditbtn:hover{background:#fff}
 .planbody .tiles{position:relative}
+/* while the Studio flow window is open, its tab is not shown; clicking the window slides it back down */
+.botbar.open #planbtn{visibility:hidden;pointer-events:none}
+.left .plan2:not(.collapsed){cursor:pointer}
+.left .plan2 .tile,.left .plan2 .achip2,.left .plan2 button{cursor:pointer}
