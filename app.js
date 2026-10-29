@@ -199,12 +199,12 @@ function ensureInsight(o) {
 const ANS_GOOD = {
   k: [{ t: 'A finding says what the evidence shows.' }, { t: 'It is the main idea from the slide.' }, { t: 'We use evidence, not guesses.' }, { t: 'It is what we saw in the interviews.' }],
   a: [{ t: 'In my project, users skip long readings, so we made them shorter.' }, { t: '我们用访谈证据重写了问题。', en: 'We rewrote the problem using interview evidence.', lang: 'Chinese' }, { t: 'I tested it with two users from my team.' }, { t: 'We used it to fix our brief.' }],
-  e: [{ t: 'It matters because it shows what users really need.' }, { t: 'It stops us building the wrong thing.' }, { t: 'Because evidence makes our choice stronger.' }, { t: 'Es importante porque muestra la necesidad real.', en: 'It is important because it shows the real need.', lang: 'Spanish' }]
+  e: [{ t: 'It matters because it shows what users really need.' }, { t: 'It stops us building the wrong thing.' }, { t: 'Because evidence makes our choice stronger.' }, { t: '这很重要，因为它显示了真实的需求。', en: 'It is important because it shows the real need.', lang: 'Chinese' }]
 };
 const ANS_BAD = {
   k: [{ t: 'Not sure.' }, { t: 'I missed this one.' }, { t: 'I think it is a kind of survey?' }],
   a: [{ t: 'I could not link it to my project.' }, { t: 'We have not tried it yet.' }, { t: 'No example yet.' }],
-  e: [{ t: 'It is important.' }, { t: 'Because the tutor said so.' }, { t: 'Es importante para el proyecto.', en: 'It is important for the project.', lang: 'Spanish' }]
+  e: [{ t: 'It is important.' }, { t: 'Because the tutor said so.' }, { t: '这对项目很重要。', en: 'It is important for the project.', lang: 'Chinese' }]
 };
 const QTOPIC = { k: 'Recalling the main idea', a: 'Using it in your own project', e: 'Explaining why it matters' };
 function loAnswers(o) {
@@ -227,7 +227,7 @@ function qaPages(o) {
   return pages;
 }
 /* answers written in another language are shown in English first; the original is one tap away */
-function origHTML(t, lang) { return `<details class="orig"><summary>Original · ${esc(lang)}</summary><span lang="${lang === 'Chinese' ? 'zh-Hans' : ''}">${esc(t)}</span></details>`; }
+function origHTML(t, lang) { return `<details class="orig"><summary>Original</summary><span lang="${'zh-Hans'}">${esc(t)}</span></details>`; }
 function loPanel(o) {
   const s = S(), anon = O.anon;
   const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);

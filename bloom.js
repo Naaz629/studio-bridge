@@ -129,9 +129,9 @@ const SAMPLES = [
   { t: 'I think the assumption is that everyone already knows who the users are.' },
   { t: '我们应该只用访谈证据来重写这个假设。', en: 'We should rewrite this assumption using only interview evidence.', lang: 'Chinese' },
   { t: 'The evidence doesn\'t show why they skip it, only that they do.' },
-  { t: 'Creo que necesitamos más datos antes de decidir.', en: 'I think we need more data before deciding.', lang: 'Spanish' },
+  { t: '我认为决定之前我们需要更多数据。', en: 'I think we need more data before deciding.', lang: 'Chinese' },
   { t: 'We could test it with two more interviews first.' },
-  { t: 'Si le brief change, on doit relire les preuves.', en: 'If the brief changes, we must re-read the evidence.', lang: 'French' }
+  { t: '如果任务书变了，我们必须重新阅读证据。', en: 'If the brief changes, we must re-read the evidence.', lang: 'Chinese' }
 ];
 function ensureRes(q) {
   if (q.res) return q.res;
