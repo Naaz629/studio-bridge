@@ -486,6 +486,7 @@ $('#slideFile').addEventListener('change', async e => {
   }
   if (slides.length) {
     s.uploads = slides; s.upload = files.length === 1 ? files[0].name : `${files.length} files`; s.flow = null;
+    if (window.shell && window.shell.slides) Promise.all(files.map(async f => ({ name: f.name, data: new Uint8Array(await f.arrayBuffer()) }))).then(list => window.shell.slides.save(s.code, list)).catch(() => {});
     const withText = slides.filter(x => x.text).length;
     toast(`Read ${slides.length} slide${slides.length > 1 ? 's' : ''} · ${withText} with text the app can use for questions` + (skipped.length ? ` · skipped ${skipped.join(', ')} (save as PDF or PPTX)` : ''));
   } else toast('Could not read ' + skipped.join(', ') + ' — save it as PDF or PPTX');
@@ -526,6 +527,16 @@ setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Mat
 setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
 
 (typeof BUNDLED_UNITS !== 'undefined' ? BUNDLED_UNITS : []).forEach(o => applyOutline(o, false));
+/* bring back the slides uploaded earlier */
+if (window.shell && window.shell.slides) window.shell.slides.load().then(async saved => {
+  for (const sub of SUBJECTS) {
+    const list = saved[sub.code]; if (!list || !list.length) continue;
+    const slides = [];
+    for (const x of list) { try { const f = new File([x.data], x.name); f._path = x.path; const got = await readSlideFile(f); if (got) slides.push(...got); } catch (e) { console.error(e); } }
+    if (slides.length) { sub.uploads = slides; sub.upload = list.length === 1 ? list[0].name : list.length + ' files'; sub.flow = null; }
+  }
+  render();
+}).catch(() => {});
 render();
 function answersHTML(q) {
   const r = ensureRes(q);
@@ -546,7 +557,7 @@ function cdEmpty(s, f, m, cd) {
     : cd.state === 'off' ? `<div class="cdwait"><b>AI is turned off</b><p>${esc(cd.aiError || '')} Concept checks are written by an AI model so the wording is simple and matches your slide.</p><div class="qacts"><button class="sm p" data-a="aisettings">✦ Choose AI</button>${own}</div></div>`
     : `<div class="cdwait"><b>The AI could not write the questions</b><p>${esc(cd.aiError || 'Something went wrong.')}</p><div class="qacts"><button class="sm p" data-a="cdretry">↻ Try again</button><button class="sm" data-a="aisettings">✦ AI settings</button>${own}</div></div>`;
   return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdtake">Your take</span><span class="spacer"></span><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="cdbody"><h3 class="cdq">${esc(cd.title)}</h3>${body}</div>
+  <div class="cdbody">${body}</div>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
 function cdCard(s, f, m) {

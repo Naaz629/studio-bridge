@@ -91,7 +91,7 @@ async function readPptxAsIs(file, onProgress) {
   const sh = typeof window !== 'undefined' && window.shell;
   if (!sh || !sh.pptxToPdf || !sh.pathFor) return texts;
   try {
-    const fp = sh.pathFor(file); if (!fp) return texts;
+    const fp = file._path || sh.pathFor(file); if (!fp) return texts;
     const r = await sh.pptxToPdf(fp);
     if (!r || !r.data) return texts;
     const pages = await readPdf(new File([r.data], file.name.replace(/.pptx$/i, '.pdf'), { type: 'application/pdf' }), onProgress);

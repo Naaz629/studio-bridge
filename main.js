@@ -325,6 +325,25 @@ ipcMain.handle('ai:generate', (e, payload) => aiGenerate(payload));
 // self-test runs use a throwaway data folder so they never touch the real saved settings
 if (process.env.STUDIO_TEST_OUT) app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'studio-bridge-test-')));
 app.setAppUserModelId('edu.studio.bridge');
+/* uploaded slide files are kept in the app's data folder and come back every time the app opens */
+const slideDir = () => path.join(app.getPath('userData'), 'slides');
+const slideManifest = () => path.join(slideDir(), 'slides.json');
+const readManifest = () => { try { return JSON.parse(fs.readFileSync(slideManifest(), 'utf8')); } catch (e) { return {}; } };
+ipcMain.handle('slides:save', (e, subject, files) => {
+  fs.mkdirSync(slideDir(), { recursive: true });
+  const m = readManifest();
+  (m[subject] || []).forEach(x => fs.unlink(path.join(slideDir(), x.file), () => {}));
+  m[subject] = (files || []).map((f, i) => { const file = String(subject).replace(/[^A-Za-z0-9_-]/g, '') + '-' + Date.now() + '-' + i + path.extname(f.name); fs.writeFileSync(path.join(slideDir(), file), Buffer.from(f.data)); return { name: f.name, file }; });
+  fs.writeFileSync(slideManifest(), JSON.stringify(m));
+  return true;
+});
+ipcMain.handle('slides:load', () => {
+  const m = readManifest(), out = {};
+  for (const [subject, list] of Object.entries(m)) {
+    out[subject] = list.map(x => { const p = path.join(slideDir(), x.file); return fs.existsSync(p) ? { name: x.name, path: p, data: fs.readFileSync(p) } : null; }).filter(Boolean);
+  }
+  return out;
+});
 /* load the local model into memory at start so the first set of questions does not wait for it */
 const warmOllama = () => { try { const c = aiLoad(); if (c.provider !== 'ollama') return; fetch((c.ollamaUrl || OLLAMA_DEFAULT.url).replace(/[/]$/, '') + '/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: c.ollamaModel, keep_alive: '30m' }) }).catch(() => {}); } catch (e) {} };
 app.whenReady().then(() => {
