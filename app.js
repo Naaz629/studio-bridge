@@ -116,7 +116,7 @@ function discussionCard(s, f, m, p) {
 function actQs() {
   if (A.type === 'Concept Development') { const s = S(); return ensureCD(s, s.pos).qs.map(q => q.text); }
   if (A.type === 'Q&A Session') return sortedQs(S()).map(q => q.text);
-  if (A.type === 'Artefact upload') return ['upload'];
+  if (A.type === 'Artefact upload') { const g = S().liveArts || []; return g.length ? g.map(x => x[1]) : ['upload']; }
   return PROMPTS[A.type];
 }
 /* ---------- Q&A Session: full-screen questions with the other students' answers arriving live ---------- */
@@ -151,18 +151,15 @@ function qaCard(s, f, m) {
   ${navOverlay(Math.min(A.q || 0, Math.max(0, sortedQs(s).length - 1)), Math.max(1, sortedQs(s).length), (A.q || 0) > 0 || s.pos > 0, (A.q || 0) < sortedQs(s).length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function qaScroll() {}
-/* ---------- Artefact upload: one screen that tells students to upload; uploads appear here as they arrive ---------- */
+/* ---------- Artefact upload: the uploads play as a full-screen image slideshow, as they arrive ---------- */
 function artefactCard(s, f, m) {
-  const got = s.liveArts || (s.liveArts = []);
-  const nm = n => O.anon ? 'Student' : n;
-  return `<div class="card2 actcard artcard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>Upload your artefact</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="artbody"><div class="artinfo"><b>Students: add your work now.</b><ol><li>Open the Studio Bridge link on your phone or laptop.</li><li>Choose your photo, PDF or file.</li><li>Write your name and a short title.</li></ol><span class="meta">${got.length} uploaded</span></div>
-  <div class="artlive" id="artLive">${artLiveHTML(s)}</div></div>
-  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+  const got = s.liveArts || (s.liveArts = []), at = Math.max(0, Math.min(got.length - 1, A.q || 0));
+  const body = got.length ? artSlideHTML(got[at]) : '<div class="artwait">Upload your artefact now</div>';
+  return `<div class="card2 actcard artcard" style="background:${m.color}"><button class="x artx" data-a="actclose" aria-label="Close activity">✕</button><div class="artshow" id="artLive">${body}</div>
+  ${navOverlay(at, Math.max(1, got.length), at > 0 || s.pos > 0, at < got.length - 1 || s.pos < f.length - 1)}</div>`;
 }
-function artLiveHTML(s) {
-  const got = s.liveArts || [];
-  return got.length ? got.map(([n, t, ic]) => `<div class="art"><div class="thumb">${ic}</div><div class="am"><b>${esc(t)}</b><div class="meta">${esc(O.anon ? 'Student' : n)}</div></div></div>`).join('') : '<div class="none">Waiting for the first upload…</div>';
+function artSlideHTML([n, t, ic]) {
+  return `<div class="artslide"><div class="artimg">${ic}</div><div class="artcap"><b>${esc(t)}</b><span>${esc(n)}</span></div></div>`;
 }
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
@@ -668,6 +665,5 @@ setInterval(() => {
   if (!A || A.type !== 'Artefact upload' || V !== 'live') return;
   const s = S(), got = s.liveArts || (s.liveArts = []), pool = s.artefacts || [];
   if (got.length >= pool.length) return;
-  got.push(pool[got.length]);
-  const l = document.getElementById('artLive'); if (l) { l.innerHTML = artLiveHTML(s); const m = document.querySelector('.artinfo .meta'); if (m) m.textContent = got.length + ' uploaded'; }
+  got.push(pool[got.length]); A.q = got.length - 1; render();
 }, 3500);

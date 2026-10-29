@@ -886,3 +886,12 @@ button.qtxt{padding-top:12px}
 .artlive{flex:1;min-width:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;align-content:start}
 .artlive .art{animation:rise .3s ease}
 .artbody{padding-left:34px;padding-right:34px}
+
+/* Artefact upload as a plain image slideshow */
+.artcard{position:relative;padding:0;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.artcard .artx{position:absolute;right:12px;top:12px;z-index:3}
+.artshow{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.artslide{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;animation:rise .3s ease}
+.artimg{font-size:clamp(80px,18cqw,260px);line-height:1}
+.artcap{position:absolute;left:20px;bottom:14px;display:flex;flex-direction:column;font-size:13px;color:var(--ink-2)}.artcap b{font-size:15px;color:var(--ink)}
+.artwait{font-family:var(--serif);font-size:clamp(22px,3.4cqw,44px);color:var(--ink-2)}
