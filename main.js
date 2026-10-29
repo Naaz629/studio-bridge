@@ -277,7 +277,7 @@ async function aiAsk(system, user, schema) {
 const INSIGHT_SYSTEM = `You help a university design tutor read class results for ONE learning outcome. Use plain, simple English and short sentences. Use only the data you are given. Never name individual students.
 Reply with JSON only: {"summary":"...","stuck":"...","why":"..."}
 - summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the numbers. Say how many students are stuck at the weakest level.
-- stuck: ONE specific insight about what students got wrong, written as one plain sentence of at most 12 words that starts with "Students". Read the answers that were wrong or weak and name the exact thing they could not do, in terms of this learning outcome. Example: "Students could not narrow their design plan to fit the brief." Do not copy the learning outcome and do not use general words like "apply" or "understand".
+- stuck: ONE precise insight from the weak answers, in this form: "Struggle to <one action> as they couldn't <the specific thing they missed>". At most 14 words. Name the real cause you see in the answers. Example: "Struggle to plan as they couldn't choose a specific opportunity to work with." Do not copy the learning outcome and do not mention levels.
 - why: leave this as an empty string.`;
 const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' } } };
 ipcMain.handle('ai:insight', async (e, p = {}) => {
@@ -300,7 +300,7 @@ ${takes}`;
   const r = await aiAsk(INSIGHT_SYSTEM, user, INSIGHT_SCHEMA);
   if (!r.json) return r;
   const clip = (t, n) => String(t || '').trim().slice(0, n);
-  return { summary: clip(r.json.summary, 360), stuck: clip(r.json.stuck, 90), why: clip(r.json.why, 220) };
+  return { summary: clip(r.json.summary, 360), stuck: clip(r.json.stuck, 110), why: clip(r.json.why, 220) };
 });
 ipcMain.handle('ai:status', () => aiStatus());
 ipcMain.handle('ai:save', (e, opts) => aiSave(opts));
