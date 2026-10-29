@@ -343,6 +343,15 @@ ipcMain.handle('slides:load', () => {
   for (const [subject, list] of Object.entries(m)) {
     out[subject] = list.map(x => { const p = path.join(slideDir(), x.file); return fs.existsSync(p) ? { name: x.name, path: p, data: fs.readFileSync(p) } : null; }).filter(Boolean);
   }
+  /* slides kept inside the app's own folder (slides/<unit code>/) are used when nothing was uploaded for that unit */
+  try {
+    const base = path.join(__dirname, 'slides');
+    for (const code of fs.readdirSync(base)) {
+      if (out[code] && out[code].length) continue;
+      const files = fs.readdirSync(path.join(base, code)).filter(f => /.(pdf|pptx)$/i.test(f)).sort();
+      if (files.length) out[code] = files.map(f => { const p = path.join(base, code, f); return { name: f, path: p, data: fs.readFileSync(p) }; });
+    }
+  } catch (e) { /* no bundled slides */ }
   return out;
 });
 /* load the local model into memory at start so the first set of questions does not wait for it */
