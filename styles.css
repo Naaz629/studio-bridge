@@ -834,3 +834,4 @@ button.qtxt{padding-top:12px}
 .botbar.open #planbtn{visibility:hidden;pointer-events:none}
 .left .plan2:not(.collapsed){cursor:pointer}
 .left .plan2 .tile,.left .plan2 .achip2,.left .plan2 button{cursor:pointer}
+.botbar.open,.botbar.open .barrow{background:var(--dock,#fffaf6)!important;border-top-color:transparent}
