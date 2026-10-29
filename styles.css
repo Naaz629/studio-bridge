@@ -840,3 +840,4 @@ button.qtxt{padding-top:12px}
 .botbar.open .barrow{background:transparent!important}
 .botbar.open>*{pointer-events:auto}
 .botbar.open #planbtn{pointer-events:none}
+.qrow{box-sizing:border-box}.qrows{overflow-x:hidden}
