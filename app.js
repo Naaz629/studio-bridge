@@ -225,6 +225,8 @@ function qaPages(o) {
   pages.push({ k: 'take', title: 'Your take', topic: 'What students wrote in their own words', src: 'Class discussion', answers: null });
   return pages;
 }
+/* answers written in another language are shown in English first; the original is one tap away */
+function origHTML(t, lang) { return `<details class="orig"><summary>Original · ${esc(lang)}</summary><span lang="${lang === 'Chinese' ? 'zh-Hans' : ''}">${esc(t)}</span></details>`; }
 function loPanel(o) {
   const s = S(), anon = O.anon;
   const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
@@ -241,9 +243,9 @@ function loPanel(o) {
   const who = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
   const body = pg.answers
     ? `<div class="qahead"><b>${esc(pg.title)}</b><span>${esc(pg.topic)}</span><small>${esc(pg.src)} · ${pg.n} of ${pg.total} got it right</small></div>
-       <div class="anslist">${pg.answers.map((a, i) => `<div class="ans2 ${a.ok ? 'good' : 'gap'}"><span class="ansmark">${a.ok ? '✓' : '!'}</span><div><b>${esc(who(a.who, i))}</b><p>${esc(a.en || a.t)}</p>${a.lang ? `<small>Translated from ${a.lang}: “${esc(a.t)}”</small>` : ''}</div></div>`).join('')}</div>`
+       <div class="anslist">${pg.answers.map((a, i) => `<div class="ans2 ${a.ok ? 'good' : 'gap'}"><span class="ansmark">${a.ok ? '✓' : '!'}</span><div><b>${esc(who(a.who, i))}</b><p>${esc(a.en || a.t)}</p>${a.lang ? origHTML(a.t, a.lang) : ''}</div></div>`).join('')}</div>`
     : `<div class="qahead"><b>${esc(pg.title)}</b><span>${esc(pg.topic)}</span></div>
-       <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}</small>` : ''}</div></div>`; }).join('')}</div>`;
+       <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div></div>`; }).join('')}</div>`;
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
   <section class="losec"><h4>Class insight</h4>${insBody}</section>
@@ -537,7 +539,7 @@ function answersHTML(q) {
     const tot = r.counts.reduce((x, y) => x + y, 0) || 1, avg = r.counts.reduce((x, c, i) => x + c * (i + 1), 0) / tot, mx = Math.max(...r.counts, 1);
     return `<div class="cdscale">${r.counts.map((c, i) => `<div class="sbox"><i class="rbar" style="height:${Math.round(c / mx * 100)}%"></i><b>${i + 1}</b><small>${c}</small></div>`).join('')}</div><div class="cdlabels"><span>${esc(q.lo || 'Not yet')}</span><span>Average ${avg.toFixed(1)}</span><span>${esc(q.hi || 'Very')}</span></div>`;
   }
-  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}: “${esc(sm.t)}”</small>` : ''}</div>`; }).join('')}</div>`;
+  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
 }
 function cdEmpty(s, f, m, cd) {
   const own = '<button class="sm" data-a="cdedit">✎ Write my own questions</button>';
