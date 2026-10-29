@@ -326,7 +326,7 @@ function loPanel(o) {
   const body = pg.answers
     ? `<div class="qahead"><b>${esc(pg.topic)}</b><small>${pg.n} of ${pg.total} got it right</small></div>
        <div class="anslist">${pg.answers.map((a, i) => `<div class="ans2 ${a.ok ? 'good' : 'gap'}"><span class="ansmark">${a.ok ? '✓' : '!'}</span><div><b>${esc(who(a.who, i))}</b><p>${esc(a.en || a.t)}</p>${a.lang ? origHTML(a.t, a.lang) : ''}</div></div>`).join('')}</div>`
-    : `<div class="qahead"><b>${esc(pg.title)}</b></div>
+    : `
        <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div></div>`; }).join('')}</div>`;
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
