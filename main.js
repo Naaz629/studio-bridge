@@ -39,7 +39,7 @@ function createWindow() {
             while (flowOf(S())[S().pos].cd.pending && Date.now() - t0 < 240000) await sleep(1000);
             out.aiSeconds = Math.round((Date.now() - t0) / 1000);
             const cd = flowOf(S())[S().pos].cd;
-            out.ai = { state: cd.state, asked: cd.asked, aiError: cd.aiError, status: await window.shell.ai.status(), pendingWhileWaiting: early, by: cd.by, pendingNow: cd.pending, error: cd.aiError || null, footer: (document.querySelector('.cdfoot') || {}).textContent, qs: cd.qs.map(q => q.type + ' | ' + q.text + ' || ' + q.zh + (q.options ? ' | ' + q.options.map(o => (o.ok ? '*' : '') + o.t + ' / ' + o.zh).join(' ; ') : '')), terms: cd.terms, zhShown: Array.from(document.querySelectorAll('.cdzh')).map(e => e.textContent), termsShown: (document.querySelector('.cdterms') || {}).textContent };
+            out.ai = { state: cd.state, asked: cd.asked, aiError: cd.aiError, status: await window.shell.ai.status(), pendingWhileWaiting: early, by: cd.by, pendingNow: cd.pending, error: cd.aiError || null, footer: (document.querySelector('.cdfoot') || {}).textContent, qs: cd.qs.map(q => q.type + ' | ' + q.text + (q.options ? ' | ' + q.options.map(o => (o.ok ? '*' : '') + o.t).join(' ; ') : '')) };
           }
           if (${JSON.stringify(!!process.env.STUDIO_TEST_UNIT)}) {
             const bad = await window.shell.unit.fetch('https://example.com/units/IDEA9301');
@@ -175,30 +175,19 @@ HELP STUDENTS START: for every "open" question add "hint": a short sentence star
 EXAMPLE of the style (do not copy the topic):
 {"level":"apply","type":"open","text":"Think about your own project. Where do you see a user need? Give one real example.","hint":"In my project, I saw that users need ..."}
 
-CHINESE-SPEAKING STUDENTS: every student reads Simplified Chinese (Mandarin) as their first language. Work in two steps. Step 1: say each design idea in simple English (not jargon). Step 2: give an accurate Simplified Chinese translation of that simple English. Use the standard Chinese design words that students meet in class (for example 洞察 for insight, 用户 for user, 原型 for prototype, 利益相关者 for stakeholder). Keep the Chinese short and natural. Never leave a field empty.
-- "zh" is the Chinese translation of "text".
-- For mc: every option has "t" (simple English) and "zh" (Chinese).
-- For scale: "lo_zh" and "hi_zh" are the Chinese labels.
-- For open: "hint_zh" is the Chinese sentence starter.
-- "terms": 3 to 5 design words from the slide. Each has "term" (the jargon word), "simple" (a plain English meaning, at most 10 words) and "zh" (the Chinese word and a short meaning). "simple" must be English only. Example: {"term":"insight","simple":"a new meaning found in research","zh":"洞察：研究中发现的新含义"}.
-
-Reply with JSON only, no other words: {"questions":[{"level":"identify|apply|analyse|evaluate|create","type":"mc|scale|open","text":"...","zh":"...","options":[{"t":"...","zh":"...","ok":true}],"lo":"...","hi":"...","lo_zh":"...","hi_zh":"...","hint":"...","hint_zh":"..."}],"terms":[{"term":"...","simple":"...","zh":"..."}]}
-Include "options" only for mc, "lo"/"lo_zh"/"hi"/"hi_zh" only for scale, "hint"/"hint_zh" only for open.`;
+Reply with JSON only, no other words: {"questions":[{"level":"identify|apply|analyse|evaluate|create","type":"mc|scale|open","text":"...","options":[{"t":"...","ok":true}],"lo":"...","hi":"...","hint":"..."}]}
+Include "options" only for mc, "lo" and "hi" only for scale, "hint" only for open.`;
 const QUESTIONS_SCHEMA = {
-  type: 'object', required: ['questions', 'terms'],
-  properties: {
-    questions: { type: 'array', minItems: 5, maxItems: 5, items: {
-      type: 'object', required: ['level', 'type', 'text', 'zh'],
-      properties: {
-        level: { type: 'string', enum: ['identify', 'apply', 'analyse', 'evaluate', 'create'] },
-        type: { type: 'string', enum: ['mc', 'scale', 'open'] },
-        text: { type: 'string' }, zh: { type: 'string' },
-        options: { type: 'array', items: { type: 'object', required: ['t', 'zh', 'ok'], properties: { t: { type: 'string' }, zh: { type: 'string' }, ok: { type: 'boolean' } } } },
-        lo: { type: 'string' }, hi: { type: 'string' }, lo_zh: { type: 'string' }, hi_zh: { type: 'string' },
-        hint: { type: 'string' }, hint_zh: { type: 'string' }
-      } } },
-    terms: { type: 'array', minItems: 3, maxItems: 5, items: { type: 'object', required: ['term', 'simple', 'zh'], properties: { term: { type: 'string' }, simple: { type: 'string' }, zh: { type: 'string' } } } }
-  }
+  type: 'object', required: ['questions'],
+  properties: { questions: { type: 'array', minItems: 5, maxItems: 5, items: {
+    type: 'object', required: ['level', 'type', 'text'],
+    properties: {
+      level: { type: 'string', enum: ['identify', 'apply', 'analyse', 'evaluate', 'create'] },
+      type: { type: 'string', enum: ['mc', 'scale', 'open'] },
+      text: { type: 'string' },
+      options: { type: 'array', items: { type: 'object', required: ['t', 'ok'], properties: { t: { type: 'string' }, ok: { type: 'boolean' } } } },
+      lo: { type: 'string' }, hi: { type: 'string' }, hint: { type: 'string' }
+    } } } }
 };
 const pickJSON = text => { const m = String(text || '').match(/\{[\s\S]*\}/); if (!m) return null; try { return JSON.parse(m[0]); } catch { return null; } };
 
@@ -221,7 +210,7 @@ async function aiGenerate(p = {}) {
       const body = await res.json();
       const j = pickJSON(body.message && body.message.content);
       if (!j) return { error: 'The local model did not reply in the expected format.' };
-      return { questions: j.questions, terms: j.terms, model: cfg.ollamaModel, provider: 'ollama' };
+      return { questions: j.questions, model: cfg.ollamaModel, provider: 'ollama' };
     } catch (e) {
       return { error: e.name === 'TimeoutError' ? 'The local model took too long. Try a smaller model.' : 'Ollama is not running. Start the Ollama app, then try again.' };
     }
@@ -244,7 +233,7 @@ async function aiGenerate(p = {}) {
     const body = await res.json();
     const j = pickJSON((body.content || []).map(c => c.text || '').join(''));
     if (!j) return { error: 'The AI reply was not in the expected format.' };
-    return { questions: j.questions, terms: j.terms, model: cfg.model, provider: 'anthropic' };
+    return { questions: j.questions, model: cfg.model, provider: 'anthropic' };
   } catch (e) {
     return { error: e.name === 'TimeoutError' ? 'The AI took too long to answer.' : 'Could not reach the AI service. Check the internet connection.' };
   }
@@ -288,8 +277,8 @@ async function aiAsk(system, user, schema) {
 const INSIGHT_SYSTEM = `You help a university design tutor read class results for ONE learning outcome. Use plain, simple English and short sentences. Use only the data you are given. Never name individual students.
 Reply with JSON only: {"summary":"...","stuck":"...","why":"..."}
 - summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the numbers. Say how many students are stuck at the weakest level.
-- stuck: the SPECIFIC skill or idea from THIS learning outcome that most students are stuck on, as a short phrase (at most 12 words). Use the exact words of the learning outcome (for example the thing to plan, test or evaluate). It MUST match the weakest level named in the data. Never write a general phrase like "using the idea in their own project".
-- why: one short sentence on why students struggle with that specific skill, based on the notes and the student answers. Name the specific skill again.`;
+- stuck: the idea most students are stuck on, as a short phrase (at most 8 words). It MUST be about the weakest level named in the data.
+- why: one short sentence on the most likely reason, based on the notes and the student answers.`;
 const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' } } };
 ipcMain.handle('ai:insight', async (e, p = {}) => {
   const lv = (p.levels || []).map(l => `- ${l.label}: ${l.n} of ${p.total} students (${l.src})`).join(String.fromCharCode(10));

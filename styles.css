@@ -822,15 +822,3 @@ button.qtxt{padding-top:12px}
 .ans2.good .ansmark{background:#d6f0dd;color:#1c7a47}.ans2.gap .ansmark{background:#fde2e3;color:#a4262b}
 .ans2 b{font-size:12.5px}.ans2 p{margin:1px 0 0;font-size:13.5px;line-height:1.45}.ans2 small{display:block;color:var(--muted);font-size:11px;margin-top:1px}
 .lopanel .lochead .x{margin-left:auto}
-
-/* Chinese support: simple English first, Simplified Chinese under it */
-.cdzh{margin:0;font-size:clamp(13px,2cqw,26px);line-height:1.35;color:var(--ink-2);font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif}
-.otxt .zh{display:block;font-size:.86em;color:var(--muted);margin-top:1px;font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif}
-.cdhint [lang="zh-Hans"]{font-style:normal;font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif}
-.cdterms{display:flex;flex-direction:column;gap:4px;margin-top:auto}
-.cdterms>small{font-size:clamp(9px,.95cqw,12px);letter-spacing:.08em;color:var(--muted);font-weight:700;text-transform:uppercase}
-.cdterms>div{display:flex;flex-wrap:wrap;gap:6px}
-.term{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:clamp(10px,1.15cqw,14px);color:var(--ink-2)}
-.term b{color:var(--ink)}
-.cdblock textarea[lang="zh-Hans"],.cdblock input[lang="zh-Hans"]{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif}
-.cdqzh{min-height:44px}

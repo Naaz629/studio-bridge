@@ -229,10 +229,8 @@ function loPanel(o) {
   const s = S(), anon = O.anon;
   const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
   const stuckN = o.total - weak[1][0], ins = ensureInsight(o);
-  const lo1 = (s.ulo[o.lo] || o.out).replace(/.$/, ''), loBit = lo1.charAt(0).toLowerCase() + lo1.slice(1, 70) + (lo1.length > 70 ? '…' : '');
-  const loWords = (lo1.toLowerCase().match(/[a-z]{5,}/g) || []), aiOn = ins.state === 'ready' && ins.stuck && loWords.some(w => ins.stuck.toLowerCase().includes(w.slice(0, 5)));
-  const topic = aiOn ? ins.stuck : { k: 'Recalling the key idea behind: ', a: 'Applying to their own project: ', e: 'Explaining why it matters: ' }[weak[0]] + loBit;
-  const why = aiOn && ins.why ? ins.why : o.gap + ' (' + o.lo + ')';
+  const topic = ins.state === 'ready' && ins.stuck ? ins.stuck : STUCK_PHRASE[weak[0]];
+  const why = ins.state === 'ready' && ins.why ? ins.why : o.gap;
   const insBody = ins.state === 'pending' ? '<p class="aiflag busy">✦ The AI is reading the class results…</p>'
     : ins.state === 'ready' ? `<p class="insight-text">${esc(ins.summary)}</p><small class="muted">✦ AI summary · based on this week's results</small>`
     : `<p class="insight-text muted">${ins.state === 'off' ? 'AI is turned off, so there is no written summary.' : 'The AI could not write the summary: ' + esc(ins.error || '')}</p><div class="qacts">${ins.state === 'off' ? '<button class="sm p" data-a="aisettings">✦ Choose AI</button>' : '<button class="sm p" data-a="oinsightretry">↻ Try again</button>'}</div>`;
@@ -342,23 +340,20 @@ function cdBlock(i, q) {
   return `<div class="cdblock" data-i="${i}"><label class="k2">${i + 1}. ${esc(q.label)} <span class="muted">· ${esc(q.note)}</span></label>
   <select class="cdtype" data-i="${i}">${Object.entries(TYPE_NAMES).map(([k, n]) => `<option value="${k}" ${q.type === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
   <textarea class="cdq" data-i="${i}">${esc(q.text)}</textarea>
-  <textarea class="cdqzh" data-i="${i}" lang="zh-Hans" placeholder="中文翻译 (Simplified Chinese)">${esc(q.zh || '')}</textarea>
-  ${q.type === 'open' ? `<div class="cdoptrow"><span class="muted" style="white-space:nowrap">Sentence starter</span><input class="cdhintin" value="${esc(q.hint || '')}" placeholder="In my project, I saw ..."><input class="cdhintzh" lang="zh-Hans" value="${esc(q.hint_zh || '')}" placeholder="中文"></div>` : ''}
-  ${q.type === 'mc' ? `<div class="cdoptlist">${slots.map((o, k) => `<div class="cdoptrow"><input type="radio" name="ok${i}" value="${k}" ${o.ok ? 'checked' : ''} title="Correct answer"><span class="let">${'ABCD'[k]}</span><input class="cdo" value="${esc(o.t)}" placeholder="Option ${'ABCD'[k]}"><input class="cdozh" lang="zh-Hans" value="${esc(o.zh || '')}" placeholder="中文"></div>`).join('')}<small class="muted">Select the circle next to the correct answer.</small></div>` : ''}
-  ${q.type === 'scale' ? `<div class="cdoptrow"><input class="cdlo" value="${esc(q.lo || 'Not yet')}" placeholder="Low label"><input class="cdhi" value="${esc(q.hi || 'Very')}" placeholder="High label"><input class="cdlozh" lang="zh-Hans" value="${esc(q.lo_zh || '')}" placeholder="低 (中文)"><input class="cdhizh" lang="zh-Hans" value="${esc(q.hi_zh || '')}" placeholder="高 (中文)"></div>` : ''}</div>`;
+  ${q.type === 'open' ? `<div class="cdoptrow"><span class="muted" style="white-space:nowrap">Sentence starter</span><input class="cdhintin" value="${esc(q.hint || '')}" placeholder="In my project, I saw ..."></div>` : ''}
+  ${q.type === 'mc' ? `<div class="cdoptlist">${slots.map((o, k) => `<div class="cdoptrow"><input type="radio" name="ok${i}" value="${k}" ${o.ok ? 'checked' : ''} title="Correct answer"><span class="let">${'ABCD'[k]}</span><input class="cdo" value="${esc(o.t)}" placeholder="Option ${'ABCD'[k]}"></div>`).join('')}<small class="muted">Select the circle next to the correct answer.</small></div>` : ''}
+  ${q.type === 'scale' ? `<div class="cdoptrow"><input class="cdlo" value="${esc(q.lo || 'Not yet')}" placeholder="Low label"><input class="cdhi" value="${esc(q.hi || 'Very')}" placeholder="High label"></div>` : ''}</div>`;
 }
 function readBlock(i, q) {
   const b = document.querySelector(`.cdblock[data-i="${i}"]`); if (!b) return;
   q.text = b.querySelector('.cdq').value.trim() || q.text;
-  const zq = b.querySelector('.cdqzh'); if (zq) q.zh = zq.value.trim();
-  if (q.type === 'open') { const h = b.querySelector('.cdhintin'); q.hint = h ? h.value.trim() : (q.hint || ''); const hz = b.querySelector('.cdhintzh'); if (hz) q.hint_zh = hz.value.trim(); }
+  if (q.type === 'open') { const h = b.querySelector('.cdhintin'); q.hint = h ? h.value.trim() : (q.hint || ''); }
   if (q.type === 'mc') {
-    const opts = [...b.querySelectorAll('.cdoptrow')].map(r => ({ t: r.querySelector('.cdo').value.trim(), ok: r.querySelector('input[type=radio]').checked, zh: (r.querySelector('.cdozh') || { value: '' }).value.trim() })).filter(o => o.t);
+    const opts = [...b.querySelectorAll('.cdoptrow')].map(r => ({ t: r.querySelector('.cdo').value.trim(), ok: r.querySelector('input[type=radio]').checked })).filter(o => o.t);
     if (opts.length && !opts.some(o => o.ok)) opts[0].ok = true;
     q.options = opts;
   } else if (q.type === 'scale') {
     q.lo = b.querySelector('.cdlo').value.trim() || 'Not yet'; q.hi = b.querySelector('.cdhi').value.trim() || 'Very';
-    q.lo_zh = (b.querySelector('.cdlozh') || { value: '' }).value.trim(); q.hi_zh = (b.querySelector('.cdhizh') || { value: '' }).value.trim();
   }
 }
 document.addEventListener('change', e => {
@@ -533,11 +528,11 @@ function answersHTML(q) {
   const r = ensureRes(q);
   if (q.type === 'mc') {
     const tot = r.counts.reduce((x, y) => x + y, 0) || 1;
-    return `<div class="cdopts">${q.options.map((o, i) => `<div class="cdopt ${o.ok ? 'ok' : ''}"><i class="rbar" style="width:${Math.round(r.counts[i] / tot * 100)}%"></i><span class="let">${'ABCDEF'[i]}</span><span class="otxt">${esc(o.t)}${o.zh ? `<small class="zh" lang="zh-Hans">${esc(o.zh)}</small>` : ''}</span><span class="ocnt">${r.counts[i]}${o.ok ? ' ✓' : ''}</span></div>`).join('')}</div>`;
+    return `<div class="cdopts">${q.options.map((o, i) => `<div class="cdopt ${o.ok ? 'ok' : ''}"><i class="rbar" style="width:${Math.round(r.counts[i] / tot * 100)}%"></i><span class="let">${'ABCDEF'[i]}</span><span class="otxt">${esc(o.t)}</span><span class="ocnt">${r.counts[i]}${o.ok ? ' ✓' : ''}</span></div>`).join('')}</div>`;
   }
   if (q.type === 'scale') {
     const tot = r.counts.reduce((x, y) => x + y, 0) || 1, avg = r.counts.reduce((x, c, i) => x + c * (i + 1), 0) / tot, mx = Math.max(...r.counts, 1);
-    return `<div class="cdscale">${r.counts.map((c, i) => `<div class="sbox"><i class="rbar" style="height:${Math.round(c / mx * 100)}%"></i><b>${i + 1}</b><small>${c}</small></div>`).join('')}</div><div class="cdlabels"><span>${esc(q.lo || 'Not yet')}${q.lo_zh ? ' · ' + esc(q.lo_zh) : ''}</span><span>Average ${avg.toFixed(1)}</span><span>${esc(q.hi || 'Very')}${q.hi_zh ? ' · ' + esc(q.hi_zh) : ''}</span></div>`;
+    return `<div class="cdscale">${r.counts.map((c, i) => `<div class="sbox"><i class="rbar" style="height:${Math.round(c / mx * 100)}%"></i><b>${i + 1}</b><small>${c}</small></div>`).join('')}</div><div class="cdlabels"><span>${esc(q.lo || 'Not yet')}</span><span>Average ${avg.toFixed(1)}</span><span>${esc(q.hi || 'Very')}</span></div>`;
   }
   return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? `<small>Translated from ${sm.lang}: “${esc(sm.t)}”</small>` : ''}</div>`; }).join('')}</div>`;
 }
@@ -551,17 +546,12 @@ function cdEmpty(s, f, m, cd) {
   <div class="cdbody"><h3 class="cdq">${esc(cd.title)}</h3><p class="cdsrc">Checking your understanding of: ${esc(cd.source)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</p>${body}</div>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
-/* design words: jargon -> simple English -> Chinese */
-function termsHTML(cd) {
-  if (!cd.terms || !cd.terms.length) return '';
-  return `<div class="cdterms"><small>Key words · 关键词</small><div>${cd.terms.map(t => `<span class="term"><b>${esc(t.term)}</b>${t.simple ? ' = ' + esc(t.simple) : ''} · <span lang="zh-Hans">${esc(t.zh)}</span></span>`).join('')}</div></div>`;
-}
 function cdCard(s, f, m) {
   const cd = ensureCD(s, s.pos);
   if (!cd.qs.length) return cdEmpty(s, f, m, cd);
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
   return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdchip">✦ CONCEPT CHECK</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><span class="cdbrand">Studio Bridge</span><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3>${q.zh ? `<p class="cdzh" lang="zh-Hans">${esc(q.zh)}</p>` : ''}<p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b>${q.hint_zh ? ` · <b lang="zh-Hans">${esc(q.hint_zh)}</b>` : ''}</p>` : ''}<div id="cdAns">${answersHTML(q)}</div>${termsHTML(cd)}<div class="cdfoot">${cd.pending ? '<span class="aiflag busy">✦ Writing questions from this slide…</span> · ' : cd.by === 'ai' ? `<span class="aiflag">✦ ${cd.edited ? 'AI draft, edited' : 'AI draft from this slide · check before you use it'}</span> · ` : ''}${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
+  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}<div id="cdAns">${answersHTML(q)}</div><div class="cdfoot">${cd.pending ? '<span class="aiflag busy">✦ Writing questions from this slide…</span> · ' : cd.by === 'ai' ? `<span class="aiflag">✦ ${cd.edited ? 'AI draft, edited' : 'AI draft from this slide · check before you use it'}</span> · ` : ''}${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 
