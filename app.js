@@ -553,7 +553,7 @@ function cdCard(s, f, m) {
   const cd = ensureCD(s, s.pos);
   if (!cd.qs.length) return cdEmpty(s, f, m, cd);
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
-  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdtake">Your take</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdtake">Your take</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><button class="cdeditbtn" data-a="cdedit" aria-label="Edit questions" data-tip="Edit questions">✎</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length}</small><h3 class="cdq">${esc(q.text)}</h3>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}<div id="cdAns">${answersHTML(q)}</div></div>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
