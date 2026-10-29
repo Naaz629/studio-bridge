@@ -116,7 +116,7 @@ function discussionCard(s, f, m, p) {
 function actQs() {
   if (A.type === 'Concept Development') { const s = S(); return ensureCD(s, s.pos).qs.map(q => q.text); }
   if (A.type === 'Q&A Session') return sortedQs(S()).map(q => q.text);
-  if (A.type === 'Artefact upload') { const g = S().liveArts || []; return g.length ? g.map(x => x[1]) : ['upload']; }
+  if (A.type === 'Artefact upload') return ['upload'];
   return PROMPTS[A.type];
 }
 /* ---------- Q&A Session: full-screen questions with the other students' answers arriving live ---------- */
@@ -151,18 +151,26 @@ function qaCard(s, f, m) {
   ${navOverlay(Math.min(A.q || 0, Math.max(0, sortedQs(s).length - 1)), Math.max(1, sortedQs(s).length), (A.q || 0) > 0 || s.pos > 0, (A.q || 0) < sortedQs(s).length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function qaScroll() {}
-/* ---------- Artefact upload: the uploads play as a full-screen image slideshow, as they arrive ---------- */
+/* ---------- Artefact upload: an image slideshow. Examples first, then each student's upload (name + type) as it arrives.
+   Playing by itself; the tutor can stop on any artefact (click it, or pick it below) and it starts again after 2 minutes of no activity. ---------- */
+const EXAMPLE_ARTS = [['Business model canvas', 'assets/artefacts/bmc-1.svg'], ['Value proposition canvas', 'assets/artefacts/vpc-2.svg']];
+const ART_IDLE = 120000;
+const artHeld = () => !!(A && A.hold && Date.now() - A.hold < ART_IDLE);
+function artItems(s) { return EXAMPLE_ARTS.map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(([n, t, src, anon]) => ({ n, t, src, anon: !!anon }))); }
 function artefactCard(s, f, m) {
-  const got = s.liveArts || (s.liveArts = []), at = Math.max(0, Math.min(got.length - 1, A.q || 0));
-  const body = got.length ? artSlideHTML(got[at]) : '<div class="artwait">Upload your artefact now</div>';
-  return `<div class="card2 actcard artcard" style="background:${m.color}"><button class="x artx" data-a="actclose" aria-label="Close activity">✕</button><div class="artshow" id="artLive">${body}</div>
-  ${navOverlay(at, Math.max(1, got.length), at > 0 || s.pos > 0, at < got.length - 1 || s.pos < f.length - 1)}</div>`;
+  const items = artItems(s), at = Math.max(0, Math.min(items.length - 1, A.q || 0)), it = items[at];
+  const dots = items.map((x, i) => `<button class="artdot ${i === at ? 'on' : ''}" data-a="artpick" data-i="${i}" aria-label="Show ${esc(x.t)} ${i + 1}"></button>`).join('');
+  return `<div class="card2 actcard artcard" style="background:${m.color}"><button class="x artx" data-a="actclose" aria-label="Close activity">✕</button>
+  <div class="artshow" id="artLive" data-a="artpause" title="Click to stop here">${artSlideHTML(it)}</div>
+  <div class="artbar"><span class="artstate">${artHeld() ? 'Stopped · starts again after 2 minutes of no activity' : 'Slideshow playing'}</span><div class="artdots">${dots}</div></div>
+  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+}
+function artSlideHTML(it) {
+  const cap = it.ex ? `<span class="extag">Example</span><b>${esc(it.t)}</b>` : it.anon ? `<b>${esc(it.t)}</b>` : `<b>${esc(it.n)}</b><span>${esc(it.t)}</span>`;
+  return `<div class="artslide"><div class="artimg">${artPic(it.src)}</div><div class="artcap">${cap}</div></div>`;
 }
 /* artefacts are image files */
 function artPic(src) { return String(src).startsWith("assets/") ? `<img class="artpic" src="${esc(src)}" alt="" draggable="false">` : src; }
-function artSlideHTML([n, t, ic]) {
-  return `<div class="artslide"><div class="artimg">${artPic(ic)}</div><div class="artcap"><b>${esc(t)}</b><span>${esc(n)}</span></div></div>`;
-}
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
   if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
@@ -220,7 +228,7 @@ function outcomeCard(o) {
 function artefactsHTML() {
   const s = S();
   return `
-  <div class="art-grid">${s.artefacts.map(([nm, t, ic], i) => `<div class="art"><div class="thumb">${artPic(ic)}</div><div class="am"><b>${esc(t)}</b><div class="meta">${O.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(nm)}</div></div></div>`).join('')}</div>`;
+  <div class="art-grid">${s.artefacts.map(([nm, t, ic, anon], i) => `<div class="art"><div class="thumb">${artPic(ic)}</div><div class="am"><b>${esc(t)}</b><div class="meta">${anon || O.anon ? 'Anonymous' : esc(nm)}</div></div></div>`).join('')}</div>`;
 }
 /* Overview: Student Activity (one box per learning outcome) beside Artefacts; an LO opens a green card with its Questions & Answer and Your take */
 function weekOutcomes() {
@@ -465,6 +473,8 @@ document.addEventListener('click', e => {
       }
       break;
     case 'tile': goTo(s, +a.dataset.i); break;
+    case 'artpick': A.q = +a.dataset.i; A.hold = Date.now(); break;
+    case 'artpause': A.hold = artHeld() ? 0 : Date.now(); break;
     case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
     case 'actclose': { const f = flowOf(s); goTo(s, s.pos < f.length - 1 ? s.pos + 1 : s.pos - 1); break; }
     case 'upload': L.menu = false; return $('#slideFile').click();
@@ -662,10 +672,16 @@ setInterval(() => {
   const l = document.getElementById('qaList'); if (l) { const top = l.scrollTop; l.innerHTML = qaListHTML(s); l.scrollTop = top; }
 }, 4500);
 
-/* simulated live class: artefacts arrive one by one on the Artefact upload screen */
+/* the slideshow plays by itself unless the tutor has stopped it; students' uploads arrive one by one */
+setInterval(() => {
+  if (!A || A.type !== 'Artefact upload' || V !== 'live' || artHeld()) return;
+  const n = artItems(S()).length; A.q = ((A.q || 0) + 1) % n; render();
+}, 6000);
 setInterval(() => {
   if (!A || A.type !== 'Artefact upload' || V !== 'live') return;
-  const s = S(), got = s.liveArts || (s.liveArts = []), pool = s.artefacts || [];
+  const s = S(), got = s.liveArts || (s.liveArts = []), pool = (s.artefacts || []).slice(2);
   if (got.length >= pool.length) return;
-  got.push(pool[got.length]); A.q = got.length - 1; render();
-}, 3500);
+  got.push(pool[got.length]);
+  if (!artHeld()) A.q = EXAMPLE_ARTS.length + got.length - 1;
+  render();
+}, 9000);

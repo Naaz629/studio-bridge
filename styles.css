@@ -902,3 +902,15 @@ button.qtxt{padding-top:12px}
 .artpic{display:block;width:100%;height:auto;object-fit:contain;border-radius:6px;background:#fff}
 .artimg .artpic{width:min(78%,900px);max-height:84%;margin:0 auto;box-shadow:0 4px 14px rgba(0,0,0,.14)}
 .thumb .artpic{width:88%;margin:auto}
+
+.artshow{cursor:pointer}
+.artcap .extag{align-self:flex-start;background:#fff;border:1px solid var(--line);border-radius:999px;padding:1px 9px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.artbar{position:absolute;left:20px;right:20px;bottom:10px;display:flex;align-items:center;justify-content:center;gap:14px;pointer-events:none}
+.artbar .artstate{position:absolute;right:0;font-size:11px;color:var(--ink-2)}
+.artdots{display:flex;gap:8px;pointer-events:auto}
+.artdot{width:10px;height:10px;border-radius:50%;background:rgba(0,0,0,.22);padding:0}
+.artdot.on{background:var(--ink);transform:scale(1.25)}
+.artcap{bottom:34px}
+.artslide{padding-bottom:56px;box-sizing:border-box}
+.artimg .artpic{width:auto;max-width:78%;max-height:100%}
+.artimg{max-height:100%;display:flex;align-items:center;justify-content:center;height:100%}

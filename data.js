@@ -123,7 +123,7 @@ function makeSubject(cfg) {
     weeks: buildWeeks(cfg), upload: null, uploads: [], slideIdx: 0, attach: {}, taught: Object.keys(cfg.topics).length,
     reactions: Object.fromEntries(EMOJIS.map((e, i) => [e.k, [14, 3, 4, 6, 9][i]])),
     qs: cfg.qs, cards: { agree: 7, disagree: 3, turn: 4, clarify: 5, idea: 6 },
-    artefacts: [['Amira Khan', 'Business model canvas', 'assets/artefacts/bmc-1.svg'], ['Ben Tran', 'Value proposition canvas', 'assets/artefacts/vpc-2.svg'], ['Chloe Rossi', 'Business model canvas', 'assets/artefacts/bmc-3.svg'], ['Dev Patel', 'Value proposition canvas', 'assets/artefacts/vpc-4.svg'], ['Elena Sosa', 'Business model canvas', 'assets/artefacts/bmc-5.svg'], ['Farid Ali', 'Value proposition canvas', 'assets/artefacts/vpc-6.svg']]
+    artefacts: [['Amira Khan', 'Business model canvas', 'assets/artefacts/bmc-1.svg'], ['Ben Tran', 'Value proposition canvas', 'assets/artefacts/vpc-2.svg'], ['Chloe Rossi', 'Business model canvas', 'assets/artefacts/bmc-3.svg'], ['Dev Patel', 'Value proposition canvas', 'assets/artefacts/vpc-4.svg', true], ['Elena Sosa', 'Business model canvas', 'assets/artefacts/bmc-5.svg'], ['Farid Ali', 'Value proposition canvas', 'assets/artefacts/vpc-6.svg']]
   };
   return s;
 }
