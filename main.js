@@ -277,8 +277,8 @@ async function aiAsk(system, user, schema) {
 const INSIGHT_SYSTEM = `You help a university design tutor read class results for ONE learning outcome. Use plain, simple English and short sentences. Use only the data you are given. Never name individual students.
 Reply with JSON only: {"summary":"...","stuck":"...","why":"..."}
 - summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the numbers. Say how many students are stuck at the weakest level.
-- stuck: the idea most students are stuck on, as a short phrase (at most 8 words). It MUST be about the weakest level named in the data.
-- why: one short sentence on the most likely reason, based on the notes and the student answers.`;
+- stuck: the SPECIFIC skill or idea from THIS learning outcome that most students are stuck on, as a short phrase (at most 12 words). Use the exact words of the learning outcome. It MUST match the weakest level named in the data. Never write a general phrase like "using the idea in their own project".
+- why: one short sentence on why students struggle with that specific skill, based on the notes and the student answers. Name the specific skill again.`;
 const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' } } };
 ipcMain.handle('ai:insight', async (e, p = {}) => {
   const lv = (p.levels || []).map(l => `- ${l.label}: ${l.n} of ${p.total} students (${l.src})`).join(String.fromCharCode(10));

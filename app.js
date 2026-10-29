@@ -229,8 +229,11 @@ function loPanel(o) {
   const s = S(), anon = O.anon;
   const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
   const stuckN = o.total - weak[1][0], ins = ensureInsight(o);
-  const topic = ins.state === 'ready' && ins.stuck ? ins.stuck : STUCK_PHRASE[weak[0]];
-  const why = ins.state === 'ready' && ins.why ? ins.why : o.gap;
+  const lo1 = (s.ulo[o.lo] || o.out).replace(/\.$/, ''), loBit = lo1.charAt(0).toLowerCase() + lo1.slice(1, 70) + (lo1.length > 70 ? '…' : '');
+  const loWords = lo1.toLowerCase().match(/[a-z]{5,}/g) || [];
+  const aiOn = ins.state === 'ready' && ins.stuck && loWords.some(w => ins.stuck.toLowerCase().includes(w.slice(0, 5)));
+  const topic = aiOn ? ins.stuck : { k: 'Recalling the key idea behind: ', a: 'Applying to their own project: ', e: 'Explaining why it matters: ' }[weak[0]] + loBit;
+  const why = aiOn && ins.why ? ins.why : o.gap + ' (' + o.lo + ')';
   const insBody = ins.state === 'pending' ? '<p class="aiflag busy">✦ The AI is reading the class results…</p>'
     : ins.state === 'ready' ? `<p class="insight-text">${esc(ins.summary)}</p><small class="muted">✦ AI summary · based on this week's results</small>`
     : `<p class="insight-text muted">${ins.state === 'off' ? 'AI is turned off, so there is no written summary.' : 'The AI could not write the summary: ' + esc(ins.error || '')}</p><div class="qacts">${ins.state === 'off' ? '<button class="sm p" data-a="aisettings">✦ Choose AI</button>' : '<button class="sm p" data-a="oinsightretry">↻ Try again</button>'}</div>`;
