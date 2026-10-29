@@ -841,3 +841,19 @@ button.qtxt{padding-top:12px}
 .botbar.open>*{pointer-events:auto}
 .botbar.open #planbtn{pointer-events:none}
 .qrow{box-sizing:border-box}.qrows{overflow-x:hidden}
+
+/* ===== Q&A Session: the stage becomes the full Q&A; the right column shrinks to the numbers ===== */
+.qacard{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.qalist{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 4px 12px}
+.qablk{background:rgba(255,255,255,.7);border:2px solid transparent;border-radius:14px;padding:12px 14px}
+.qablk.sel{border-color:var(--ink);background:#fff}
+.qahd{display:flex;gap:12px;align-items:flex-start}
+.qanum{flex:none;font-family:var(--serif);font-size:22px;color:var(--ink-2);min-width:30px}
+.qatxt{flex:1;display:flex;flex-direction:column;gap:2px}.qatxt b{font-size:16px;font-weight:600}.qatxt small{font-size:11.5px;color:var(--muted)}
+.qaans{margin:8px 0 0 42px;display:flex;flex-direction:column;gap:6px}
+.qar{background:rgba(0,0,0,.04);border-radius:10px;padding:7px 11px;animation:rise .25s ease}
+.qar b{font-size:12px}.qar p{margin:1px 0 0;font-size:13.5px;line-height:1.45}.qar.tutor{background:#d6f0dd}
+.sess2.qamode .rightcol{width:88px;padding:16px 8px}
+.qamode .qh small,.qamode .qh h2,.qamode .qtxt,.qamode .qd,.qamode .asked{display:none}
+.qamode .qwrap{justify-content:center}
+.qamode .qr.selq .qn{outline:2px solid var(--ink);outline-offset:3px;border-radius:50%}

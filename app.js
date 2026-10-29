@@ -32,7 +32,7 @@ function render() {
   const oldStrip = document.querySelector('.planbody .tiles'), keepX = oldStrip ? oldStrip.scrollLeft : 0;
   $('#view').innerHTML = V === 'live' ? live() : overview();
   courseBtn(); mainMenu(); botbar();
-  if (V === 'live') { renderQP(); pulseDots(); syncStrip(keepX); }
+  if (V === 'live') { renderQP(); pulseDots(); syncStrip(keepX); if (A && A.type === 'Q&A Session') qaScroll(); }
 }
 /* keep the Studio flow strip in step with the main screen: the current tile is always in view, and a manual scroll is kept while nothing changes */
 let stripKey = '';
@@ -117,10 +117,42 @@ function actQs() {
   if (A.type === 'Concept Development') { const s = S(); return ensureCD(s, s.pos).qs.map(q => q.text); }
   return PROMPTS[A.type];
 }
+/* ---------- Q&A Session: full-screen questions with the other students' answers arriving live ---------- */
+const REPLY_BANK = [
+  { t: 'I think yes, because the client knows the real needs.' },
+  { t: 'We asked our client last week and they said to include it.' },
+  { t: 'Maybe we can test it with two users first.' },
+  { t: 'I am not sure. Can the tutor give an example?' },
+  { t: 'In our team we wrote this in the brief.' },
+  { t: '我们团队也遇到了同样的问题。', en: 'Our team has the same problem.', lang: 'Chinese' },
+  { t: '我觉得应该先和客户确认。', en: 'I think we should check with the client first.', lang: 'Chinese' },
+  { t: 'I agree with this question, we have the same problem.' }
+];
+const sortedQs = s => [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
+function qaReplies(q) {
+  if (!q.replies) {
+    const r = seeded(hash('qa' + q.id + q.text)), n = 2 + Math.floor(r() * 2);
+    q.replies = shuffled(REPLY_BANK.map((_, i) => i), hash('rp' + q.id)).slice(0, n).map(k => Object.assign({ who: NAMES[(hash(q.text) + k) % NAMES.length] }, REPLY_BANK[k]));
+  }
+  return q.replies;
+}
+function qaListHTML(s) {
+  const list = sortedQs(s), sel = A && A.sel != null ? A.sel : (list[0] && list[0].id);
+  const nm = (n, i) => O.anon ? 'Student ' + String.fromCharCode(65 + i) : n;
+  return list.map((q, i) => `<div class="qablk ${q.id === sel ? 'sel' : ''}" data-qb="${q.id}"><div class="qahd"><span class="qanum">${pad(i + 1)}</span><div class="qatxt"><b>${esc(q.tr || q.text)}</b>${q.tr ? `<small>Original: ${esc(q.text)}</small>` : ''}<small>${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>${q.up ? `<span class="asked">${q.up}</span>` : ''}</div>
+    <div class="qaans">${qaReplies(q).map((r, k) => `<div class="qar"><b>${esc(nm(r.who, k))}</b><p>${esc(r.en || r.t)}</p>${r.lang ? origHTML(r.t, r.lang) : ''}</div>`).join('')}${q.ans ? `<div class="qar tutor"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}</div></div>`).join('') || '<div class="none">No questions yet.</div>';
+}
+function qaCard(s, f, m) {
+  return `<div class="card2 actcard qacard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>Questions &amp; answers</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  <div class="qalist" id="qaList">${qaListHTML(s)}</div>
+  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+}
+function qaScroll() { const b = document.querySelector('.qablk.sel'); if (b) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
   if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
   if (A.type === 'Concept Development') return cdCard(s, f, m);
+  if (A.type === 'Q&A Session') return qaCard(s, f, m);
   return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="abody"><small>QUESTION ${A.q + 1} OF ${p.length}</small><h3>${esc(p[A.q])}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${8 + A.q * 3} students have responded</div></div>
   ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
@@ -138,7 +170,7 @@ function planStrip(sl, s) {
 }
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
-  return `<div class="sess2 ${L.qopen ? '' : 'qclosed'}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div></div>
+  return `<div class="sess2 ${L.qopen || (A && A.type === 'Q&A Session') ? '' : 'qclosed'} ${A && A.type === 'Q&A Session' ? 'qamode' : ''}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div></div>
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${planStrip(sl, s)}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside></div>`;
 }
@@ -146,7 +178,7 @@ function renderQP() {
   const el = $('#qp'); if (!el) return;
   const s = S(), list = [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   el.innerHTML = `<div class="qh"><small>Activity</small><h2>Questions &amp; answers</h2></div>
-  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id, en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''}">
+  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id && !(A && A.type === 'Q&A Session'), en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.sel != null ? A.sel : (list[0] && list[0].id)) === q.id ? 'selq' : ''}">
     <div class="qwrap"><div class="qrow"><button class="qn" data-a="qnum" data-q="${q.id}" aria-label="Mark question ${i + 1}">${pad(i + 1)}</button><button class="qtxt" data-a="qopen" data-q="${q.id}"><span class="qt">${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</button></div>
     ${q.up ? `<span class="asked" title="${q.up} students asked">${q.up}</span>` : ''}</div>
     ${open ? `<div class="qd">
@@ -406,7 +438,7 @@ document.addEventListener('click', e => {
     case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
     case 'actclose': { const f = flowOf(s); goTo(s, s.pos < f.length - 1 ? s.pos + 1 : s.pos - 1); break; }
     case 'upload': L.menu = false; return $('#slideFile').click();
-    case 'qnum': q.seen = !q.seen; renderQP(); return;
+    case 'qnum': if (A && A.type === 'Q&A Session') { A.sel = q.id; q.seen = true; renderQP(); const l = document.getElementById('qaList'); if (l) { l.innerHTML = qaListHTML(s); qaScroll(); } return; } q.seen = !q.seen; renderQP(); return;
     case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;
@@ -588,3 +620,14 @@ document.addEventListener('click', e => {
   if (!sec || !L.plan || e.target.closest('.tile,.achip2,button,.tgap,[data-a]')) return;
   L.plan = false; botbar(); sec.classList.add('collapsed');
 });
+
+/* simulated live class: other students' answers keep arriving in the Q&A Session */
+setInterval(() => {
+  if (!A || A.type !== 'Q&A Session' || V !== 'live') return;
+  const s = S(), list = sortedQs(s); if (!list.length) return;
+  const q = list[Math.floor(Math.random() * list.length)], used = qaReplies(q);
+  if (used.length >= 6) return;
+  const pick = REPLY_BANK.filter(r => !used.some(u => u.t === r.t)); if (!pick.length) return;
+  used.push(Object.assign({ who: NAMES[Math.floor(Math.random() * NAMES.length)] }, pick[Math.floor(Math.random() * pick.length)]));
+  const l = document.getElementById('qaList'); if (l) { const top = l.scrollTop; l.innerHTML = qaListHTML(s); l.scrollTop = top; }
+}, 4500);
