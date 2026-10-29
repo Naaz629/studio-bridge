@@ -545,7 +545,7 @@ function cdEmpty(s, f, m, cd) {
     : cd.state === 'notext' ? `<div class="cdwait"><b>This slide has no text to read</b><p>${esc(cd.aiError)} Upload the slides as PDF or PowerPoint, or write the questions yourself.</p><div class="qacts">${own}</div></div>`
     : cd.state === 'off' ? `<div class="cdwait"><b>AI is turned off</b><p>${esc(cd.aiError || '')} Concept checks are written by an AI model so the wording is simple and matches your slide.</p><div class="qacts"><button class="sm p" data-a="aisettings">✦ Choose AI</button>${own}</div></div>`
     : `<div class="cdwait"><b>The AI could not write the questions</b><p>${esc(cd.aiError || 'Something went wrong.')}</p><div class="qacts"><button class="sm p" data-a="cdretry">↻ Try again</button><button class="sm" data-a="aisettings">✦ AI settings</button>${own}</div></div>`;
-  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdchip">✦ CONCEPT CHECK</span><span class="spacer"></span><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdtake">Your take</span><span class="spacer"></span><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="cdbody"><h3 class="cdq">${esc(cd.title)}</h3><p class="cdsrc">Checking your understanding of: ${esc(cd.source)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</p>${body}</div>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
@@ -553,7 +553,7 @@ function cdCard(s, f, m) {
   const cd = ensureCD(s, s.pos);
   if (!cd.qs.length) return cdEmpty(s, f, m, cd);
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
-  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdchip">✦ CONCEPT CHECK</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdtake">Your take</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}<div id="cdAns">${answersHTML(q)}</div><div class="cdfoot">${cd.pending ? '<span class="aiflag busy">✦ Writing questions from this slide…</span> · ' : cd.by === 'ai' ? `<span class="aiflag">✦ ${cd.edited ? 'AI draft, edited' : 'AI draft from this slide · check before you use it'}</span> · ` : ''}${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
