@@ -156,7 +156,7 @@ function qaScroll() {}
 const EXAMPLE_ARTS = [['Business model canvas', 'assets/artefacts/bmc-1.svg'], ['Value proposition canvas', 'assets/artefacts/vpc-2.svg']];
 const ART_IDLE = 120000;
 const artHeld = () => !!(A && A.hold && Date.now() - A.hold < ART_IDLE);
-function artItems(s) { return EXAMPLE_ARTS.map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(([n, t, src, anon, group]) => ({ n: group || n, t, src, anon: !!anon }))); }
+function artItems(s) { return EXAMPLE_ARTS.map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(e => ({ n: artLabel(e), t: e[1], src: e[2] }))); }
 function artefactCard(s, f, m) {
   const items = artItems(s), at = Math.max(0, Math.min(items.length - 1, A.q || 0)), it = items[at];
   const dots = items.map((x, i) => `<button class="artdot ${i === at ? 'on' : ''}" data-a="artpick" data-i="${i}" aria-label="Show ${esc(x.t)} ${i + 1}"></button>`).join('');
@@ -166,7 +166,7 @@ function artefactCard(s, f, m) {
   ${navOverlay(0, 1, true, true)}</div>`;
 }
 function artSlideHTML(it) {
-  const cap = it.ex ? `<span class="extag">Example</span><b>${esc(it.t)}</b>` : it.anon ? `<b>${esc(it.t)}</b>` : `<b>${esc(it.n)}</b><span>${esc(it.t)}</span>`;
+  const cap = it.ex ? `<span class="extag">Example</span><b>${esc(it.t)}</b>` : `<b>${esc(it.n)}</b><span>${esc(it.t)}</span>`;
   return `<div class="artslide"><div class="artimg">${artPic(it.src)}</div><div class="artcap">${cap}</div></div>`;
 }
 /* artefacts are image files */
@@ -225,6 +225,12 @@ function outcomeCard(o) {
   <div class="loa"><button class="sm ${isOpen ? 'p' : ''}" data-a="openlo" data-o="${o.id}" aria-expanded="${isOpen}">See evidence · ${o.who.length} ${o.unit} need you ${isOpen ? '▴' : '▾'}</button><button class="sm" data-a="tip" data-o="${o.id}">Re-teach tip</button><button class="sm" data-a="group" data-o="${o.id}">Make a small group</button></div>
   ${isOpen ? `<div class="stu">${need.length ? need.map(([nm, l, note], i) => `<button class="s" data-s="${o.id}|${i}"><span class="av ${AVC[i % 7]}">${nm.startsWith('Team') ? 'T' + nm.split(' ')[1] : ini(nm)}</span><span><b>${esc(nm)}</b><small>${esc(note)}</small></span><span class="lvtag">Stuck at: ${LVL[l][0]}</span><em>›</em></button>`).join('') : '<div class="none">No matches</div>'}</div>` : ''}</article>`;
 }
+/* a file is named after the student, or the group name or number; an anonymous upload is just Student # or Group # */
+function artLabel(entry) {
+  const [nm, , , anon, group] = entry, i = S().artefacts.indexOf(entry);
+  if (group) return group;
+  return anon ? 'Student ' + (i + 1) : nm;
+}
 /* artefacts are kept in one folder per type of artefact; a folder opens to its images */
 function artefactFolders() {
   const m = new Map();
@@ -235,7 +241,7 @@ function artefactsHTML() {
   const folders = artefactFolders(), open = O.folder && folders.find(([t]) => t === O.folder);
   if (open) {
     return `<div class="foldhead"><button class="sm" data-a="ofolderback" aria-label="Back to folders">‹ Folders</button><b>${esc(open[0])}</b><span class="meta">${open[1].length} files</span></div>
-    <div class="art-grid">${open[1].map(([, , ic]) => `<div class="art"><div class="thumb">${artPic(ic)}</div></div>`).join('')}</div>`;
+    <div class="art-grid">${open[1].map(x => `<div class="art"><div class="thumb">${artPic(x[2])}</div><div class="am"><b>${esc(artLabel(x))}</b></div></div>`).join('')}</div>`;
   }
   return `<div class="folder-grid">${folders.map(([t, list]) => `<button class="folder" data-a="ofolder" data-f="${esc(t)}"><span class="ftab"></span><span class="fbody"><span class="fpeek">${list.slice(0, 3).map(x => `<span class="fp">${artPic(x[2])}</span>`).join('')}</span><b>${esc(t)}</b><span class="meta">${list.length} files</span></span></button>`).join('')}</div>`;
 }
