@@ -194,7 +194,7 @@ const pickJSON = text => { const m = String(text || '').match(/\{[\s\S]*\}/); if
 async function aiGenerate(p = {}) {
   const cfg = aiLoad();
   const asked = Array.isArray(p.asked) && p.asked.length ? `\nQuestions students asked in this session (most asked first):\n` + p.asked.map(a => `- ${String(a.text).slice(0, 200)} (${a.count} students)`).join('\n') : '';
-  const user = `Learning outcome (${p.lo || ''}): ${p.out || ''}\nSlide title: ${p.title || ''}\nSlide text:\n"""\n${String(p.text || '').slice(0, 6000)}\n"""${asked}`;
+  const user = `Learning outcome (${p.lo || ''}): ${p.out || ''}\nLatest slide: ${p.title || ''}\nAll the slides shown so far, in order:\n"""\n${String(p.text || '').slice(0, 6000)}\n"""${asked}`;
 
   if (cfg.provider === 'ollama') {
     const url = (process.env.STUDIO_OLLAMA_URL || cfg.ollamaUrl).replace(/\/$/, '');
@@ -285,7 +285,7 @@ const MATCH_SYSTEM = `You help a university design tutor. You are given one slid
 ipcMain.handle('ai:match', async (e, p = {}) => {
   const codes = (p.outs || []).map(o => String(o.lo));
   const nl = String.fromCharCode(10);
-  const user = 'Slide title: ' + String(p.title || '').slice(0, 200) + nl + 'Slide text:' + nl + String(p.text || '').slice(0, 1800) + nl + nl + 'Learning outcomes:' + nl + (p.outs || []).map(o => '- ' + o.lo + ': ' + String(o.out).slice(0, 220)).join(nl);
+  const user = 'Slide title: ' + String(p.title || '').slice(0, 200) + nl + 'Slide text:' + nl + String(p.text || '').slice(0, 3500) + nl + nl + 'Learning outcomes:' + nl + (p.outs || []).map(o => '- ' + o.lo + ': ' + String(o.out).slice(0, 220)).join(nl);
   const r = await aiAsk(MATCH_SYSTEM, user, { type: 'object', required: ['lo', 'why'], properties: { lo: { type: 'string', enum: codes.concat('none') }, why: { type: 'string' } } });
   if (!r.json) return r;
   return { lo: String(r.json.lo || 'none'), why: String(r.json.why || '').slice(0, 200) };

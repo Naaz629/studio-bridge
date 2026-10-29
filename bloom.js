@@ -54,11 +54,14 @@ function cdContext(s, pos) {
   let slide = null, idx = -1;
   for (let p = pos - 1; p >= 0; p--) if (f[p].k === 's') { idx = Math.min(f[p].i, sl.length - 1); slide = sl[idx]; break; }
   const outs = weekOuts(s), o = outs[0], out = o.out;
-  const text = slide && slide.text ? slide.text : '';
+  // read every slide shown before the activity, in order, so the questions cover the whole lesson so far
+  const seenIdx = [...new Set(f.slice(0, pos).filter(x => x.k === 's').map(x => Math.min(x.i, sl.length - 1)))];
+  const per = Math.max(400, Math.floor(5600 / Math.max(1, seenIdx.length)));
+  const text = seenIdx.map(i => sl[i]).filter(x => x && x.text).map((x, n) => 'Slide ' + (seenIdx.indexOf(sl.indexOf(x)) + 1) + ' - ' + cleanTopic(x.title || x.t) + String.fromCharCode(10) + x.text.slice(0, per)).join(String.fromCharCode(10, 10));
   const title = cleanTopic(slide ? (slide.title || slide.t) : (s.topics[s.liveWeek] || [''])[0]) || 'this week\'s topic';
   // sentences from the rest of the deck serve as believable wrong answers
   const others = [];
-  sl.forEach((x, i) => { if (i !== idx && x.text) others.push(...sentencesOf(x.text)); });
+  sl.forEach((x, i) => { if (!seenIdx.includes(i) && x.text) others.push(...sentencesOf(x.text)); });
   const asked = [...(s.qs || [])].sort((a, b) => b.up - a.up).slice(0, 6).map(q => ({ text: q.tr || q.text, count: q.up }));
   return {
     asked, outs: outs.map(x => ({ lo: x.lo, out: x.out })),
