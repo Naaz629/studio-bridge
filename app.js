@@ -53,7 +53,7 @@ function flowOf(s) {
   return s.flow;
 }
 function syncA(s) { const it = flowOf(s)[s.pos]; A = it && it.k === 'a' ? { type: it.act, q: 0 } : null; }
-function goTo(s, p) { const f = flowOf(s); s.pos = Math.max(0, Math.min(f.length - 1, p)); syncA(s); }
+function goTo(s, p) { const f = flowOf(s); if (A && A.type === 'Q&A Session') L.qopen = false; /* leaving the Q&A page keeps the side column closed */ s.pos = Math.max(0, Math.min(f.length - 1, p)); syncA(s); }
 let pulseKey = '', pulseTimer = null;
 function pulseDots() {
   const s = S(), key = si + '|' + s.pos + '|' + (A ? A.type + A.q : '');
