@@ -930,3 +930,4 @@ button.qtxt{padding-top:12px}
 .folder b{font-size:14px}
 .foldhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}.foldhead b{font-size:15px}
 .folder-grid{align-items:start}.folder b{min-height:2.6em;display:block}.folder{height:auto}
+.lobox{min-height:0}.lobox .lotext{margin-bottom:0}

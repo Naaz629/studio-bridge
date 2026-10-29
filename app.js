@@ -250,7 +250,6 @@ function loBox(o, open) {
   return `<div class="lowrap"><div class="lolabel">${esc(o.lo)}</div>
   <button class="lobox ${open ? 'open' : ''}" data-a="olo" data-o="${esc(o.id)}" aria-expanded="${open}">
     <span class="lotext">${esc(S().ulo[o.lo] || o.out)}</span>
-    <span class="lomini">${lv.map(([k, [n]]) => `<span class="lm" title="${LVL[k][0]}: ${n} of ${o.total}"><i style="width:${Math.round(n / o.total * 100)}%;background:${ST[lvState(n, o.total)][1]}"></i></span>`).join('')}</span>
   </button></div>`;
 }
 /* the learning-outcome panel docks on the right of the Overview (no overlay): an AI class insight, who is stuck and why, then a section that opens to the questions and answers */
