@@ -541,7 +541,7 @@ function answersHTML(q) {
 }
 function cdEmpty(s, f, m, cd) {
   const own = '<button class="sm" data-a="cdedit">✎ Write my own questions</button>';
-  const body = cd.pending ? `<div class="cdwait"><span class="aiflag busy">✦ The AI is writing five questions</span><p>It reads this slide, the week's learning outcome and what your students asked. On a laptop this can take up to a minute.</p></div>`
+  const body = cd.pending ? `<div class="cdwait"><span class="aiflag busy">✦ The AI is writing five questions</span></div>`
     : cd.state === 'notext' ? `<div class="cdwait"><b>This slide has no text to read</b><p>${esc(cd.aiError)} Upload the slides as PDF or PowerPoint, or write the questions yourself.</p><div class="qacts">${own}</div></div>`
     : cd.state === 'off' ? `<div class="cdwait"><b>AI is turned off</b><p>${esc(cd.aiError || '')} Concept checks are written by an AI model so the wording is simple and matches your slide.</p><div class="qacts"><button class="sm p" data-a="aisettings">✦ Choose AI</button>${own}</div></div>`
     : `<div class="cdwait"><b>The AI could not write the questions</b><p>${esc(cd.aiError || 'Something went wrong.')}</p><div class="qacts"><button class="sm p" data-a="cdretry">↻ Try again</button><button class="sm" data-a="aisettings">✦ AI settings</button>${own}</div></div>`;

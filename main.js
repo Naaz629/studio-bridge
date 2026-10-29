@@ -28,6 +28,7 @@ function createWindow() {
           const out = { origin: location.protocol };
           const pdf = ${JSON.stringify(b64(process.env.STUDIO_TEST_PDF))}, pptx = ${JSON.stringify(b64(process.env.STUDIO_TEST_PPTX))};
           if (pdf) { const t0 = performance.now(); const s = await readSlideFile(mk(pdf, 'test.pdf')); out.pdf = { pages: s.length, withText: s.filter(x => x.text).length, images: s.filter(x => (x.url||'').startsWith('data:image')).length, titles: s.slice(0, 3).map(x => x.title), ms: Math.round(performance.now() - t0) }; }
+          if (pptx && ${JSON.stringify(process.env.STUDIO_TEST_PPTX_PATH || '')}) { const r = await window.shell.pptxToPdf(${JSON.stringify(process.env.STUDIO_TEST_PPTX_PATH || '')}); out.asis = r.error ? { error: r.error } : { bytes: r.data.length }; if (r.data) { const pg = await readPdf(new File([r.data], 'x.pdf', { type: 'application/pdf' })); out.asis.pages = pg.length; out.asis.images = pg.filter(x => (x.url || '').startsWith('data:image')).length; } }
           if (pptx) { const s = await readSlideFile(mk(pptx, 'test.pptx')); out.pptx = { slides: s.length, titles: s.map(x => x.title), notes: s[0].text.includes('Notes') }; }
           if (${JSON.stringify(!!(process.env.STUDIO_TEST_AI || process.env.STUDIO_TEST_OLLAMA))} && pptx) {
             const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -194,7 +195,10 @@ const pickJSON = text => { const m = String(text || '').match(/\{[\s\S]*\}/); if
 async function aiGenerate(p = {}) {
   const cfg = aiLoad();
   const asked = Array.isArray(p.asked) && p.asked.length ? `\nQuestions students asked in this session (most asked first):\n` + p.asked.map(a => `- ${String(a.text).slice(0, 200)} (${a.count} students)`).join('\n') : '';
-  const user = `Learning outcome (${p.lo || ''}): ${p.out || ''}\nLatest slide: ${p.title || ''}\nAll the slides shown so far, in order:\n"""\n${String(p.text || '').slice(0, 6000)}\n"""${asked}`;
+  const outs = Array.isArray(p.outs) && p.outs.length > 1 ? p.outs : null;
+  const loLine = outs ? 'Learning outcomes this week:\n' + outs.map(o => '- ' + o.lo + ': ' + String(o.out).slice(0, 200)).join('\n') + '\nFirst set "lo" to the code of the ONE outcome these slides teach (judge by meaning), then write all questions for that outcome.' : `Learning outcome (${p.lo || ''}): ${p.out || ''}`;
+  const schema = outs ? Object.assign({}, QUESTIONS_SCHEMA, { required: ['lo'].concat(QUESTIONS_SCHEMA.required), properties: Object.assign({ lo: { type: 'string', enum: outs.map(o => o.lo) } }, QUESTIONS_SCHEMA.properties) }) : QUESTIONS_SCHEMA;
+  const user = `${loLine}\nLatest slide: ${p.title || ''}\nAll the slides shown so far, in order:\n"""\n${String(p.text || '').slice(0, 4000)}\n"""${asked}`;
 
   if (cfg.provider === 'ollama') {
     const url = (process.env.STUDIO_OLLAMA_URL || cfg.ollamaUrl).replace(/\/$/, '');
@@ -202,7 +206,7 @@ async function aiGenerate(p = {}) {
       const res = await fetch(url + '/api/chat', {
         method: 'POST', signal: AbortSignal.timeout(240000),
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ model: cfg.ollamaModel, stream: false, format: QUESTIONS_SCHEMA, options: { temperature: 0.4 },
+        body: JSON.stringify({ model: cfg.ollamaModel, stream: false, format: schema, keep_alive: '30m', options: { temperature: 0.4, num_predict: 1100, num_ctx: 4096 },
           messages: [{ role: 'system', content: AI_SYSTEM }, { role: 'user', content: user }] })
       });
       if (res.status === 404) return { error: `The model "${cfg.ollamaModel}" is not downloaded yet. In a terminal run: ollama pull ${cfg.ollamaModel}` };
@@ -210,7 +214,7 @@ async function aiGenerate(p = {}) {
       const body = await res.json();
       const j = pickJSON(body.message && body.message.content);
       if (!j) return { error: 'The local model did not reply in the expected format.' };
-      return { questions: j.questions, model: cfg.ollamaModel, provider: 'ollama' };
+      return { questions: j.questions, lo: j.lo, model: cfg.ollamaModel, provider: 'ollama' };
     } catch (e) {
       return { error: e.name === 'TimeoutError' ? 'The local model took too long. Try a smaller model.' : 'Ollama is not running. Start the Ollama app, then try again.' };
     }
@@ -321,7 +325,10 @@ ipcMain.handle('ai:generate', (e, payload) => aiGenerate(payload));
 // self-test runs use a throwaway data folder so they never touch the real saved settings
 if (process.env.STUDIO_TEST_OUT) app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'studio-bridge-test-')));
 app.setAppUserModelId('edu.studio.bridge');
+/* load the local model into memory at start so the first set of questions does not wait for it */
+const warmOllama = () => { try { const c = aiLoad(); if (c.provider !== 'ollama') return; fetch((c.ollamaUrl || OLLAMA_DEFAULT.url).replace(/[/]$/, '') + '/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: c.ollamaModel, keep_alive: '30m' }) }).catch(() => {}); } catch (e) {} };
 app.whenReady().then(() => {
+  if (!process.env.STUDIO_TEST_OUT) warmOllama();
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });

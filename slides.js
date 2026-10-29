@@ -84,10 +84,26 @@ async function readPptx(file) {
   return out;
 }
 
+/* show a .pptx exactly as designed: PowerPoint (on this computer) exports it to PDF and each page is shown as a picture;
+   the slide text and speaker notes still come from the file itself so the AI can read them */
+async function readPptxAsIs(file, onProgress) {
+  const texts = await readPptx(file);
+  const sh = typeof window !== 'undefined' && window.shell;
+  if (!sh || !sh.pptxToPdf || !sh.pathFor) return texts;
+  try {
+    const fp = sh.pathFor(file); if (!fp) return texts;
+    const r = await sh.pptxToPdf(fp);
+    if (!r || !r.data) return texts;
+    const pages = await readPdf(new File([r.data], file.name.replace(/.pptx$/i, '.pdf'), { type: 'application/pdf' }), onProgress);
+    if (!pages.length) return texts;
+    return pages.map((p, i) => { const t = texts[i]; return Object.assign(p, { name: file.name + ' · slide ' + (i + 1), title: t ? t.title : p.title, text: t ? t.text : p.text }); });
+  } catch (e) { return texts; }
+}
+
 async function readSlideFile(file, onProgress) {
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   if (ext === 'pdf') return readPdf(file, onProgress);
-  if (ext === 'pptx') return readPptx(file);
+  if (ext === 'pptx') return readPptxAsIs(file, onProgress);
   if (file.type.startsWith('image/')) return [{ name: file.name, url: URL.createObjectURL(file), title: stripExt(file.name), text: '' }];
   return null; // .ppt / .key and other formats can't be read
 }

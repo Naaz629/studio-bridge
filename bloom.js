@@ -102,18 +102,11 @@ async function aiBuildCD(ctx) {
   const st = await ai.status();
   if (!st.enabled) throw fail('off', 'AI is turned off. Choose a question writer to create concept checks.');
   if (!ctx.hasText) throw fail('notext', 'This slide has no text the app can read, so the AI has nothing to work from.');
-  // find the outcome this slide really teaches (by meaning); keep the default if none fits
-  if (ai.match && ctx.outs && ctx.outs.length > 1) {
-    try {
-      const m = await ai.match({ title: ctx.title, text: ctx.text, outs: ctx.outs });
-      const hit = m && ctx.outs.find(x => x.lo === m.lo);
-      if (hit) { ctx.lo = hit.lo; ctx.out = hit.out; ctx.loAction = hit.out.charAt(0).toLowerCase() + hit.out.slice(1); ctx.relevant = true; }
-      else if (m && m.lo === 'none') ctx.relevant = false;
-    } catch (e) { /* the default outcome stays */ }
-  }
   let last = 'The AI reply could not be used.';
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await ai.generate({ lo: ctx.lo, out: ctx.out, title: ctx.title, text: ctx.text, asked: ctx.asked });
+    const res = await ai.generate({ lo: ctx.lo, out: ctx.out, outs: ctx.outs, title: ctx.title, text: ctx.text, asked: ctx.asked });
+    const hit = !res.error && ctx.outs && ctx.outs.find(x => x.lo === res.lo);
+    if (hit) { ctx.lo = hit.lo; ctx.out = hit.out; ctx.loAction = hit.out.charAt(0).toLowerCase() + hit.out.slice(1); }
     if (res.error) { last = res.error; break; }   // connection or key problems are not fixed by asking again
     const qs = normaliseAI(res.questions, ctx);
     if (qs) return Object.assign({}, ctx, { qs, by: 'ai', aiProvider: res.provider, state: 'ready', pending: false });
