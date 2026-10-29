@@ -689,3 +689,12 @@ setInterval(() => {
   if (!artHeld()) A.q = EXAMPLE_ARTS.length + got.length - 1;
   render();
 }, 9000);
+
+/* double-click the artefact slideshow to carry on to the next slide */
+document.addEventListener('dblclick', e => {
+  if (!A || A.type !== 'Artefact upload' || !e.target.closest('.artshow')) return;
+  const s = S(), f = flowOf(s); let np = s.pos + 1;
+  while (np < f.length && f[np].k === 'a') np++;
+  if (np >= f.length) { toast('This is the last slide.'); return; }
+  goTo(s, np); render();
+});
