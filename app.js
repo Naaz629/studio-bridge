@@ -232,7 +232,7 @@ function loPanel(o) {
   const s = S(), anon = O.anon;
   const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
   const stuckN = o.total - weak[1][0], ins = ensureInsight(o);
-  const lo1 = (s.ulo[o.lo] || o.out).replace(/.$/, ''), loBit = lo1.split(/s+/).slice(0, 9).join(' ').toLowerCase();
+  const lo1 = (s.ulo[o.lo] || o.out).replace(/.$/, ''), loBit = lo1.split(/s+/).slice(0, 6).join(' ').toLowerCase();
   const topic = ins.state === 'ready' && ins.stuck ? ins.stuck : 'Students struggled to ' + loBit + '.';
   const why = '';
   const insBody = ins.state === 'pending' ? '<p class="aiflag busy">✦ The AI is reading the class results…</p>'
