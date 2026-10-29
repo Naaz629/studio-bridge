@@ -29,9 +29,21 @@ function render() {
   document.querySelectorAll('.nav [data-v]').forEach(b => b.dataset.v === V ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
   const s0 = S();
   $('#navLiveSub').textContent = `Week ${s0.liveWeek} in progress`; $('#navLive').dataset.tip = `Session · Week ${s0.liveWeek} in progress`;
+  const oldStrip = document.querySelector('.planbody .tiles'), keepX = oldStrip ? oldStrip.scrollLeft : 0;
   $('#view').innerHTML = V === 'live' ? live() : overview();
   courseBtn(); mainMenu(); botbar();
-  if (V === 'live') { renderQP(); pulseDots(); }
+  if (V === 'live') { renderQP(); pulseDots(); syncStrip(keepX); }
+}
+/* keep the Studio flow strip in step with the main screen: the current tile is always in view, and a manual scroll is kept while nothing changes */
+let stripKey = '';
+function syncStrip(keepX) {
+  const strip = document.querySelector('.planbody .tiles'), on = strip && strip.querySelector('.tile.on'); if (!strip) return;
+  const key = si + '|' + S().pos;
+  strip.scrollLeft = keepX;
+  if (key !== stripKey || (on && (on.offsetLeft < strip.scrollLeft || on.offsetLeft + on.offsetWidth > strip.scrollLeft + strip.clientWidth))) {
+    if (on) strip.scrollLeft = on.offsetLeft - (strip.clientWidth - on.offsetWidth) / 2;
+    stripKey = key;
+  }
 }
 /* The session flow is an ordered list of steps: slides and activities. */
 function flowOf(s) {
