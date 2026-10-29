@@ -194,7 +194,7 @@ function planStrip(sl, s) {
 }
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
-  return `<div class="sess2 ${L.qopen || (A && A.type === 'Q&A Session') ? '' : 'qclosed'} ${A && A.type === 'Q&A Session' ? 'qamode' : ''}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div></div>
+  return `<div class="sess2 ${L.qopen || (A && A.type === 'Q&A Session') ? '' : 'qclosed'} ${A && A.type === 'Q&A Session' ? 'qamode' : ''} ${A && A.type === 'Q&A Session' && L.qside ? 'qside' : ''}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div></div>
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${planStrip(sl, s)}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside></div>`;
 }
@@ -454,7 +454,7 @@ document.addEventListener('click', e => {
     case 'subj': L.subj = !L.subj; L.menu = false; break;
     case 'pick': si = +a.dataset.i; L.subj = false; syncA(S()); if (!S().weeks[O.w]) O.w = S().liveWeek in S().weeks ? S().liveWeek : +Object.keys(S().weeks)[0]; O.open = null; toast('Subject: ' + S().name); break;
     case 'toggleplan': L.plan = !L.plan; botbar(); document.querySelector('.plan2')?.classList.toggle('collapsed', !L.plan); return;
-    case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
+    case 'toggleq': { if (A && A.type === 'Q&A Session') { L.qside = !L.qside; a.setAttribute('aria-pressed', L.qside); document.querySelector('.sess2')?.classList.toggle('qside', L.qside); return; } L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev':
       if (A && A.type === 'Artefact upload') { const n = artItems(s).length; A.q = Math.max(0, (A.q || 0) - 1); A.hold = Date.now(); }

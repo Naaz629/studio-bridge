@@ -853,8 +853,8 @@ button.qtxt{padding-top:12px}
 .qaans{margin:8px 0 0 42px;display:flex;flex-direction:column;gap:6px}
 .qar{background:rgba(0,0,0,.04);border-radius:10px;padding:7px 11px;animation:rise .25s ease}
 .qar b{font-size:12px}.qar p{margin:1px 0 0;font-size:13.5px;line-height:1.45}.qar.tutor{background:#d6f0dd}
-.sess2.qamode .rightcol{width:88px;padding:16px 8px}
-.qamode .qh small,.qamode .qh h2,.qamode .qtxt,.qamode .qd,.qamode .asked{display:none}
+.sess2.qamode:not(.qside) .rightcol{width:88px;padding:16px 8px}
+.qamode:not(.qside) .qh small,.qamode:not(.qside) .qh h2,.qamode:not(.qside) .qtxt,.qamode:not(.qside) .qd,.qamode:not(.qside) .asked{display:none}
 .qamode .qwrap{justify-content:center}
 .qamode .qr.selq .qn{outline:2px solid var(--ink);outline-offset:3px;border-radius:50%}
 /* the open window sits under the bar strip: only the real buttons on the right catch the mouse, so chips and tiles stay draggable */
@@ -863,7 +863,7 @@ button.qtxt{padding-top:12px}
 .botbar.open #planbtn{pointer-events:none}
 
 /* the numbers are part of the green Q&A card, not a separate column */
-.sess2.qamode .rightcol{width:0!important;padding:0!important;border-left-width:0!important;overflow:hidden}
+.sess2.qamode:not(.qside) .rightcol{width:0!important;padding:0!important;border-left-width:0!important;overflow:hidden}
 .qaline{flex:1;min-height:0;display:flex;flex-direction:row;gap:14px}
 .qaline .qalist{flex:1;min-width:0}
 .qanums{flex:none;width:76px;overflow-y:auto;display:flex;flex-direction:column;border-left:1px solid rgba(0,0,0,.12);padding-left:8px}
