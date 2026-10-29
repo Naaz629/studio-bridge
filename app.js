@@ -92,9 +92,7 @@ function slideCard(sl, s) {
   const f = flowOf(s), it = f[s.pos], cur = sl[Math.min(it.i, sl.length - 1)];
   const lines = cur.text ? cur.text.split('\n').slice(1, 8) : [];
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : cur.text ? `<div class="stext"><small>SLIDE ${it.i + 1} OF ${sl.length}</small><h2>${esc(cur.t)}</h2>${lines.length ? `<ul class="sbul">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}</div>` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
-  const link = cur.text ? loForSlide(s, cur) : null;
-  const chip = link && link.matched ? `<span class="lochip" data-tip="${esc(link.o.out)}">${esc(link.o.lo)}</span>` : '';
-  return `<div class="slidewrap2"><div class="slidepage">${body}${chip}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}</div></div>`;
+  return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}</div></div>`;
 }
 function discussionCard(s, f, m, p) {
   const cards = DISCUSS_CARDS.map(c => `<div class="dcard" data-card="${c.k}" data-tip="${c.label} · ${s.cards[c.k]} students"><img src="${c.img}" alt="${c.label}"><span class="dcount">${s.cards[c.k]}</span></div>`).join('');

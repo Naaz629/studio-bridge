@@ -280,6 +280,16 @@ Reply with JSON only: {"summary":"...","stuck":"...","why":"..."}
 - stuck: ONE precise insight from the weak answers, in this form: "Struggle to <one action> as they couldn't <the specific thing they missed>". At most 14 words. Name the real cause you see in the answers. Example: "Struggle to plan as they couldn't choose a specific opportunity to work with." Do not copy the learning outcome and do not mention levels.
 - why: leave this as an empty string.`;
 const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' } } };
+/* which learning outcome is this slide teaching? judged by meaning, not by shared words */
+const MATCH_SYSTEM = `You help a university design tutor. You are given one slide and a list of learning outcomes. Decide which ONE outcome the slide is helping students learn, by what the slide TEACHES (its idea and purpose), not by words that appear in both. If no outcome fits, answer "none". Reply with JSON only: {"lo":"<code of the outcome, or none>","why":"<one short sentence>"}`;
+ipcMain.handle('ai:match', async (e, p = {}) => {
+  const codes = (p.outs || []).map(o => String(o.lo));
+  const nl = String.fromCharCode(10);
+  const user = 'Slide title: ' + String(p.title || '').slice(0, 200) + nl + 'Slide text:' + nl + String(p.text || '').slice(0, 1800) + nl + nl + 'Learning outcomes:' + nl + (p.outs || []).map(o => '- ' + o.lo + ': ' + String(o.out).slice(0, 220)).join(nl);
+  const r = await aiAsk(MATCH_SYSTEM, user, { type: 'object', required: ['lo', 'why'], properties: { lo: { type: 'string', enum: codes.concat('none') }, why: { type: 'string' } } });
+  if (!r.json) return r;
+  return { lo: String(r.json.lo || 'none'), why: String(r.json.why || '').slice(0, 200) };
+});
 ipcMain.handle('ai:insight', async (e, p = {}) => {
   const lv = (p.levels || []).map(l => `- ${l.label}: ${l.n} of ${p.total} students (${l.src})`).join(String.fromCharCode(10));
   const notes = (p.notes || []).slice(0, 8).map(n => '- ' + String(n).slice(0, 140)).join(String.fromCharCode(10));

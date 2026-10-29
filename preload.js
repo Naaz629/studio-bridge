@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('shell', {
     save: opts => ipcRenderer.invoke('ai:save', opts),
     clear: () => ipcRenderer.invoke('ai:clear'),
     check: o => ipcRenderer.invoke('ai:check', o),
+    match: payload => ipcRenderer.invoke('ai:match', payload),
     insight: payload => ipcRenderer.invoke('ai:insight', payload),
     generate: payload => ipcRenderer.invoke('ai:generate', payload)
   }

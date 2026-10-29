@@ -41,18 +41,11 @@ function termsOf(text, n = 5) {
   return Object.entries(freq).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, n).map(e => e[0]);
 }
 
-/* ---- which learning outcome does a slide belong to? match its words against each outcome of the week ---- */
+/* the outcomes of the live week; the AI decides which one a slide teaches (see aiBuildCD) */
 function weekOuts(s) {
   const W = s.weeks[s.liveWeek] || Object.values(s.weeks)[0], seen = new Map();
   Object.values(W.sessions).forEach(ss => ss.outs.forEach(o => { if (!seen.has(o.lo)) seen.set(o.lo, o); }));
   return [...seen.values()];
-}
-const stems = t => new Set((String(t).toLowerCase().match(/[a-z]{5,}/g) || []).filter(w => !STOP.has(w)).map(w => w.slice(0, 5)));
-function loForSlide(s, slide) {
-  const outs = weekOuts(s), sw = stems((slide && (slide.title || slide.t) || '') + ' ' + (slide && slide.text || ''));
-  let best = null, bs = 0;
-  for (const o of outs) { let n = 0; stems((s.ulo && s.ulo[o.lo]) || o.out).forEach(w => { if (sw.has(w)) n++; }); if (n > bs) { bs = n; best = o; } }
-  return { o: best || outs[0], matched: bs > 0 };
 }
 
 /* ---- context: the outcome the slide belongs to + the slide before the activity ---- */
@@ -60,7 +53,7 @@ function cdContext(s, pos) {
   const f = flowOf(s), sl = slidesFor(s);
   let slide = null, idx = -1;
   for (let p = pos - 1; p >= 0; p--) if (f[p].k === 's') { idx = Math.min(f[p].i, sl.length - 1); slide = sl[idx]; break; }
-  const o = loForSlide(s, slide).o, out = o.out;
+  const outs = weekOuts(s), o = outs[0], out = o.out;
   const text = slide && slide.text ? slide.text : '';
   const title = cleanTopic(slide ? (slide.title || slide.t) : (s.topics[s.liveWeek] || [''])[0]) || 'this week\'s topic';
   // sentences from the rest of the deck serve as believable wrong answers
@@ -68,7 +61,7 @@ function cdContext(s, pos) {
   sl.forEach((x, i) => { if (i !== idx && x.text) others.push(...sentencesOf(x.text)); });
   const asked = [...(s.qs || [])].sort((a, b) => b.up - a.up).slice(0, 6).map(q => ({ text: q.tr || q.text, count: q.up }));
   return {
-    asked,
+    asked, outs: outs.map(x => ({ lo: x.lo, out: x.out })),
     topic: title, title, text, hasText: sentencesOf(text).length > 0,
     slideNo: idx >= 0 ? idx + 1 : null,
     source: idx >= 0 ? `Slide ${idx + 1} · ${title}` : title,
@@ -106,6 +99,15 @@ async function aiBuildCD(ctx) {
   const st = await ai.status();
   if (!st.enabled) throw fail('off', 'AI is turned off. Choose a question writer to create concept checks.');
   if (!ctx.hasText) throw fail('notext', 'This slide has no text the app can read, so the AI has nothing to work from.');
+  // find the outcome this slide really teaches (by meaning); keep the default if none fits
+  if (ai.match && ctx.outs && ctx.outs.length > 1) {
+    try {
+      const m = await ai.match({ title: ctx.title, text: ctx.text, outs: ctx.outs });
+      const hit = m && ctx.outs.find(x => x.lo === m.lo);
+      if (hit) { ctx.lo = hit.lo; ctx.out = hit.out; ctx.loAction = hit.out.charAt(0).toLowerCase() + hit.out.slice(1); ctx.relevant = true; }
+      else if (m && m.lo === 'none') ctx.relevant = false;
+    } catch (e) { /* the default outcome stays */ }
+  }
   let last = 'The AI reply could not be used.';
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await ai.generate({ lo: ctx.lo, out: ctx.out, title: ctx.title, text: ctx.text, asked: ctx.asked });
