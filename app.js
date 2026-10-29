@@ -283,7 +283,13 @@ const ANS_BAD = {
   a: [{ t: 'I could not link it to my project.' }, { t: 'We have not tried it yet.' }, { t: 'No example yet.' }],
   e: [{ t: 'It is important.' }, { t: 'Because the tutor said so.' }, { t: '这对项目很重要。', en: 'It is important for the project.', lang: 'Chinese' }]
 };
-const QTOPIC = { k: 'Recalling the main idea', a: 'Using it in your own project', e: 'Explaining why it matters' };
+/* the heading of each page is the question that was asked in the concept check (the AI-written one when there is one) */
+const QTOPIC = { k: 'What is the main idea of this lesson?', a: 'Give one example of using this idea in your own project.', e: 'Why does this idea matter for your project?' };
+const CD_AT = { k: 0, a: 1, e: 3 };
+function askedQuestion(k) {
+  const s = S(), cd = flowOf(s).map(x => x.cd).filter(c => c && c.state === 'ready' && c.qs && c.qs.length).pop();
+  return (cd && cd.qs[CD_AT[k]] && cd.qs[CD_AT[k]].text) || QTOPIC[k];
+}
 function loAnswers(o) {
   if (o.answers) return o.answers;
   const r = seeded(hash(o.id + 'ans')), team = o.unit === 'teams', out = {};
@@ -299,7 +305,7 @@ function loAnswers(o) {
 }
 function qaPages(o) {
   const lv = Object.entries(o.lv), ans = loAnswers(o);
-  const pages = lv.map(([k, [n, src]]) => ({ k, title: LVL[k][0], topic: QTOPIC[k], src, n, total: o.total, answers: ans[k] }));
+  const pages = lv.map(([k, [n, src]]) => ({ k, title: LVL[k][0], topic: askedQuestion(k), src, n, total: o.total, answers: ans[k] }));
   pages.push({ k: 'take', title: 'Your take', topic: 'What students wrote in their own words', src: 'Class discussion', answers: null });
   return pages;
 }
@@ -318,9 +324,9 @@ function loPanel(o) {
   const pages = qaPages(o), pi = Math.max(0, Math.min(O.qp || 0, pages.length - 1)), pg = pages[pi];
   const who = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
   const body = pg.answers
-    ? `<div class="qahead"><b>${esc(pg.title)}</b><span>${esc(pg.topic)}</span><small>${esc(pg.src)} · ${pg.n} of ${pg.total} got it right</small></div>
+    ? `<div class="qahead"><b>${esc(pg.topic)}</b><small>${pg.n} of ${pg.total} got it right</small></div>
        <div class="anslist">${pg.answers.map((a, i) => `<div class="ans2 ${a.ok ? 'good' : 'gap'}"><span class="ansmark">${a.ok ? '✓' : '!'}</span><div><b>${esc(who(a.who, i))}</b><p>${esc(a.en || a.t)}</p>${a.lang ? origHTML(a.t, a.lang) : ''}</div></div>`).join('')}</div>`
-    : `<div class="qahead"><b>${esc(pg.title)}</b><span>${esc(pg.topic)}</span></div>
+    : `<div class="qahead"><b>${esc(pg.title)}</b></div>
        <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div></div>`; }).join('')}</div>`;
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
