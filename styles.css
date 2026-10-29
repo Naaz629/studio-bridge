@@ -835,3 +835,8 @@ button.qtxt{padding-top:12px}
 .left .plan2:not(.collapsed){cursor:pointer}
 .left .plan2 .tile,.left .plan2 .achip2,.left .plan2 button{cursor:pointer}
 .botbar.open,.botbar.open .barrow{background:var(--dock,#fffaf6)!important;border-top-color:transparent}
+/* open: the Studio flow window itself fills the strip where the bar sits */
+.botbar.open{margin-top:-53px;position:relative;z-index:3;background:transparent!important;pointer-events:none}
+.botbar.open .barrow{background:transparent!important}
+.botbar.open>*{pointer-events:auto}
+.botbar.open #planbtn{pointer-events:none}
