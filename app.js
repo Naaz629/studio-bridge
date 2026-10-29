@@ -162,7 +162,7 @@ function artefactCard(s, f, m) {
   const dots = items.map((x, i) => `<button class="artdot ${i === at ? 'on' : ''}" data-a="artpick" data-i="${i}" aria-label="Show ${esc(x.t)} ${i + 1}"></button>`).join('');
   return `<div class="card2 actcard artcard" style="background:${m.color}"><button class="x artx" data-a="actclose" aria-label="Close activity">✕</button>
   <div class="artshow" id="artLive" data-a="artpause" title="Click to stop here">${artSlideHTML(it)}</div>
-  <div class="artbar"><span class="artstate">${artHeld() ? 'Stopped · starts again after 2 minutes of no activity' : 'Slideshow playing'}</span><div class="artdots">${dots}</div></div>
+  <div class="artbar"><span class="artstate">${artHeld() ? 'Stopped' : ''}</span><div class="artdots">${dots}</div></div>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
 function artSlideHTML(it) {
