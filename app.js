@@ -554,7 +554,7 @@ function cdCard(s, f, m) {
   if (!cd.qs.length) return cdEmpty(s, f, m, cd);
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
   return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdtake">Your take</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><button class="sm" data-a="cdedit">✎ Edit questions</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}<div id="cdAns">${answersHTML(q)}</div><div class="cdfoot">${cd.pending ? '<span class="aiflag busy">✦ Writing questions from this slide…</span> · ' : cd.by === 'ai' ? `<span class="aiflag">✦ ${cd.edited ? 'AI draft, edited' : 'AI draft from this slide · check before you use it'}</span> · ` : ''}${esc(q.note)} · <b>${esc(cd.lo)}</b> ${esc(cd.out)}</div></div>
+  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length} · ${TYPE_NAMES[q.type]}</small><h3 class="cdq">${esc(q.text)}</h3><p class="cdsrc">Checking your understanding of: ${esc(q.source || cd.source)}</p>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}<div id="cdAns">${answersHTML(q)}</div></div>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 
