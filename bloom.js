@@ -74,18 +74,22 @@ function normaliseAI(raw, ctx) {
     const r = raw[i] || {}, text = String(r.text || '').trim();
     const type = ['mc', 'scale', 'open'].includes(r.type) ? r.type : null;
     if (!text || !type || wordCount(text) > 45) return null;
-    const q = { level: LEVELS[i].k, label: LEVELS[i].label, note: LEVELS[i].note, source: ctx.source, type, text };
+    const q = { level: LEVELS[i].k, label: LEVELS[i].label, note: LEVELS[i].note, source: ctx.source, type, text, zh: String(r.zh || '').trim().slice(0, 220) };
     if (type === 'mc') {
-      const opts = (Array.isArray(r.options) ? r.options : []).map(o => ({ t: String((o && o.t) || '').trim(), ok: !!(o && o.ok) })).filter(o => o.t).slice(0, 4);
+      const opts = (Array.isArray(r.options) ? r.options : []).map(o => ({ t: String((o && o.t) || '').trim(), ok: !!(o && o.ok), zh: String((o && o.zh) || '').trim().slice(0, 90) })).filter(o => o.t).slice(0, 4);
       if (opts.length < 3 || !opts.some(o => o.ok) || opts.some(o => wordCount(o.t) > 32)) return null;
       let seen = false; opts.forEach(o => { if (o.ok && seen) o.ok = false; if (o.ok) seen = true; });
       q.options = opts;
     } else if (type === 'scale') {
       q.lo = String(r.lo || 'Not yet').trim().slice(0, 24); q.hi = String(r.hi || 'Very sure').trim().slice(0, 24);
-    } else q.hint = String(r.hint || '').trim().slice(0, 90);
+      q.lo_zh = String(r.lo_zh || '').trim().slice(0, 14); q.hi_zh = String(r.hi_zh || '').trim().slice(0, 14);
+    } else { q.hint = String(r.hint || '').trim().slice(0, 90); q.hint_zh = String(r.hint_zh || '').trim().slice(0, 120); }
     qs.push(q);
   }
   return qs;
+}
+function normTerms(raw) {
+  return (Array.isArray(raw) ? raw : []).map(t => ({ term: String((t && t.term) || '').trim().slice(0, 40), simple: String((t && t.simple) || '').trim().slice(0, 90), zh: String((t && t.zh) || '').trim().slice(0, 60) })).map(t => /[a-z]/i.test(t.simple) ? t : Object.assign(t, { simple: '' })).filter(t => t.term && t.zh).slice(0, 5);
 }
 async function aiBuildCD(ctx) {
   const ai = window.shell && window.shell.ai;
@@ -99,7 +103,7 @@ async function aiBuildCD(ctx) {
     const res = await ai.generate({ lo: ctx.lo, out: ctx.out, title: ctx.title, text: ctx.text, asked: ctx.asked });
     if (res.error) { last = res.error; break; }   // connection or key problems are not fixed by asking again
     const qs = normaliseAI(res.questions, ctx);
-    if (qs) return Object.assign({}, ctx, { qs, by: 'ai', aiProvider: res.provider, state: 'ready', pending: false });
+    if (qs) return Object.assign({}, ctx, { qs, terms: normTerms(res.terms), by: 'ai', aiProvider: res.provider, state: 'ready', pending: false });
   }
   throw fail('error', last);
 }
