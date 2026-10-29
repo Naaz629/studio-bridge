@@ -156,7 +156,7 @@ function qaScroll() {}
 const EXAMPLE_ARTS = [['Business model canvas', 'assets/artefacts/bmc-1.svg'], ['Value proposition canvas', 'assets/artefacts/vpc-2.svg']];
 const ART_IDLE = 120000;
 const artHeld = () => !!(A && A.hold && Date.now() - A.hold < ART_IDLE);
-function artItems(s) { return EXAMPLE_ARTS.map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(([n, t, src, anon]) => ({ n, t, src, anon: !!anon }))); }
+function artItems(s) { return EXAMPLE_ARTS.map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(([n, t, src, anon, group]) => ({ n: group || n, t, src, anon: !!anon }))); }
 function artefactCard(s, f, m) {
   const items = artItems(s), at = Math.max(0, Math.min(items.length - 1, A.q || 0)), it = items[at];
   const dots = items.map((x, i) => `<button class="artdot ${i === at ? 'on' : ''}" data-a="artpick" data-i="${i}" aria-label="Show ${esc(x.t)} ${i + 1}"></button>`).join('');
@@ -228,7 +228,7 @@ function outcomeCard(o) {
 function artefactsHTML() {
   const s = S();
   return `
-  <div class="art-grid">${s.artefacts.map(([nm, t, ic, anon], i) => `<div class="art"><div class="thumb">${artPic(ic)}</div><div class="am"><b>${esc(t)}</b><div class="meta">${anon || O.anon ? 'Anonymous' : esc(nm)}</div></div></div>`).join('')}</div>`;
+  <div class="art-grid">${s.artefacts.map(([nm0, t, ic, anon, group], i) => { const nm = group || nm0; return `<div class="art"><div class="thumb">${artPic(ic)}</div><div class="am"><b>${esc(t)}</b><div class="meta">${anon || O.anon ? 'Anonymous' : esc(nm)}</div></div></div>`; }).join('')}</div>`;
 }
 /* Overview: Student Activity (one box per learning outcome) beside Artefacts; an LO opens a green card with its Questions & Answer and Your take */
 function weekOutcomes() {
