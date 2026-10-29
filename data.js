@@ -123,7 +123,7 @@ function makeSubject(cfg) {
     weeks: buildWeeks(cfg), upload: null, uploads: [], slideIdx: 0, attach: {}, taught: Object.keys(cfg.topics).length,
     reactions: Object.fromEntries(EMOJIS.map((e, i) => [e.k, [14, 3, 4, 6, 9][i]])),
     qs: cfg.qs, cards: { agree: 7, disagree: 3, turn: 4, clarify: 5, idea: 6 },
-    artefacts: [['Amira Khan', 'Persona canvas', '🗂️'], ['Ben Tran', 'Empathy map', '🧠'], ['Chloe Rossi', 'Journey sketch', '🛤️'], ['Dev Patel', 'Interview notes', '📝'], ['Elena Sosa', 'Concept poster', '🖼️'], ['Farid Ali', 'Prototype photo', '📷']]
+    artefacts: [['Amira Khan', 'Prototype photo', '📷'], ['Ben Tran', 'Concept poster', '🖼️'], ['Chloe Rossi', 'Prototype photo', '📷'], ['Dev Patel', 'Concept poster', '🖼️'], ['Elena Sosa', 'Prototype photo', '📷'], ['Farid Ali', 'Concept poster', '🖼️']]
   };
   return s;
 }
