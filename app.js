@@ -581,3 +581,10 @@ function cdCard(s, f, m) {
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 
+
+/* pressing the empty part of the Studio flow section closes it (tiles and activity chips keep working) */
+document.addEventListener('click', e => {
+  const sec = e.target.closest('.plan2');
+  if (!sec || !L.plan || e.target.closest('.tile,.achip2,button,.tgap,[data-a]')) return;
+  L.plan = false; botbar(); sec.classList.add('collapsed');
+});
