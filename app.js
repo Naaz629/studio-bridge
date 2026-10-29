@@ -435,7 +435,16 @@ document.addEventListener('click', e => {
     case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev': if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1); break;
-    case 'next': if (A && A.q < actQs().length - 1) A.q++; else goTo(s, s.pos + 1); break;
+    case 'next':
+      if (A && A.q < actQs().length - 1) A.q++;
+      else if (A && s.pos < flowOf(s).length - 1 && !L.warnNext) {
+        /* last question: warn once so nobody skips to the next slide by accident */
+        L.warnNext = true; toast('This is the last question. Press the arrow again to move to the next slide.');
+        document.querySelectorAll('.navarrow.r').forEach(b => b.classList.add('warn'));
+        clearTimeout(L.warnT); L.warnT = setTimeout(() => { L.warnNext = false; document.querySelectorAll('.navarrow.r').forEach(b => b.classList.remove('warn')); }, 6000);
+        return;
+      } else { L.warnNext = false; goTo(s, s.pos + 1); }
+      break;
     case 'tile': goTo(s, +a.dataset.i); break;
     case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
     case 'actclose': { const f = flowOf(s); goTo(s, s.pos < f.length - 1 ? s.pos + 1 : s.pos - 1); break; }

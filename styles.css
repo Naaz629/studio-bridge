@@ -873,3 +873,6 @@ button.qtxt{padding-top:12px}
 .qacard .navarrow.r{right:104px}
 .qacard .qalist{padding-right:34px;padding-left:34px}
 .qacard .navarrow.r{right:112px}
+
+.navarrow.warn{background:#e0a23a!important;color:#fff;animation:warnpulse .9s ease-in-out infinite}
+@keyframes warnpulse{50%{transform:translateY(-50%) scale(1.12)}}
