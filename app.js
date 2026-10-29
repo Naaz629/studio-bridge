@@ -158,8 +158,10 @@ function artefactCard(s, f, m) {
   return `<div class="card2 actcard artcard" style="background:${m.color}"><button class="x artx" data-a="actclose" aria-label="Close activity">✕</button><div class="artshow" id="artLive">${body}</div>
   ${navOverlay(at, Math.max(1, got.length), at > 0 || s.pos > 0, at < got.length - 1 || s.pos < f.length - 1)}</div>`;
 }
+/* artefacts are image files */
+function artPic(src) { return String(src).startsWith("assets/") ? `<img class="artpic" src="${esc(src)}" alt="" draggable="false">` : src; }
 function artSlideHTML([n, t, ic]) {
-  return `<div class="artslide"><div class="artimg">${ic}</div><div class="artcap"><b>${esc(t)}</b><span>${esc(n)}</span></div></div>`;
+  return `<div class="artslide"><div class="artimg">${artPic(ic)}</div><div class="artcap"><b>${esc(t)}</b><span>${esc(n)}</span></div></div>`;
 }
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
@@ -218,7 +220,7 @@ function outcomeCard(o) {
 function artefactsHTML() {
   const s = S();
   return `
-  <div class="art-grid">${s.artefacts.map(([nm, t, ic], i) => `<div class="art"><div class="thumb">${ic}</div><div class="am"><b>${esc(t)}</b><div class="meta">${O.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(nm)}</div></div></div>`).join('')}</div>`;
+  <div class="art-grid">${s.artefacts.map(([nm, t, ic], i) => `<div class="art"><div class="thumb">${artPic(ic)}</div><div class="am"><b>${esc(t)}</b><div class="meta">${O.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(nm)}</div></div></div>`).join('')}</div>`;
 }
 /* Overview: Student Activity (one box per learning outcome) beside Artefacts; an LO opens a green card with its Questions & Answer and Your take */
 function weekOutcomes() {
