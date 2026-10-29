@@ -41,14 +41,26 @@ function termsOf(text, n = 5) {
   return Object.entries(freq).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, n).map(e => e[0]);
 }
 
-/* ---- context: the week's outcome + the slide before the activity ---- */
+/* ---- which learning outcome does a slide belong to? match its words against each outcome of the week ---- */
+function weekOuts(s) {
+  const W = s.weeks[s.liveWeek] || Object.values(s.weeks)[0], seen = new Map();
+  Object.values(W.sessions).forEach(ss => ss.outs.forEach(o => { if (!seen.has(o.lo)) seen.set(o.lo, o); }));
+  return [...seen.values()];
+}
+const stems = t => new Set((String(t).toLowerCase().match(/[a-z]{5,}/g) || []).filter(w => !STOP.has(w)).map(w => w.slice(0, 5)));
+function loForSlide(s, slide) {
+  const outs = weekOuts(s), sw = stems((slide && (slide.title || slide.t) || '') + ' ' + (slide && slide.text || ''));
+  let best = null, bs = 0;
+  for (const o of outs) { let n = 0; stems((s.ulo && s.ulo[o.lo]) || o.out).forEach(w => { if (sw.has(w)) n++; }); if (n > bs) { bs = n; best = o; } }
+  return { o: best || outs[0], matched: bs > 0 };
+}
+
+/* ---- context: the outcome the slide belongs to + the slide before the activity ---- */
 function cdContext(s, pos) {
   const f = flowOf(s), sl = slidesFor(s);
   let slide = null, idx = -1;
   for (let p = pos - 1; p >= 0; p--) if (f[p].k === 's') { idx = Math.min(f[p].i, sl.length - 1); slide = sl[idx]; break; }
-  const W = s.weeks[s.liveWeek] || Object.values(s.weeks)[0];
-  const sess = W.sessions.tut || Object.values(W.sessions)[0];
-  const o = sess.outs[0], out = o.out;
+  const o = loForSlide(s, slide).o, out = o.out;
   const text = slide && slide.text ? slide.text : '';
   const title = cleanTopic(slide ? (slide.title || slide.t) : (s.topics[s.liveWeek] || [''])[0]) || 'this week\'s topic';
   // sentences from the rest of the deck serve as believable wrong answers
