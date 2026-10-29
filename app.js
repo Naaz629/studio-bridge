@@ -116,6 +116,7 @@ function discussionCard(s, f, m, p) {
 function actQs() {
   if (A.type === 'Concept Development') { const s = S(); return ensureCD(s, s.pos).qs.map(q => q.text); }
   if (A.type === 'Q&A Session') return sortedQs(S()).map(q => q.text);
+  if (A.type === 'Artefact upload') return ['upload'];
   return PROMPTS[A.type];
 }
 /* ---------- Q&A Session: full-screen questions with the other students' answers arriving live ---------- */
@@ -150,11 +151,25 @@ function qaCard(s, f, m) {
   ${navOverlay(Math.min(A.q || 0, Math.max(0, sortedQs(s).length - 1)), Math.max(1, sortedQs(s).length), (A.q || 0) > 0 || s.pos > 0, (A.q || 0) < sortedQs(s).length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function qaScroll() {}
+/* ---------- Artefact upload: one screen that tells students to upload; uploads appear here as they arrive ---------- */
+function artefactCard(s, f, m) {
+  const got = s.liveArts || (s.liveArts = []);
+  const nm = n => O.anon ? 'Student' : n;
+  return `<div class="card2 actcard artcard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>Upload your artefact</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  <div class="artbody"><div class="artinfo"><b>Students: add your work now.</b><ol><li>Open the Studio Bridge link on your phone or laptop.</li><li>Choose your photo, PDF or file.</li><li>Write your name and a short title.</li></ol><span class="meta">${got.length} uploaded</span></div>
+  <div class="artlive" id="artLive">${artLiveHTML(s)}</div></div>
+  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+}
+function artLiveHTML(s) {
+  const got = s.liveArts || [];
+  return got.length ? got.map(([n, t, ic]) => `<div class="art"><div class="thumb">${ic}</div><div class="am"><b>${esc(t)}</b><div class="meta">${esc(O.anon ? 'Student' : n)}</div></div></div>`).join('') : '<div class="none">Waiting for the first upload…</div>';
+}
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
   if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
   if (A.type === 'Concept Development') return cdCard(s, f, m);
   if (A.type === 'Q&A Session') return qaCard(s, f, m);
+  if (A.type === 'Artefact upload') return artefactCard(s, f, m);
   return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="abody"><small>QUESTION ${A.q + 1} OF ${p.length}</small><h3>${esc(p[A.q])}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${8 + A.q * 3} students have responded</div></div>
   ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
@@ -437,7 +452,7 @@ document.addEventListener('click', e => {
     case 'prev': if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1); break;
     case 'next':
       if (A && A.q < actQs().length - 1) A.q++;
-      else if (A && s.pos < flowOf(s).length - 1 && !L.warnNext) {
+      else if (A && A.type !== 'Artefact upload' && s.pos < flowOf(s).length - 1 && !L.warnNext) {
         /* last question: warn once so nobody skips to the next slide by accident */
         L.warnNext = true; toast('This is the last question. Press the arrow again to move to the next slide.');
         document.querySelectorAll('.navarrow.r').forEach(b => b.classList.add('warn'));
@@ -647,3 +662,12 @@ setInterval(() => {
   used.push(Object.assign({ who: NAMES[Math.floor(Math.random() * NAMES.length)] }, pick[Math.floor(Math.random() * pick.length)]));
   const l = document.getElementById('qaList'); if (l) { const top = l.scrollTop; l.innerHTML = qaListHTML(s); l.scrollTop = top; }
 }, 4500);
+
+/* simulated live class: artefacts arrive one by one on the Artefact upload screen */
+setInterval(() => {
+  if (!A || A.type !== 'Artefact upload' || V !== 'live') return;
+  const s = S(), got = s.liveArts || (s.liveArts = []), pool = s.artefacts || [];
+  if (got.length >= pool.length) return;
+  got.push(pool[got.length]);
+  const l = document.getElementById('artLive'); if (l) { l.innerHTML = artLiveHTML(s); const m = document.querySelector('.artinfo .meta'); if (m) m.textContent = got.length + ' uploaded'; }
+}, 3500);
