@@ -15,7 +15,7 @@ let V = 'live';
 let si = 0; // subject index
 const S = () => SUBJECTS[si];
 const L = { open: null, reply: null, plan: true, qopen: true, react: false, subj: false, menu: false, dragging: false };
-const O = { qp: 0, w: 6, s: 'tut', open: null, q: '', tab: 'lo', anon: false };
+const O = { qp: 0, w: 6, s: 'tut', open: null, q: '', tab: 'lo', anon: false, folder: null };
 let A = null; // running activity { type, q }
 let qid = 100;
 
@@ -225,10 +225,19 @@ function outcomeCard(o) {
   <div class="loa"><button class="sm ${isOpen ? 'p' : ''}" data-a="openlo" data-o="${o.id}" aria-expanded="${isOpen}">See evidence · ${o.who.length} ${o.unit} need you ${isOpen ? '▴' : '▾'}</button><button class="sm" data-a="tip" data-o="${o.id}">Re-teach tip</button><button class="sm" data-a="group" data-o="${o.id}">Make a small group</button></div>
   ${isOpen ? `<div class="stu">${need.length ? need.map(([nm, l, note], i) => `<button class="s" data-s="${o.id}|${i}"><span class="av ${AVC[i % 7]}">${nm.startsWith('Team') ? 'T' + nm.split(' ')[1] : ini(nm)}</span><span><b>${esc(nm)}</b><small>${esc(note)}</small></span><span class="lvtag">Stuck at: ${LVL[l][0]}</span><em>›</em></button>`).join('') : '<div class="none">No matches</div>'}</div>` : ''}</article>`;
 }
+/* artefacts are kept in one folder per type of artefact; a folder opens to its images */
+function artefactFolders() {
+  const m = new Map();
+  S().artefacts.forEach(x => { if (!m.has(x[1])) m.set(x[1], []); m.get(x[1]).push(x); });
+  return [...m.entries()];
+}
 function artefactsHTML() {
-  const s = S();
-  return `
-  <div class="art-grid">${s.artefacts.map(([nm0, t, ic, anon, group], i) => { const nm = group || nm0; return `<div class="art"><div class="thumb">${artPic(ic)}</div><div class="am"><b>${esc(t)}</b></div></div>`; }).join('')}</div>`;
+  const folders = artefactFolders(), open = O.folder && folders.find(([t]) => t === O.folder);
+  if (open) {
+    return `<div class="foldhead"><button class="sm" data-a="ofolderback" aria-label="Back to folders">‹ Folders</button><b>${esc(open[0])}</b><span class="meta">${open[1].length} files</span></div>
+    <div class="art-grid">${open[1].map(([, , ic]) => `<div class="art"><div class="thumb">${artPic(ic)}</div></div>`).join('')}</div>`;
+  }
+  return `<div class="folder-grid">${folders.map(([t, list]) => `<button class="folder" data-a="ofolder" data-f="${esc(t)}"><span class="ftab"></span><span class="fbody"><span class="fpeek">${list.slice(0, 3).map(x => `<span class="fp">${artPic(x[2])}</span>`).join('')}</span><b>${esc(t)}</b><span class="meta">${list.length} files</span></span></button>`).join('')}</div>`;
 }
 /* Overview: Student Activity (one box per learning outcome) beside Artefacts; an LO opens a green card with its Questions & Answer and Your take */
 function weekOutcomes() {
@@ -554,6 +563,8 @@ document.addEventListener('click', e => {
     case 'aicheck': checkOllama(); return;
     case 'olpick': { const i = document.getElementById('olModel'); if (i) { i.value = a.dataset.m; checkOllama(); } return; }
     case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('Saved key removed.'); }); return;
+    case 'ofolder': O.folder = a.dataset.f; break;
+    case 'ofolderback': O.folder = null; break;
     case 'olo': O.open = O.open === a.dataset.o ? null : a.dataset.o; O.qp = 0; break;
     case 'oqprev': O.qp = Math.max(0, (O.qp || 0) - 1); break;
     case 'oqnext': O.qp = (O.qp || 0) + 1; break;
