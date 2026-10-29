@@ -443,7 +443,12 @@ document.addEventListener('click', e => {
         document.querySelectorAll('.navarrow.r').forEach(b => b.classList.add('warn'));
         clearTimeout(L.warnT); L.warnT = setTimeout(() => { L.warnNext = false; document.querySelectorAll('.navarrow.r').forEach(b => b.classList.remove('warn')); }, 6000);
         return;
-      } else { L.warnNext = false; goTo(s, s.pos + 1); }
+      } else {
+        L.warnNext = false;
+        /* leaving an activity shows the next slide; it does not open another activity panel */
+        let np = s.pos + 1; if (A) { const f = flowOf(s); while (np < f.length && f[np].k === 'a') np++; if (np >= f.length) np = s.pos + 1; }
+        goTo(s, np);
+      }
       break;
     case 'tile': goTo(s, +a.dataset.i); break;
     case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
