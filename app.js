@@ -652,6 +652,14 @@ setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Mat
 setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
 
 (typeof BUNDLED_UNITS !== 'undefined' ? BUNDLED_UNITS : []).forEach(o => applyOutline(o, false));
+/* in a browser (no desktop app) the course slides shipped next to the page are shown */
+if (!(window.shell && window.shell.slides)) {
+  const sub = SUBJECTS.find(x => x.code === 'IDEA9301'), name = 'W06 IDEA9301 2026.pdf';
+  if (sub) fetch('slides/IDEA9301/' + encodeURIComponent(name)).then(r => r.ok ? r.blob() : Promise.reject()).then(async b => {
+    const got = await readSlideFile(new File([b], name, { type: 'application/pdf' }));
+    if (got && got.length) { sub.uploads = got; sub.upload = name; sub.flow = null; render(); }
+  }).catch(() => {});
+}
 /* bring back the slides uploaded earlier */
 if (window.shell && window.shell.slides) window.shell.slides.load().then(async saved => {
   for (const sub of SUBJECTS) {
