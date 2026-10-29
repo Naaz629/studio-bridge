@@ -857,3 +857,7 @@ button.qtxt{padding-top:12px}
 .qamode .qh small,.qamode .qh h2,.qamode .qtxt,.qamode .qd,.qamode .asked{display:none}
 .qamode .qwrap{justify-content:center}
 .qamode .qr.selq .qn{outline:2px solid var(--ink);outline-offset:3px;border-radius:50%}
+/* the open window sits under the bar strip: only the real buttons on the right catch the mouse, so chips and tiles stay draggable */
+.botbar.open>*,.botbar.open .barrow,.botbar.open .barrow>*{pointer-events:none}
+.botbar.open .barrow>.bb,.botbar.open .barrow>.reactlbl,.botbar.open .barrow button.bb{pointer-events:auto}
+.botbar.open #planbtn{pointer-events:none}
