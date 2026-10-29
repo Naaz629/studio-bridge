@@ -263,7 +263,7 @@ const STUCK_PHRASE = { k: 'Recalling the main idea', a: 'Using the idea in their
 function loTakes(o) { return shuffled(SAMPLES.map((_, k) => k), hash(o.id)).slice(0, 3); }
 function ensureInsight(o) {
   if (o.insight) return o.insight;
-  const ai = window.shell && window.shell.ai;
+  const ai = (window.shell && window.shell.ai) || window.demoAI;
   if (!ai || !ai.insight) return (o.insight = { state: 'off', error: 'The AI summary runs in the desktop app.' });
   o.insight = { state: 'pending' };
   const lv = Object.entries(o.lv);
@@ -386,7 +386,7 @@ async function doUnitImport() {
   render();
 }
 async function openAISettings() {
-  if (!(window.shell && window.shell.ai)) return modal(`<h4>AI question writer</h4><p class="sub">This is available in the desktop app. The browser preview uses the template questions.</p><div class="row"><button class="sm p" data-x>Close</button></div>`);
+  if (!(window.shell && window.shell.ai)) return modal(`<h4>AI question writer</h4><p class="sub">The browser version uses the built-in Demo AI. The desktop app also offers Ollama and Claude.</p><div class="row"><button class="sm p" data-x>Close</button></div>`);
   const st = await window.shell.ai.status();
   const names = { 'claude-sonnet-5-5': 'Claude Sonnet 5.5 — balanced', 'claude-haiku-5-5': 'Claude Haiku 5.5 — fastest, lowest cost', 'claude-opus-5-5': 'Claude Opus 5.5 — most capable' };
   const opt = (v, title, sub) => `<label class="aiopt"><input type="radio" name="aiprov" value="${v}" ${st.provider === v ? 'checked' : ''}><span><b>${title}</b><small>${sub}</small></span></label>`;

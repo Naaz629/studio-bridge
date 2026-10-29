@@ -96,7 +96,7 @@ function normaliseAI(raw, ctx) {
   return qs;
 }
 async function aiBuildCD(ctx) {
-  const ai = window.shell && window.shell.ai;
+  const ai = (window.shell && window.shell.ai) || window.demoAI;
   const fail = (state, msg) => Object.assign(new Error(msg), { state });
   if (!ai) throw fail('off', 'The AI question writer runs in the desktop app.');
   const st = await ai.status();

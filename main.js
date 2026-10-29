@@ -203,8 +203,9 @@ const shortSentence = (t, n = 20) => { const w = String(t).replace(/\s+/g, ' ').
 async function demoGenerate(p = {}) {
   await demoWait(1800);
   const lines = String(p.text || '').split(NL).map(l => l.trim()).filter(Boolean).filter(l => !/^Slide \d+ - /.test(l));
-  const sents = lines.filter(l => l.split(' ').length >= 5 && l.length <= 200);
-  const title = String(p.title || 'this idea').replace(/^Week\s*\d+\s*[:\-–]?\s*/i, '').trim() || 'this idea';
+  const sents = lines.filter(l => l.split(' ').length >= 5 && l.length <= 200 && !/acknowledg|gadigal|elders|sovereignty|traditional custodians|copyright|all rights reserved|^page \d|^week \d+$/i.test(l));
+  let title = String(p.title || '').replace(/^Weeks*d+s*[:-–]?s*/i, '').trim();
+    if (!title || /^this week/i.test(title)) title = shortSentence(sents[0] || 'this idea', 6);
   const core = shortSentence(sents[0] || ('It is the main idea of ' + title + '.'));
   const alt = shortSentence(sents[1] || ('You use it to check your own project against evidence.'), 16);
   // pick the learning outcome whose words appear most in the slides (this is only a demo)

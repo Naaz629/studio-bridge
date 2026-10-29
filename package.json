@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "dist:mac": "electron-builder --mac",
-    "dist:win": "electron-builder --win portable"
+    "dist:win": "electron-builder --win portable",
+    "build:web": "node scripts/build-web.js"
   },
   "devDependencies": {
     "electron": "^33.0.0",
