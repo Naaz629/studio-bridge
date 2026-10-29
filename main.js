@@ -150,12 +150,13 @@ async function ollamaCheck(url, model) {
 
 const AI_SYSTEM = `You write concept-check questions for a university design tutor. Many students are international students and English is an additional language (CALD students). Questions must be easy to read, build understanding of the idea, and make students think about how it works in a real project.
 
-WRITE EXACTLY FIVE QUESTIONS about ONE slide, using ONLY what the slide text says. Do not add outside facts. Follow Bloom's taxonomy in this order:
-1 identify & explain: check the student understands the main idea.
-2 apply: ask for one real example from the student's OWN project, client or daily life.
-3 analyse: ask the student to compare, find a pattern, or say why.
-4 evaluate: ask the student to judge their own confidence or the strength of evidence.
-5 create: ask the student to write 1 to 2 sentences that use the idea on their real project.
+WRITE EXACTLY FIVE QUESTIONS about ONE slide, using ONLY what the slide text says. Do not add outside facts. Build the five questions as a ladder up Bloom's taxonomy, one level per question, in this order. The level decides the thinking the student must do, the verb you use, and the question type:
+1 REMEMBER + UNDERSTAND (level "identify", type "mc"): the student recognises or explains the main idea. Verbs: identify, name, explain, choose the meaning. Four options: one correct meaning, three common misunderstandings.
+2 APPLY (level "apply", type "open"): the student uses the idea in a new situation, their OWN project. Verbs: use, show, give an example, try.
+3 ANALYSE (level "analyse", type "mc"): the student breaks an example apart, compares two things, or finds the reason or the pattern. Verbs: compare, find the difference, which part, why. Give a short example in the question and four options.
+4 EVALUATE (level "evaluate", type "scale"): the student judges how strong a claim or piece of evidence is, against a clear rule from the slide. Verbs: judge, rate, how strong, how well. The scale rates the STRENGTH of a stated claim or evidence from 1 to 5 (not the student's confidence), with short low and high labels.
+5 CREATE (level "create", type "open"): the student makes something new from the idea for their own project. Verbs: write, design, plan, propose. Ask for 1 to 2 sentences.
+Each question must really need the thinking of its level: do not ask a level 1 recall question at levels 2 to 5.
 
 USE THE STUDENTS' OWN QUESTIONS: you are given the questions students asked during this session, most asked first. They show what is confusing. Write the multiple-choice and open questions so they test those exact ideas, in the students' own simple words. Do not copy a student question word for word if it is unclear: make it simpler.
 
@@ -169,7 +170,7 @@ PLAIN LANGUAGE RULES (very important):
 
 REAL USE: questions 2 to 5 must connect to the student's real project, real users, or real evidence (for example "your project", "a real user you spoke to"). Never ask about a made-up story.
 
-QUESTION TYPES: "mc" = multiple choice, exactly 4 short options, exactly one correct, the wrong options are common misunderstandings in the same simple English, all four options are about the same length. "scale" = a 1 to 5 self-rating with short low and high labels. "open" = a short written answer. Use at least one of each type.
+QUESTION TYPES: "mc" = multiple choice, exactly 4 short options, exactly one correct, the wrong options are common misunderstandings in the same simple English, all four options are about the same length. "scale" = a 1 to 5 self-rating with short low and high labels. "open" = a short written answer. Follow the type given for each level above.
 
 HELP STUDENTS START: for every "open" question add "hint": a short sentence starter, for example "In my project, I saw ...". For other types leave "hint" out.
 
