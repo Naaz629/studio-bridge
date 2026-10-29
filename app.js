@@ -163,7 +163,7 @@ function artefactCard(s, f, m) {
   return `<div class="card2 actcard artcard" style="background:${m.color}"><button class="x artx" data-a="actclose" aria-label="Close activity">✕</button>
   <div class="artshow" id="artLive" data-a="artpause" title="Click to stop here">${artSlideHTML(it)}</div>
   <div class="artbar"><span class="artstate">${artHeld() ? 'Stopped' : ''}</span><div class="artdots">${dots}</div></div>
-  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+  ${navOverlay(0, 1, true, true)}</div>`;
 }
 function artSlideHTML(it) {
   const cap = it.ex ? `<span class="extag">Example</span><b>${esc(it.t)}</b>` : it.anon ? `<b>${esc(it.t)}</b>` : `<b>${esc(it.n)}</b><span>${esc(it.t)}</span>`;
@@ -456,9 +456,13 @@ document.addEventListener('click', e => {
     case 'toggleplan': L.plan = !L.plan; botbar(); document.querySelector('.plan2')?.classList.toggle('collapsed', !L.plan); return;
     case 'toggleq': { L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
-    case 'prev': if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1); break;
+    case 'prev':
+      if (A && A.type === 'Artefact upload') { const n = artItems(s).length; A.q = ((A.q || 0) - 1 + n) % n; A.hold = Date.now(); }
+      else if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1);
+      break;
     case 'next':
-      if (A && A.q < actQs().length - 1) A.q++;
+      if (A && A.type === 'Artefact upload') { const n = artItems(s).length; A.q = ((A.q || 0) + 1) % n; A.hold = Date.now(); }
+      else if (A && A.q < actQs().length - 1) A.q++;
       else if (A && A.type !== 'Artefact upload' && s.pos < flowOf(s).length - 1 && !L.warnNext) {
         /* last question: warn once so nobody skips to the next slide by accident */
         L.warnNext = true; toast('This is the last question. Press the arrow again to move to the next slide.');
