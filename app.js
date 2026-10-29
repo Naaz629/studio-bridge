@@ -188,7 +188,8 @@ function ensureInsight(o) {
   const weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
   ai.insight({ weakest: LVL[weak[0]][0] + ' (' + LVL[weak[0]][1].toLowerCase() + ')', stuckN: o.total - weak[1][0], lo: o.lo, out: S().ulo[o.lo] || o.out, week: O.w, total: o.total,
     levels: lv.map(([k, [n, src]]) => ({ label: LVL[k][0], n, src })),
-    notes: [...new Set(o.who.map(w => w[2]))], takes: loTakes(o).map(k => SAMPLES[k].en || SAMPLES[k].t) })
+    notes: [...new Set(o.who.map(w => w[2]))], takes: loTakes(o).map(k => SAMPLES[k].en || SAMPLES[k].t),
+    gaps: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => !a.ok).map(a => LVL[k][0] + ': ' + (a.en || a.t))), goods: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => a.ok).slice(0, 1).map(a => LVL[k][0] + ': ' + (a.en || a.t))) })
     .then(r => { o.insight = r.summary ? { state: 'ready', summary: r.summary, stuck: r.stuck, why: r.why } : { state: r.off ? 'off' : 'error', error: r.error }; })
     .catch(e => { o.insight = { state: 'error', error: e.message }; })
     .then(() => { if (V === 'ov' && O.open === o.id) render(); });
@@ -231,11 +232,9 @@ function loPanel(o) {
   const s = S(), anon = O.anon;
   const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
   const stuckN = o.total - weak[1][0], ins = ensureInsight(o);
-  const lo1 = (s.ulo[o.lo] || o.out).replace(/\.$/, ''), loBit = lo1.charAt(0).toLowerCase() + lo1.slice(1, 70) + (lo1.length > 70 ? '…' : '');
-  const loWords = lo1.toLowerCase().match(/[a-z]{5,}/g) || [];
-  const aiOn = ins.state === 'ready' && ins.stuck && loWords.some(w => ins.stuck.toLowerCase().includes(w.slice(0, 5)));
-  const topic = aiOn ? ins.stuck : { k: 'Recalling the key idea behind: ', a: 'Applying to their own project: ', e: 'Explaining why it matters: ' }[weak[0]] + loBit;
-  const why = aiOn && ins.why ? ins.why : o.gap + ' (' + o.lo + ')';
+  const lo1 = (s.ulo[o.lo] || o.out).replace(/.$/, ''), loBit = lo1.split(/s+/).slice(0, 9).join(' ').toLowerCase();
+  const topic = ins.state === 'ready' && ins.stuck ? ins.stuck : 'Students struggled to ' + loBit + '.';
+  const why = '';
   const insBody = ins.state === 'pending' ? '<p class="aiflag busy">✦ The AI is reading the class results…</p>'
     : ins.state === 'ready' ? `<p class="insight-text">${esc(ins.summary)}</p><small class="muted">✦ AI summary · based on this week's results</small>`
     : `<p class="insight-text muted">${ins.state === 'off' ? 'AI is turned off, so there is no written summary.' : 'The AI could not write the summary: ' + esc(ins.error || '')}</p><div class="qacts">${ins.state === 'off' ? '<button class="sm p" data-a="aisettings">✦ Choose AI</button>' : '<button class="sm p" data-a="oinsightretry">↻ Try again</button>'}</div>`;
@@ -249,7 +248,7 @@ function loPanel(o) {
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
   <section class="losec"><h4>Class insight</h4>${insBody}</section>
-  <section class="losec"><h4>Most students are stuck on</h4><div class="stuckrow"><div><b>${esc(topic)}</b><p>${esc(why)}</p></div><div class="stuckn"><b>${stuckN}</b><small>of ${o.total} ${o.unit}</small></div></div></section>
+  <section class="losec"><h4>Most students are stuck on</h4><div class="stuckrow"><div><b>${esc(topic)}</b></div><div class="stuckn"><b>${stuckN}</b><small>of ${o.total} ${o.unit}</small></div></div></section>
   <section class="losec qasec"><div class="qanav"><button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button><h4>Questions &amp; Answer</h4><span class="qacount">${pi + 1} / ${pages.length}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === pages.length - 1 ? 'disabled' : ''}>›</button></div>${body}</section></aside>`;
 }
 function overview() {

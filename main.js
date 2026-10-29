@@ -277,8 +277,8 @@ async function aiAsk(system, user, schema) {
 const INSIGHT_SYSTEM = `You help a university design tutor read class results for ONE learning outcome. Use plain, simple English and short sentences. Use only the data you are given. Never name individual students.
 Reply with JSON only: {"summary":"...","stuck":"...","why":"..."}
 - summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the numbers. Say how many students are stuck at the weakest level.
-- stuck: the SPECIFIC skill or idea from THIS learning outcome that most students are stuck on, as a short phrase (at most 12 words). Use the exact words of the learning outcome. It MUST match the weakest level named in the data. Never write a general phrase like "using the idea in their own project".
-- why: one short sentence on why students struggle with that specific skill, based on the notes and the student answers. Name the specific skill again.`;
+- stuck: ONE specific insight about what students got wrong, written as one plain sentence of at most 16 words that starts with "Students". Read the answers that were wrong or weak and name the exact thing they could not do, in terms of this learning outcome. Example: "Students could not narrow their design plan to fit the brief." Do not copy the learning outcome and do not use general words like "apply" or "understand".
+- why: leave this as an empty string.`;
 const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' } } };
 ipcMain.handle('ai:insight', async (e, p = {}) => {
   const lv = (p.levels || []).map(l => `- ${l.label}: ${l.n} of ${p.total} students (${l.src})`).join(String.fromCharCode(10));
@@ -291,12 +291,16 @@ How many students got it right at each level:
 ${lv}
 What the tutor noticed:
 ${notes}
+Weak answers (what went wrong):
+${(p.gaps || []).slice(0, 10).map(n => '- ' + String(n).slice(0, 160)).join(String.fromCharCode(10))}
+Strong answers:
+${(p.goods || []).slice(0, 4).map(n => '- ' + String(n).slice(0, 160)).join(String.fromCharCode(10))}
 What some students wrote:
 ${takes}`;
   const r = await aiAsk(INSIGHT_SYSTEM, user, INSIGHT_SCHEMA);
   if (!r.json) return r;
   const clip = (t, n) => String(t || '').trim().slice(0, n);
-  return { summary: clip(r.json.summary, 360), stuck: clip(r.json.stuck, 80), why: clip(r.json.why, 220) };
+  return { summary: clip(r.json.summary, 360), stuck: clip(r.json.stuck, 140), why: clip(r.json.why, 220) };
 });
 ipcMain.handle('ai:status', () => aiStatus());
 ipcMain.handle('ai:save', (e, opts) => aiSave(opts));
