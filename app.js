@@ -205,7 +205,7 @@ function outcomeCard(o) {
 }
 function artefactsHTML() {
   const s = S();
-  return `<div class="art-tools"><label class="switch"><input type="checkbox" data-a="anon" ${O.anon ? 'checked' : ''}> Show anonymously</label><span class="meta">${s.artefacts.length} uploads · Week ${O.w}</span></div>
+  return `
   <div class="art-grid">${s.artefacts.map(([nm, t, ic], i) => `<div class="art"><div class="thumb">${ic}</div><div class="am"><b>${esc(t)}</b><div class="meta">${O.anon ? 'Student ' + String.fromCharCode(65 + i) : esc(nm)}</div></div></div>`).join('')}</div>`;
 }
 /* Overview: Student Activity (one box per learning outcome) beside Artefacts; an LO opens a green card with its Questions & Answer and Your take */
