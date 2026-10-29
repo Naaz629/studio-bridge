@@ -228,7 +228,7 @@ function outcomeCard(o) {
 function artefactsHTML() {
   const s = S();
   return `
-  <div class="art-grid">${s.artefacts.map(([nm0, t, ic, anon, group], i) => { const nm = group || nm0; return `<div class="art"><div class="thumb">${artPic(ic)}</div><div class="am"><b>${esc(t)}</b><div class="meta">${anon || O.anon ? 'Anonymous' : esc(nm)}</div></div></div>`; }).join('')}</div>`;
+  <div class="art-grid">${s.artefacts.map(([nm0, t, ic, anon, group], i) => { const nm = group || nm0; return `<div class="art"><div class="thumb">${artPic(ic)}</div><div class="am"><b>${esc(t)}</b></div></div>`; }).join('')}</div>`;
 }
 /* Overview: Student Activity (one box per learning outcome) beside Artefacts; an LO opens a green card with its Questions & Answer and Your take */
 function weekOutcomes() {
