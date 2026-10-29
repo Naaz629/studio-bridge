@@ -115,6 +115,7 @@ function discussionCard(s, f, m, p) {
 /* the question list for the running activity (Concept Development comes from Bloom's taxonomy) */
 function actQs() {
   if (A.type === 'Concept Development') { const s = S(); return ensureCD(s, s.pos).qs.map(q => q.text); }
+  if (A.type === 'Q&A Session') return sortedQs(S()).map(q => q.text);
   return PROMPTS[A.type];
 }
 /* ---------- Q&A Session: full-screen questions with the other students' answers arriving live ---------- */
@@ -137,17 +138,17 @@ function qaReplies(q) {
   return q.replies;
 }
 function qaListHTML(s) {
-  const list = sortedQs(s), sel = A && A.sel != null ? A.sel : (list[0] && list[0].id);
+  const list = sortedQs(s), at = Math.max(0, Math.min(list.length - 1, A && A.q || 0)), sel = list[at] && list[at].id;
   const nm = (n, i) => O.anon ? 'Student ' + String.fromCharCode(65 + i) : n;
-  return list.map((q, i) => `<div class="qablk ${q.id === sel ? 'sel' : ''}" data-qb="${q.id}"><div class="qahd"><span class="qanum">${pad(i + 1)}</span><div class="qatxt"><b>${esc(q.tr || q.text)}</b>${q.tr ? `<small>Original: ${esc(q.text)}</small>` : ''}<small>${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>${q.up ? `<span class="asked">${q.up}</span>` : ''}</div>
+  return list.map((q, i) => [q, i]).filter(([q]) => q.id === sel).map(([q, i]) => `<div class="qablk sel" data-qb="${q.id}"><div class="qahd"><span class="qanum">${pad(i + 1)}</span><div class="qatxt"><b>${esc(q.tr || q.text)}</b>${q.tr ? `<small>Original: ${esc(q.text)}</small>` : ''}<small>${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>${q.up ? `<span class="asked">${q.up}</span>` : ''}</div>
     <div class="qaans">${qaReplies(q).map((r, k) => `<div class="qar"><b>${esc(nm(r.who, k))}</b><p>${esc(r.en || r.t)}</p>${r.lang ? origHTML(r.t, r.lang) : ''}</div>`).join('')}${q.ans ? `<div class="qar tutor"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}</div></div>`).join('') || '<div class="none">No questions yet.</div>';
 }
 function qaCard(s, f, m) {
   return `<div class="card2 actcard qacard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>Questions &amp; answers</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="qalist" id="qaList">${qaListHTML(s)}</div>
-  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+  ${navOverlay(Math.min(A.q || 0, Math.max(0, sortedQs(s).length - 1)), Math.max(1, sortedQs(s).length), (A.q || 0) > 0 || s.pos > 0, (A.q || 0) < sortedQs(s).length - 1 || s.pos < f.length - 1)}</div>`;
 }
-function qaScroll() { const b = document.querySelector('.qablk.sel'); if (b) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+function qaScroll() {}
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
   if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
@@ -178,13 +179,13 @@ function renderQP() {
   const el = $('#qp'); if (!el) return;
   const s = S(), list = [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   el.innerHTML = `<div class="qh"><small>Activity</small><h2>Questions &amp; answers</h2></div>
-  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id && !(A && A.type === 'Q&A Session'), en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.sel != null ? A.sel : (list[0] && list[0].id)) === q.id ? 'selq' : ''}">
+  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id && !(A && A.type === 'Q&A Session'), en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.q || 0) === i ? 'selq' : ''}">
     <div class="qwrap"><div class="qrow"><button class="qn" data-a="qnum" data-q="${q.id}" aria-label="Mark question ${i + 1}">${pad(i + 1)}</button><button class="qtxt" data-a="qopen" data-q="${q.id}"><span class="qt">${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</button></div>
     ${q.up ? `<span class="asked" title="${q.up} students asked">${q.up}</span>` : ''}</div>
     ${open ? `<div class="qd">
       <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.same} same question</div>
       ${q.ans ? `<div class="box ans"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}
-      ${q.st === 'open' ? `<form class="inl" data-q="${q.id}"><input placeholder="Type your answer…" aria-label="Answer"><button class="sm p">Post</button></form>` : `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>`}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
+      ${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
   const bd = $('#bdg'); if (bd) bd.textContent = unanswered();
 }
 
@@ -438,7 +439,7 @@ document.addEventListener('click', e => {
     case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
     case 'actclose': { const f = flowOf(s); goTo(s, s.pos < f.length - 1 ? s.pos + 1 : s.pos - 1); break; }
     case 'upload': L.menu = false; return $('#slideFile').click();
-    case 'qnum': if (A && A.type === 'Q&A Session') { A.sel = q.id; q.seen = true; renderQP(); const l = document.getElementById('qaList'); if (l) { l.innerHTML = qaListHTML(s); qaScroll(); } return; } q.seen = !q.seen; renderQP(); return;
+    case 'qnum': if (A && A.type === 'Q&A Session') { A.q = Math.max(0, sortedQs(s).findIndex(x => x.id === q.id)); q.seen = true; render(); return; } q.seen = !q.seen; renderQP(); return;
     case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;
