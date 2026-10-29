@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist:mac": "electron-builder --mac"
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win portable"
   },
   "devDependencies": {
     "electron": "^33.0.0",
@@ -21,8 +22,9 @@
     },
     "icon": "assets/icon.png",
     "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
+      "target": "portable",
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false
     },
     "files": [
       "main.js",
@@ -35,7 +37,11 @@
       "slides.js",
       "assets/**",
       "vendor/**",
-      "outline.js"
-    ]
+      "outline.js",
+      "slides/**"
+    ],
+    "portable": {
+      "artifactName": "StudioBridge-${version}-portable.exe"
+    }
   }
 }

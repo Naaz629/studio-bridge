@@ -395,6 +395,7 @@ async function openAISettings() {
   modal(`<div class="k2">✦ AI question writer</div><h4>Who writes the concept check questions?</h4>
   <div class="aiopts">
     ${opt('template', 'Off', 'No AI. You write the concept check questions yourself')}
+    ${opt('demo', 'Demo AI (built in)', 'Nothing to install · shows how the AI works with example questions made from your slides')}
     ${opt('ollama', 'Free AI on this laptop (Ollama)', 'Free · no account · slide text never leaves your computer')}
     ${opt('anthropic', 'Claude (Anthropic API)', 'Best wording · paid per use · needs an API key')}
   </div>
@@ -567,7 +568,7 @@ document.addEventListener('click', e => {
       window.shell.ai.save(opts).then(r => {
         if (r.error) return toast(r.error);
         $('#modal').innerHTML = '';
-        toast(prov === 'template' ? 'AI is off. You can still write concept check questions yourself.' : prov === 'ollama' ? 'Free local AI is on. New concept checks will be written on this laptop.' : 'Claude is on. New concept checks will be written from the slide text.');
+        toast(prov === 'demo' ? 'Demo AI is on. Concept checks use built-in example questions made from your slides.' : prov === 'template' ? 'AI is off. You can still write concept check questions yourself.' : prov === 'ollama' ? 'Free local AI is on. New concept checks will be written on this laptop.' : 'Claude is on. New concept checks will be written from the slide text.');
       });
       return;
     }

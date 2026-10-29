@@ -20,6 +20,7 @@ function createWindow() {
     win.webContents.once('did-finish-load', async () => {
       let report;
       if (process.env.STUDIO_TEST_AI) { process.env.STUDIO_AI_URL = process.env.STUDIO_TEST_AI; aiSave({ provider: 'anthropic', key: 'sk-ant-test-0123456789abcdef', model: 'claude-haiku-5-5' }); }
+      if (process.env.STUDIO_TEST_DEMO) { aiSave({ provider: 'demo' }); }
       if (process.env.STUDIO_TEST_OLLAMA) { aiSave({ provider: 'ollama', ollamaUrl: process.env.STUDIO_TEST_OLLAMA, ollamaModel: 'qwen2.5:3b' }); }
       try {
         const b64 = p => (p && fs.existsSync(p)) ? fs.readFileSync(p).toString('base64') : null;
@@ -30,7 +31,7 @@ function createWindow() {
           if (pdf) { const t0 = performance.now(); const s = await readSlideFile(mk(pdf, 'test.pdf')); out.pdf = { pages: s.length, withText: s.filter(x => x.text).length, images: s.filter(x => (x.url||'').startsWith('data:image')).length, titles: s.slice(0, 3).map(x => x.title), ms: Math.round(performance.now() - t0) }; }
           if (pptx && ${JSON.stringify(process.env.STUDIO_TEST_PPTX_PATH || '')}) { const r = await window.shell.pptxToPdf(${JSON.stringify(process.env.STUDIO_TEST_PPTX_PATH || '')}); out.asis = r.error ? { error: r.error } : { bytes: r.data.length }; if (r.data) { const pg = await readPdf(new File([r.data], 'x.pdf', { type: 'application/pdf' })); out.asis.pages = pg.length; out.asis.images = pg.filter(x => (x.url || '').startsWith('data:image')).length; } }
           if (pptx) { const s = await readSlideFile(mk(pptx, 'test.pptx')); out.pptx = { slides: s.length, titles: s.map(x => x.title), notes: s[0].text.includes('Notes') }; }
-          if (${JSON.stringify(!!(process.env.STUDIO_TEST_AI || process.env.STUDIO_TEST_OLLAMA))} && pptx) {
+          if (${JSON.stringify(!!(process.env.STUDIO_TEST_AI || process.env.STUDIO_TEST_OLLAMA || process.env.STUDIO_TEST_DEMO))} && pptx) {
             const sleep = ms => new Promise(r => setTimeout(r, ms));
             const dt = new DataTransfer(); dt.items.add(mk(pptx, 'deck.pptx'));
             const inp = document.getElementById('slideFile'); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
@@ -55,7 +56,7 @@ function createWindow() {
             const o = weekOutcomes().outs[0]; O.open = o.id; render();
             const t0 = Date.now(); while ((o.insight || {}).state === 'pending' && Date.now() - t0 < 170000) await sleep2(1000);
             const panel = document.querySelector('.lopanel');
-            out.insight = { seconds: Math.round((Date.now() - t0) / 1000), state: o.insight && o.insight.state, summary: o.insight && o.insight.summary, stuck: o.insight && o.insight.stuck, why: o.insight && o.insight.why, error: o.insight && o.insight.error, shownInPanel: panel ? panel.querySelector('.insight-text').textContent : null, stuckNumber: panel ? panel.querySelector('.stuckn b').textContent : null };
+            out.insight = { seconds: Math.round((Date.now() - t0) / 1000), state: o.insight && o.insight.state, summary: o.insight && o.insight.summary, stuck: o.insight && o.insight.stuck, why: o.insight && o.insight.why, error: o.insight && o.insight.error, shownInPanel: panel && panel.querySelector('.insight-text') ? panel.querySelector('.insight-text').textContent : null };
           }
           return out;
         })()`;
@@ -103,7 +104,8 @@ function aiLoad() {
   let key = null;
   if (j.key) { try { key = safeStorage.decryptString(Buffer.from(j.key, 'base64')); } catch { key = null; } }
   // settings saved by the first version (key only) mean Anthropic
-  const provider = j.provider || (key ? 'anthropic' : 'template');
+  // the installed (packaged) app starts in Demo AI so every feature can be shown without installing anything
+  const provider = j.provider || (key ? 'anthropic' : (app.isPackaged || process.env.STUDIO_DEMO ? 'demo' : 'template'));
   return {
     provider, key,
     model: AI_MODELS.includes(j.model) ? j.model : AI_MODELS[0],
@@ -113,7 +115,7 @@ function aiLoad() {
 }
 function aiSave(opts = {}) {
   const prev = aiRead(), cur = aiLoad();
-  const provider = ['template', 'ollama', 'anthropic'].includes(opts.provider) ? opts.provider : (opts.key ? 'anthropic' : cur.provider);
+  const provider = ['template', 'demo', 'ollama', 'anthropic'].includes(opts.provider) ? opts.provider : (opts.key ? 'anthropic' : cur.provider);
   const next = Object.assign({}, prev, { provider });
   if (provider === 'anthropic') {
     if (!safeStorage.isEncryptionAvailable()) return { error: 'Secure storage is not available on this computer, so the key cannot be saved safely.' };
@@ -134,7 +136,7 @@ function aiSave(opts = {}) {
 }
 function aiStatus() {
   const c = aiLoad();
-  const enabled = c.provider === 'ollama' || (c.provider === 'anthropic' && !!c.key);
+  const enabled = c.provider === 'demo' || c.provider === 'ollama' || (c.provider === 'anthropic' && !!c.key);
   return { provider: c.provider, enabled, hasKey: !!c.key, model: c.model, models: AI_MODELS, ollamaUrl: c.ollamaUrl, ollamaModel: c.ollamaModel, canStore: safeStorage.isEncryptionAvailable() };
 }
 /* is Ollama running, and is the model downloaded? */
@@ -193,8 +195,42 @@ const QUESTIONS_SCHEMA = {
 };
 const pickJSON = text => { const m = String(text || '').match(/\{[\s\S]*\}/); if (!m) return null; try { return JSON.parse(m[0]); } catch { return null; } };
 
+/* ---------- Demo AI: built in, no install. It reads the slide text and writes a Bloom's-taxonomy ladder of examples,
+   so every screen can be shown. It is a stand-in for the real AI (Ollama or Claude), not a language model. ---------- */
+const NL = String.fromCharCode(10);
+const demoWait = ms => new Promise(r => setTimeout(r, ms));
+const shortSentence = (t, n = 20) => { const w = String(t).replace(/\s+/g, ' ').trim().split(' '); return w.slice(0, n).join(' ').replace(/[,;:]$/, '') + (w.length > n ? '…' : ''); };
+async function demoGenerate(p = {}) {
+  await demoWait(1800);
+  const lines = String(p.text || '').split(NL).map(l => l.trim()).filter(Boolean).filter(l => !/^Slide \d+ - /.test(l));
+  const sents = lines.filter(l => l.split(' ').length >= 5 && l.length <= 200);
+  const title = String(p.title || 'this idea').replace(/^Week\s*\d+\s*[:\-–]?\s*/i, '').trim() || 'this idea';
+  const core = shortSentence(sents[0] || ('It is the main idea of ' + title + '.'));
+  const alt = shortSentence(sents[1] || ('You use it to check your own project against evidence.'), 16);
+  // pick the learning outcome whose words appear most in the slides (this is only a demo)
+  const outs = Array.isArray(p.outs) ? p.outs : [];
+  const bag = new Set((String(p.text || '') + ' ' + title).toLowerCase().match(/[a-z]{5,}/g) || []);
+  let lo = outs[0] ? outs[0].lo : undefined, best = -1;
+  for (const o of outs) { const n = (String(o.out).toLowerCase().match(/[a-z]{5,}/g) || []).filter(w => bag.has(w)).length; if (n > best) { best = n; lo = o.lo; } }
+  const mc = (text, right, wrongs) => ({ type: 'mc', text, options: [{ t: right, ok: true }].concat(wrongs.map(t => ({ t, ok: false }))) });
+  const questions = [
+    Object.assign({ level: 'identify' }, mc('Which sentence best explains the main idea of "' + shortSentence(title, 8) + '"?', core, ['It is a step you can skip when time is short.', 'It only matters at the very end of a project.', 'It means choosing the idea you like most.'])),
+    { level: 'apply', type: 'open', text: 'Use the idea from "' + shortSentence(title, 8) + '" in your own project. Give one real example.', hint: 'In my project, I used this idea to…' },
+    Object.assign({ level: 'analyse' }, mc('Which team used this idea well?', 'The team tested their plan with real users, then changed it.', ['The team kept the plan because they liked it.', 'The team asked no one and finished early.', 'The team copied the plan of another group.'])),
+    { level: 'evaluate', type: 'scale', text: 'How strong is this evidence for your choice: "' + alt + '"? Rate it from 1 to 5.', lo: 'Very weak', hi: 'Very strong' },
+    { level: 'create', type: 'open', text: 'Write 1 to 2 sentences that use "' + shortSentence(title, 8) + '" to improve your project.', hint: 'To improve my project, I will…' }
+  ];
+  return { questions, lo, terms: [], model: 'demo', provider: 'demo' };
+}
+function demoInsight(p = {}) {
+  const right = (p.total || 0) - (p.stuckN || 0);
+  const weak = String(p.weakest || 'the weakest step').replace(/\s*\(.*$/, '');
+  const quote = (p.gaps || [])[0] && String(p.gaps[0]).split(' ').length > 5 ? ' One weak answer was: "' + shortSentence(String(p.gaps[0]).replace(/^[^:]*:\s*/, ''), 12) + '".' : '';
+  return { summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
+}
 async function aiGenerate(p = {}) {
   const cfg = aiLoad();
+  if (cfg.provider === 'demo') return demoGenerate(p);
   const asked = Array.isArray(p.asked) && p.asked.length ? `\nQuestions students asked in this session (most asked first):\n` + p.asked.map(a => `- ${String(a.text).slice(0, 200)} (${a.count} students)`).join('\n') : '';
   const outs = Array.isArray(p.outs) && p.outs.length > 1 ? p.outs : null;
   const loLine = outs ? 'Learning outcomes this week:\n' + outs.map(o => '- ' + o.lo + ': ' + String(o.out).slice(0, 200)).join('\n') + '\nFirst set "lo" to the code of the ONE outcome these slides teach (judge by meaning), then write all questions for that outcome.' : `Learning outcome (${p.lo || ''}): ${p.out || ''}`;
@@ -296,6 +332,7 @@ ipcMain.handle('ai:match', async (e, p = {}) => {
   return { lo: String(r.json.lo || 'none'), why: String(r.json.why || '').slice(0, 200) };
 });
 ipcMain.handle('ai:insight', async (e, p = {}) => {
+  if (aiLoad().provider === 'demo') { await demoWait(900); return demoInsight(p); }
   const lv = (p.levels || []).map(l => `- ${l.label}: ${l.n} of ${p.total} students (${l.src})`).join(String.fromCharCode(10));
   const notes = (p.notes || []).slice(0, 8).map(n => '- ' + String(n).slice(0, 140)).join(String.fromCharCode(10));
   const takes = (p.takes || []).slice(0, 4).map(n => '- "' + String(n).slice(0, 160) + '"').join(String.fromCharCode(10));
