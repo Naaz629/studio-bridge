@@ -861,3 +861,14 @@ button.qtxt{padding-top:12px}
 .botbar.open>*,.botbar.open .barrow,.botbar.open .barrow>*{pointer-events:none}
 .botbar.open .barrow>.bb,.botbar.open .barrow>.reactlbl,.botbar.open .barrow button.bb{pointer-events:auto}
 .botbar.open #planbtn{pointer-events:none}
+
+/* the numbers are part of the green Q&A card, not a separate column */
+.sess2.qamode .rightcol{width:0!important;padding:0!important;border-left-width:0!important;overflow:hidden}
+.qaline{flex:1;min-height:0;display:flex;flex-direction:row;gap:14px}
+.qaline .qalist{flex:1;min-width:0}
+.qanums{flex:none;width:76px;overflow-y:auto;display:flex;flex-direction:column;border-left:1px solid rgba(0,0,0,.12);padding-left:8px}
+.qanums .qr{border-top:1px solid rgba(0,0,0,.08);padding:8px 0;position:relative}
+.qanums .qr:first-child{border-top:0}
+.qanums .qwrap,.qanums .qrow{justify-content:center;padding:0}
+.qacard .navarrow.r{right:104px}
+.qacard .qalist{padding-right:34px;padding-left:34px}

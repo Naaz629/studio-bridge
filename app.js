@@ -145,7 +145,8 @@ function qaListHTML(s) {
 }
 function qaCard(s, f, m) {
   return `<div class="card2 actcard qacard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>Questions &amp; answers</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="qalist" id="qaList">${qaListHTML(s)}</div>
+  <div class="qaline"><div class="qalist" id="qaList">${qaListHTML(s)}</div>
+  <div class="qanums" aria-label="Questions">${sortedQs(s).map((q, i) => `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${(A.q || 0) === i ? 'selq' : ''}"><div class="qwrap"><div class="qrow"><button class="qn" data-a="qnum" data-q="${q.id}" aria-label="Question ${i + 1}">${pad(i + 1)}</button></div></div></div>`).join('')}</div></div>
   ${navOverlay(Math.min(A.q || 0, Math.max(0, sortedQs(s).length - 1)), Math.max(1, sortedQs(s).length), (A.q || 0) > 0 || s.pos > 0, (A.q || 0) < sortedQs(s).length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function qaScroll() {}
