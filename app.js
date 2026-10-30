@@ -406,7 +406,7 @@ function overview() {
       <div class="ovcol">
         <section class="ovc"><div class="ovch"><div><h3>Class learning journey</h3><p>Small steps, growing understanding.</p></div><div class="bignum"><b>${total}</b> students</div></div>
           <div class="pbar"><i style="width:${avg}%"></i></div><div class="pcap"><span>${avg}% of the class got it right on average</span><span>Goal 80%</span></div>
-          <div class="stats3"><div><b>${s.qs.length}</b><small>Questions asked</small></div><div><b>${nAns}</b><small>Answered in class</small></div><div><b>${nActs}</b><small>Activities in the flow</small></div></div></section>
+          <div class="stats3"><div><b>${s.qs.length}</b><small>Questions asked</small></div><div><b>${nActs}</b><small>Activities in the flow</small></div></div></section>
         <section class="ovc"><div class="ovch"><div><h3>Student activity</h3><p>How the class did on each learning outcome</p></div><div class="seg2">${Object.entries(W.sessions).map(([k, v]) => `<button data-ss="${k}" aria-pressed="${k === key}">${v.name}</button>`).join('')}</div></div>
           <div class="loscroll">${outs.map(o => loBox(o, open && open.id === o.id)).join('')}</div></section>
       </div>
