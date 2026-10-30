@@ -204,7 +204,7 @@ function slideTitle(s, sl, fallback) {
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   const qa = A && A.type === 'Q&A Session';
-  return `<div class="livewrap"><div class="crumbbar"><div class="crumb"><b>Live</b><span class="sep">/</span><span>Week ${s.liveWeek} · In progress</span></div><span class="spacer"></span>
+  return `<div class="livewrap"><div class="crumbbar"><span class="spacer"></span>
   <label class="tsearch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qSearch" type="search" placeholder="Search" value="${esc(L.qsearch || '')}" aria-label="Search questions" autocomplete="off"><kbd>Ctrl K</kbd></label>
   <button class="qtoggle" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Show or hide the questions panel" data-tip="Questions"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button></div>
   <div class="sess2 ${L.qopen || qa ? '' : 'qclosed'} ${qa ? 'qamode' : ''} ${qa && L.qside ? 'qside' : ''}"><section class="left">
