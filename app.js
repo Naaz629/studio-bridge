@@ -402,28 +402,22 @@ function loAnswers(o) {
 function qaPages(o) {
   const lv = Object.entries(o.lv), ans = loAnswers(o);
   const pages = lv.map(([k, [n, src]]) => ({ k, title: LVL[k][0], topic: askedQuestion(k), src, n, total: o.total, answers: ans[k] }));
-  pages.push({ k: 'take', title: 'Your take', topic: askedQuestion('t'), src: 'Class discussion', answers: null });
   const s = S(), row = (mark, name, text) => '<div class="ans2"><span class="ansmark">' + mark + '</span><div><b>' + name + '</b><p>' + text + '</p></div></div>';
   pages.push({ k: 'qa', title: 'Q&A Session', group: 'Questions', body: who => {
     const qs = s.qs.slice().sort((a, b) => b.up - a.up), done = qs.filter(q => q.st !== 'open').length;
     return '<div class="qahead"><b>What students asked</b><small>' + qs.length + ' questions · ' + done + ' answered</small></div><div class="anslist">' + qs.map((q, i) => row(q.st === 'open' ? '!' : '✓', esc(who(q.who, i)), esc(q.tr || q.text) + ' · ' + q.up + ' upvotes')).join('') + '</div>';
   } });
-  pages.push({ k: 'art', title: 'Artefact upload', group: 'Activities', body: () => {
+  pages.push({ k: 'art', title: 'Artefact uploads', group: 'Activities', body: () => {
     const f = artefactFolders();
     return '<div class="qahead"><b>What students uploaded</b><small>' + s.artefacts.length + ' files in ' + f.length + ' folders</small></div><div class="anslist">' + f.map(([t, l]) => row('▢', esc(t), l.length + ' files')).join('') + '</div>';
-  } });
-  pages.push({ k: 'disc', title: 'Discussion cards', group: 'Activities', body: () => {
-    const tot = DISCUSS_CARDS.reduce((a, c) => a + (s.cards[c.k] || 0), 0) || 1;
-    return '<div class="qahead"><b>What the class played</b><small>' + tot + ' cards played</small></div><div class="anslist">' + DISCUSS_CARDS.map(c => row('●', c.label, s.cards[c.k] + ' students · ' + Math.round(s.cards[c.k] / tot * 100) + '%')).join('') + '</div>';
   } });
   return pages;
 }
 /* answers written in another language are shown in English first; the original is one tap away */
 function origHTML(t, lang) { return `<details class="orig"><summary>Original</summary><span lang="${'zh-Hans'}">${esc(t)}</span></details>`; }
 function qaSelect(pages, pi) {
-  const opt = (p, i) => '<option value="' + i + '"' + (i === pi ? ' selected' : '') + '>' + esc(p.group ? p.title : p.k === 'take' ? 'Your take' : 'Question ' + (i + 1) + ' · ' + String(p.topic).replace(/[?.]+$/, '').slice(0, 46)) + '</option>';
-  const qs = pages.map((p, i) => [p, i]), grp = (name, f) => '<optgroup label="' + name + '">' + qs.filter(([p]) => f(p)).map(([p, i]) => opt(p, i)).join('') + '</optgroup>';
-  return '<select class="qasel" data-sel="oqsel" aria-label="Choose what to analyse">' + grp('Questions', p => !p.group || p.group === 'Questions') + grp('Activities', p => p.group === 'Activities') + '</select>';
+  const nq = pages.findIndex(p => p.body), opt = (v, t, on) => '<option value="' + v + '"' + (on ? ' selected' : '') + '>' + t + '</option>';
+  return '<select class="qasel" data-sel="oqsel" aria-label="Choose what to analyse">' + opt(0, 'Concept development', pi < nq) + pages.slice(nq).map((p, j) => opt(nq + j, esc(p.title), pi === nq + j)).join('') + '</select>';
 }
 function loPanel(o) {
   const s = S(), anon = O.anon;
@@ -435,7 +429,7 @@ function loPanel(o) {
   const insBody = ins.state === 'pending' ? '<p class="aiflag busy">✦ The AI is reading the class results…</p>'
     : ins.state === 'ready' ? ''
     : `<p class="insight-text muted">${ins.state === 'off' ? 'AI is turned off, so there is no written summary.' : 'The AI could not write the summary: ' + esc(ins.error || '')}</p><div class="qacts">${ins.state === 'off' ? '<button class="sm p" data-a="aisettings">✦ Choose AI</button>' : '<button class="sm p" data-a="oinsightretry">↻ Try again</button>'}</div>`;
-  const pages = qaPages(o), pi = Math.max(0, Math.min(O.qp || 0, pages.length - 1)), pg = pages[pi];
+  const pages = qaPages(o), nq = pages.findIndex(p => p.body), pi = Math.max(0, Math.min(O.qp || 0, pages.length - 1)), pg = pages[pi];
   const who = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
   const body = pg.body ? pg.body(who) : pg.answers
     ? `<div class="qahead"><b>${esc(pg.topic)}</b><small>${pg.n} of ${pg.total} got it right</small></div>
@@ -445,7 +439,7 @@ function loPanel(o) {
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
   <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o, ins)}</section>
-  <section class="losec qasec"><div class="qanav"><button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>${qaSelect(pages, pi)}<span class="qacount">${pi + 1} / ${pages.length}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === pages.length - 1 ? 'disabled' : ''}>›</button></div>${body}</section></aside>`;
+  <section class="losec qasec"><div class="qanav">${pi < nq ? `<button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>` : ''}${qaSelect(pages, pi)}${pi < nq ? `<span class="qacount">${pi + 1} / ${nq}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === nq - 1 ? 'disabled' : ''}>›</button>` : ''}</div>${body}</section></aside>`;
 }
 /* Class Learning: the tutor's view of everything the class has done, laid out like the student's My Learning page */
 const FEED_ICON = {
@@ -742,7 +736,8 @@ document.addEventListener('keydown', e => {
   if (V !== 'ov' || !O.open || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
   if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
   const o = weekOutcomes().outs.find(x => x.id === O.open); if (!o) return;
-  O.qp = Math.max(0, Math.min(qaPages(o).length - 1, (O.qp || 0) + (e.key === 'ArrowRight' ? 1 : -1))); render(); e.preventDefault();
+  if ((O.qp || 0) >= qaPages(o).findIndex(p => p.body)) return;
+  O.qp = Math.max(0, Math.min(qaPages(o).findIndex(p => p.body) - 1, (O.qp || 0) + (e.key === 'ArrowRight' ? 1 : -1))); render(); e.preventDefault();
 });
 document.addEventListener('submit', e => {
   e.preventDefault(); const q = S().qs.find(x => x.id == e.target.dataset.q), v = e.target.querySelector('input').value.trim();
