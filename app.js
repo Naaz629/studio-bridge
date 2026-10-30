@@ -438,7 +438,7 @@ function loPanel(o) {
        <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div></div>`; }).join('')}</div>`;
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
-  <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o, ins)}</section></aside>${String.fromCharCode(1)}<section class="losec qasec qafull"><div class="qanav">${pi < nq ? `<button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>` : ''}${qaSelect(pages, pi)}${pi < nq ? `<span class="qacount">${pi + 1} / ${nq}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === nq - 1 ? 'disabled' : ''}>›</button>` : ''}</div>${body}</section>`;
+  <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o, ins)}</section></aside>${String.fromCharCode(1)}<section class="qafull"><div class="qacard losec qasec"><div class="qanav">${pi < nq ? `<button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>` : ''}${qaSelect(pages, pi)}${pi < nq ? `<span class="qacount">${pi + 1} / ${nq}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === nq - 1 ? 'disabled' : ''}>›</button>` : ''}</div>${body}</div></section>`;
 }
 /* Class Learning: the tutor's view of everything the class has done, laid out like the student's My Learning page */
 const FEED_ICON = {
