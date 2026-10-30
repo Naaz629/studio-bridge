@@ -438,8 +438,7 @@ function loPanel(o) {
        <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div></div>`; }).join('')}</div>`;
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
-  <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o, ins)}</section>
-  <section class="losec qasec"><div class="qanav">${pi < nq ? `<button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>` : ''}${qaSelect(pages, pi)}${pi < nq ? `<span class="qacount">${pi + 1} / ${nq}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === nq - 1 ? 'disabled' : ''}>›</button>` : ''}</div>${body}</section></aside>`;
+  <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o, ins)}</section></aside>${String.fromCharCode(1)}<section class="losec qasec qafull"><div class="qanav">${pi < nq ? `<button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>` : ''}${qaSelect(pages, pi)}${pi < nq ? `<span class="qacount">${pi + 1} / ${nq}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === nq - 1 ? 'disabled' : ''}>›</button>` : ''}</div>${body}</section>`;
 }
 /* Class Learning: the tutor's view of everything the class has done, laid out like the student's My Learning page */
 const FEED_ICON = {
@@ -464,7 +463,7 @@ function overview() {
   const ft = ['all', 'q', 'r', 'a'].includes(O.ftab) ? O.ftab : 'all', feed = classFeed(s, outs).filter(x => ft === 'all' || x.k === ft);
   const feedHTML = feed.slice(0, 12).map(x => `<div class="feeditem"><span class="ficon k-${x.k}">${FEED_ICON[x.k]}</span><div class="fbody"><small>${x.label}</small><b>${esc(x.title)}</b><span>${esc(x.meta)}</span>${x.slide ? `<button class="flink" data-a="feedgo" data-n="${x.slide}">Slide ${x.slide} <i>↗</i></button>` : x.pos != null ? `<button class="flink" data-a="feedgo" data-p="${x.pos}">Open in Studio flow <i>↗</i></button>` : ''}</div></div>`).join('') || '<div class="none">Nothing here yet.</div>';
   const tabs = [['all', 'All'], ['q', 'Questions'], ['r', 'Responses'], ['a', 'Activities']].map(([k, n]) => `<button class="ftab ${ft === k ? 'on' : ''}" data-a="ftab" data-t="${k}">${n}</button>`).join('');
-  const right = open ? loPanel(open) : '';
+  const [right, qaFull] = open ? loPanel(open).split(String.fromCharCode(1)) : ['', ''];
   return `<div class="ovw2 ovpage">
     <div class="ovtop"><div class="ovintro"><small class="eyebrow">${esc(s.code)} · ${esc(s.name)}</small><h1 class="ovtitle">Class Learning</h1><p>How the whole class is doing, from everything students have answered and uploaded.</p></div><div class="ovweek"><span class="livedot"></span><select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w} of 12</option>`).join('')}</select></div></div>
     <div class="ovcols">
@@ -474,6 +473,7 @@ function overview() {
       </div>
       <div class="ovcol">${right}</div>
     </div>
+    ${qaFull || ''}
   </div>`;
 }
 
