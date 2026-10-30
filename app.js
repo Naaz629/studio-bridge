@@ -244,7 +244,7 @@ function renderQP() {
   const el = $('#qp'); if (!el) return;
   const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   const nOpen = s.qs.filter(q => q.st === 'open').length, nAns = s.qs.length - nOpen, qf = L.qf === 'open' || L.qf === 'ans' ? L.qf : 'all';
-  const head0 = `<div class="rhead"><button class="qtoggle rhbulb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Hide questions" data-tip="Questions &amp; activities">${BULB_SVG}</button><b>Questions</b><i class="cnt">${s.qs.length}</i></div>`;
+  const head0 = `<div class="rhead" data-a="toggleq" role="button" tabindex="0" aria-label="Close the questions panel"><button class="qtoggle rhbulb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Hide questions" data-tip="Questions &amp; activities">${BULB_SVG}</button><b>Questions</b><i class="cnt">${s.qs.length}</i></div>`;
   const head = head0;
   el.innerHTML = head + `<div class="qrows">${list.map((q, i) => {
     const open = L.open === q.id && !(A && A.type === 'Q&A Session'), shown = q.tr && !q.showOrig ? q.tr : q.text, sn = qSlide(q);
