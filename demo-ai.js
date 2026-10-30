@@ -34,10 +34,10 @@
     const wk = weak.toLowerCase(), gap = (p.gaps || []).map(g => String(g).replace(/^[^:]*:\s*/, '')).find(g => g.split(' ').length > 3) || '';
   const probs = {
     start: 'Their answers stay general. They can repeat the idea but cannot link it to their own project' + (gap ? ', for example: "' + gap.slice(0, 70) + '"' : '') + '.',
-    dev: 'They understand the idea but are unsure how to use it. They hesitate at the "' + weak + '" step and ask for an example.',
+    dev: 'They understand the idea but are unsure how to use it. They hesitate on the "' + weak + '" questions and ask for an example.',
     fluent: 'They apply the idea to their own work and can explain why it matters.'
   };
-  const next = 'Before moving on, spend five minutes on the "' + weak + '" step. Show one worked example, then ask groups to try it on their own project and share one result.';
+  const next = 'Before moving on, spend five minutes on the "' + weak + '" questions. Show one worked example, then ask groups to try it on their own project and share one result.';
     const quote = (p.gaps || [])[0] && String(p.gaps[0]).split(' ').length > 5 ? ' One weak answer was: "' + shortSentence(String(p.gaps[0]).replace(/^[^:]*:\s*/, ''), 12) + '".' : '';
     return { probs, next, summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
   }
