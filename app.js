@@ -350,7 +350,7 @@ function groupHeadline(o) {
 function groupsHTML(o, ins) {
   const g = levelGroups(o), ok = ins && ins.state === 'ready' && ins.probs;
   const note = ins && ins.state === 'pending' ? 'The AI is reading the answers…' : '';
-  return '<div class="lvgrp">' + g.map(x => '<div class="lvrow ' + x.k + '"><b>' + x.label + '</b><p>' + esc(ok ? ins.probs[x.k] : note) + '</p></div>').join('') + (ok && ins.next ? '<div class="nextact"><small>✦ Suggested next step</small><p>' + esc(ins.next) + '</p></div>' : '') + '</div>';
+  return '<div class="lvgrp">' + g.map(x => '<div class="lvrow ' + x.k + '"><b><span class="lvp">' + x.pct + '%</span> ' + x.label + '</b><p>' + esc(ok ? ins.probs[x.k] : note) + '</p></div>').join('') + (ok && ins.next ? '<div class="nextact"><small>✦ Suggested next step</small><p>' + esc(ins.next) + '</p></div>' : '') + '</div>';
 }
 function ensureInsight(o) {
   if (o.insight) return o.insight;
