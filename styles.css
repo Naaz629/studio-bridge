@@ -1072,3 +1072,11 @@ h1,h2,.wk h1,.qh h2,.ovhead h2{font-family:var(--serif);font-weight:700;letter-s
 .crumbtitle{margin:0;min-width:0;flex:1 1 auto;font-family:var(--serif);font-weight:700;font-size:clamp(18px,1.9vw,24px);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crumbbar .spacer{flex:0 0 auto}
 .wk2{display:none}
+
+/* the Questions & activities button is a light bulb */
+#qbtn.qtoggle,#qbtn.qtoggle[aria-pressed="true"],#qbtn.qtoggle[aria-pressed="false"]{background:#fff;border:1px solid var(--line-2);color:inherit;width:46px!important;height:46px;border-radius:14px}
+#qbtn.qtoggle[aria-pressed="true"]{box-shadow:0 0 0 2px var(--green),var(--shadow)}
+#qbtn .bulb{display:block;transition:transform .2s}
+#qbtn:hover .bulb{transform:scale(1.12) rotate(-4deg)}
+#qbtn[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);right:0;white-space:nowrap;background:#1d1d1f;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;z-index:30;pointer-events:none}
+#qbtn{position:relative}
