@@ -235,6 +235,12 @@ function qSlide(q) {
   }
   return q.slide;
 }
+/* initials in a soft coloured circle, as in the student design (Anonymous shows an A) */
+function qInitials(q) {
+  const w = String(q.who || '?').trim().split(/\s+/);
+  return /^anonymous$/i.test(q.who) ? 'A' : (w[0][0] + (w[1] ? w[1][0] : '')).toUpperCase();
+}
+function qAvatarTone(q) { return /^anonymous$/i.test(q.who) ? 2 : hash(String(q.who)) % 2; }
 function renderQP() {
   const el = $('#qp'); if (!el) return;
   const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
@@ -244,7 +250,7 @@ function renderQP() {
   el.innerHTML = head + `<div class="qrows">${list.map((q, i) => {
     const open = L.open === q.id && !(A && A.type === 'Q&A Session'), shown = q.tr && !q.showOrig ? q.tr : q.text, sn = qSlide(q);
     return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.q || 0) === i ? 'selq' : ''}">
-    <div class="qwrap"><div class="qrow qhead"><button class="qn" data-a="qnum" data-q="${q.id}" aria-label="Mark question ${i + 1}">${pad(i + 1)}</button>
+    <div class="qwrap"><div class="qrow qhead"><span class="qav av-${qAvatarTone(q)}" aria-hidden="true">${qInitials(q)}</span>
       <div class="qwho"><b>${esc(q.who)}</b><small>${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>
       ${q.st !== 'open' ? '<span class="qtick" title="Answered" aria-label="Answered"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
     <button class="qtxt qtext2" data-a="qans" data-q="${q.id}" aria-pressed="${q.st !== 'open'}" title="Click to mark as answered"><span class="qt ${q.tr && q.showOrig ? 'zhtxt' : ''}">${esc(shown)}</span></button>
