@@ -78,14 +78,13 @@ function botbar() {
   b.style.display = V === 'live' ? '' : 'none';
   b.className = 'botbar' + (L.plan ? ' open' : '');
   b.innerHTML = `<div class="barrow"><button class="${L.plan ? 'ptab flip' : 'bb planbtn'}" id="planbtn" data-a="toggleplan" aria-expanded="${L.plan}" aria-label="Studio flow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Studio flow</span><i class="caret">${L.plan ? '▾' : '▴'}</i></button><span class="spacer"></span>
-  
-  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i data-k="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}">${e.e}</i>`).join("")}</span></span></div>`;
+</div>`;
 }
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function popBall(k) {
   const em = EMOJIS.find(x => x.k === k); if (!em) return;
-  const ball = document.querySelector(`.reactemo i[data-k="${k}"]`); if (!ball) return;
-  ball.dataset.tip = `${em.l} · ${S().reactions[k]}`; const n = ball.querySelector('small'); if (n) n.textContent = S().reactions[k];
+  const ball = document.querySelector(`.rxfoot .rx[data-k="${k}"]`) || document.querySelector(`.reactemo i[data-k="${k}"]`); if (!ball) return;
+  ball.dataset.tip = `${em.l} · ${S().reactions[k]}`; const n = ball.querySelector('b, small'); if (n) n.textContent = S().reactions[k];
   if (REDUCED) return;
   ball.classList.remove('pop'); void ball.offsetWidth; ball.classList.add('pop');
   ball.addEventListener('animationend', () => ball.classList.remove('pop'), { once: true });
@@ -257,7 +256,7 @@ function renderQP() {
     ${q.tr ? `<button class="qoriglink" data-a="qorig" data-q="${q.id}">${q.showOrig ? 'English' : 'Original'}</button>` : ''}
     <div class="qfoot2"><button class="qvote ${q.voted ? 'on' : ''}" data-a="qup" data-q="${q.id}" aria-label="Upvote this question" aria-pressed="${!!q.voted}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>${q.up + (q.voted ? 1 : 0)}</span></button><span class="spacer"></span><button class="qslide" data-a="qslide" data-n="${sn}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Slide ${sn}</span><i>›</i></button></div></div>
     ${open ? `<div class="qd"><div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</div>${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`;
-  }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
+  }).join('') || '<div class="none">No questions yet.</div>'}</div>` + `<div class="rxfoot" aria-label="Class reactions">${EMOJIS.map(e => `<span class="rx" data-k="${e.k}" data-tip="${e.l}"><i>${e.e}</i><b>${s.reactions[e.k]}</b></span>`).join('')}</div>`;
   const bd = $('#bdg'); if (bd) bd.textContent = unanswered();
 }
 
