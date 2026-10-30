@@ -248,7 +248,7 @@ function renderQP() {
   const head = head0;
   el.innerHTML = head + `<div class="qrows">${list.map((q, i) => {
     const open = L.open === q.id && !(A && A.type === 'Q&A Session'), shown = q.tr && !q.showOrig ? q.tr : q.text, sn = qSlide(q);
-    return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.q || 0) === i ? 'selq' : ''}">
+    return `<div data-qid="${q.id}" class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.q || 0) === i ? 'selq' : ''}">
     <div class="qwrap"><div class="qrow qhead"><span class="qav av-${qAvatarTone(q)}" aria-hidden="true">${qInitials(q)}</span>
       <div class="qwho"><b>${esc(q.who)}</b><small>${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>
       ${q.st !== 'open' ? '<span class="qtick" title="Answered" aria-label="Answered"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
@@ -843,4 +843,13 @@ document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.ke
 document.addEventListener('click', e => {
   const c = e.target.closest('.achip2'); if (!c || L.dragging) return;
   const s = S(); flowOf(s); insertAct(s.pos + 1, c.dataset.act, true);
+});
+
+/* click the empty space of a question card to turn it green and tick it as answered (click again to undo) */
+document.addEventListener('click', e => {
+  const c = e.target.closest('.qrows .qr[data-qid]');
+  if (!c || e.target.closest('button, a')) return;
+  const q = S().qs.find(x => String(x.id) === c.dataset.qid); if (!q) return;
+  q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true;
+  renderQP();
 });
