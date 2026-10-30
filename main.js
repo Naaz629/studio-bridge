@@ -355,6 +355,13 @@ ${takes}`;
   const clip = (t, n) => String(t || '').trim().slice(0, n);
   return { summary: clip(r.json.summary, 360), stuck: clip(r.json.stuck, 110), why: clip(r.json.why, 220) };
 });
+/* translate one line of what is on screen into Simplified Chinese (design meaning kept) */
+ipcMain.handle('ai:translate', async (e, p = {}) => {
+  const text = String(p.text || '').slice(0, 400); if (!text) return { error: 'Nothing to translate.' };
+  if (aiLoad().provider === 'demo') return { off: true };
+  const r = await aiAsk('Translate the English sentence into natural Simplified Chinese for university design students. Keep design terms accurate (persona 用户画像, insight 洞察, brief 设计任务书, stakeholder 利益相关者). Reply with JSON only: {"zh":"..."}', text, { type: 'object', required: ['zh'], properties: { zh: { type: 'string' } } });
+  return r.json && r.json.zh ? { zh: String(r.json.zh).slice(0, 400) } : r;
+});
 ipcMain.handle('ai:status', () => aiStatus());
 ipcMain.handle('ai:save', (e, opts) => aiSave(opts));
 ipcMain.handle('ai:clear', () => { try { fs.unlinkSync(aiFile()); } catch { /* nothing saved */ } return { ok: true }; });

@@ -78,14 +78,13 @@ function botbar() {
   b.style.display = V === 'live' ? '' : 'none';
   b.className = 'botbar' + (L.plan ? ' open' : '');
   b.innerHTML = `<div class="barrow"><button class="${L.plan ? 'ptab flip' : 'bb planbtn'}" id="planbtn" data-a="toggleplan" aria-expanded="${L.plan}" aria-label="Studio flow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Studio flow</span><i class="caret">${L.plan ? '▾' : '▴'}</i></button><span class="spacer"></span>
-  
-  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i data-k="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}">${e.e}</i>`).join("")}</span></span></div>`;
+  </div>`;
 }
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function popBall(k) {
   const em = EMOJIS.find(x => x.k === k); if (!em) return;
-  const ball = document.querySelector(`.reactemo i[data-k="${k}"]`); if (!ball) return;
-  ball.dataset.tip = `${em.l} · ${S().reactions[k]}`;
+  const ball = document.querySelector(`.rxb[data-rk="${k}"]`); if (!ball) return;
+  ball.dataset.tip = `${em.l} · ${S().reactions[k]}`; const n = ball.querySelector('small'); if (n) n.textContent = S().reactions[k];
   if (REDUCED) return;
   ball.classList.remove('pop'); void ball.offsetWidth; ball.classList.add('pop');
   ball.addEventListener('animationend', () => ball.classList.remove('pop'), { once: true });
@@ -104,7 +103,7 @@ function slideCard(sl, s) {
   const f = flowOf(s), it = f[s.pos], cur = sl[Math.min(it.i, sl.length - 1)];
   const lines = cur.text ? cur.text.split('\n').slice(1, 8) : [];
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : cur.text ? `<div class="stext"><small>SLIDE ${it.i + 1} OF ${sl.length}</small><h2>${esc(cur.t)}</h2>${lines.length ? `<ul class="sbul">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}</div>` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
-  return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}</div></div>`;
+  return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}<span class="pgbadge">${it.i + 1} / ${sl.length} <b>LIVE</b></span></div></div>`;
 }
 function discussionCard(s, f, m, p) {
   const cards = DISCUSS_CARDS.map(c => `<div class="dcard" data-card="${c.k}" data-tip="${c.label} · ${s.cards[c.k]} students"><img src="${c.img}" alt="${c.label}"><span class="dcount">${s.cards[c.k]}</span></div>`).join('');
@@ -194,11 +193,29 @@ function planStrip(sl, s) {
 }
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
-  return `<div class="sess2 ${L.qopen || (A && A.type === 'Q&A Session') ? '' : 'qclosed'} ${A && A.type === 'Q&A Session' ? 'qamode' : ''} ${A && A.type === 'Q&A Session' && L.qside ? 'qside' : ''}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div></div>
-  <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${planStrip(sl, s)}</section>
-  <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside>
-  <div class="topbar"><label class="tsearch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qSearch" type="search" placeholder="Search questions" value="${esc(L.qsearch || '')}" aria-label="Search questions" autocomplete="off"><kbd>Ctrl K</kbd></label>
-  <button class="qtoggle" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Show or hide the questions panel" data-tip="Questions"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button></div></div>`;
+  const qa = A && A.type === 'Q&A Session';
+  return `<div class="livewrap"><div class="crumbbar"><div class="crumb"><b>Live</b><span class="sep">/</span><span>Week ${s.liveWeek} · In progress</span></div><span class="spacer"></span>
+  <label class="tsearch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qSearch" type="search" placeholder="Search" value="${esc(L.qsearch || '')}" aria-label="Search questions" autocomplete="off"><kbd>Ctrl K</kbd></label>
+  <button class="qtoggle" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Show or hide the questions panel" data-tip="Questions"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button></div>
+  <div class="sess2 ${L.qopen || qa ? '' : 'qclosed'} ${qa ? 'qamode' : ''} ${qa && L.qside ? 'qside' : ''}"><section class="left">
+  <div class="wk2"><small class="livenow"><i></i>LIVE NOW · TUTORIAL</small><h1>Week ${s.liveWeek}: ${esc(t[0])}</h1><p>Dr. Priya Nair · ${s.students || 42} students</p></div>
+  <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${transPanel(s, sl)}${planStrip(sl, s)}</section>
+  <aside class="rightcol" id="qp" aria-label="Questions and activities"></aside></div></div>`;
+}
+/* live translation: what the tutor says or shows, in English and Simplified Chinese, with the class reactions beside it */
+const TR_EXAMPLE = ['A persona should reflect patterns in your research, not assumptions about your users.', '用户画像应体现研究中发现的共性，而不是你对用户的主观假设。'];
+function liveLine(s, sl) {
+  const it = flowOf(s)[s.pos], cur = it && it.k === 's' ? sl[Math.min(it.i, sl.length - 1)] : null;
+  const line = cur && cur.text ? String(cur.text).split('\n').map(x => x.trim()).find(x => x.split(' ').length >= 6 && !/acknowledg|gadigal|copyright/i.test(x)) : '';
+  return line || '';
+}
+function transPanel(s, sl) {
+  const en = liveLine(s, sl), real = window.shell && window.shell.ai && window.shell.ai.translate;
+  let pair = TR_EXAMPLE, example = true;
+  if (en && real) { const c = (L.tr || (L.tr = {}))[en]; if (c && c.zh) { pair = [en, c.zh]; example = false; } else if (!c) { L.tr[en] = { pending: true }; window.shell.ai.translate({ text: en }).then(r => { L.tr[en] = r && r.zh ? { zh: r.zh } : { off: true }; if (V === 'live') render(); }); } }
+  const rx = EMOJIS.map(e => `<span class="rxb" data-rk="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}"><i>${e.e}</i><small>${s.reactions[e.k]}</small></span>`).join('');
+  return `<section class="trans ${L.trShut ? 'shut' : ''}"><div class="trhead"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/></svg><b>Live translation</b><span class="spacer"></span><div class="rxrow">${rx}</div><button class="trchev" data-a="trtoggle" aria-label="${L.trShut ? 'Show' : 'Hide'} translation" aria-expanded="${!L.trShut}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="${L.trShut ? 'm6 9 6 6 6-6' : 'm6 15 6-6 6 6'}"/></svg></button></div>
+  <div class="trbody"><small>English → 简体中文${example ? ' · example' : ''}</small><p class="tren">${esc(pair[0])}</p><p class="trzh" lang="zh-Hans">${esc(pair[1])}</p></div></section>`;
 }
 function renderQP() {
   const el = $('#qp'); if (!el) return;
@@ -215,7 +232,7 @@ function renderQP() {
       <div class="qwho"><b>${esc(q.who)}</b><small>${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>
       ${q.st !== 'open' ? '<span class="qchip">✓ Answered</span>' : ''}</div>
     <button class="qtxt qtext2" data-a="qopen" data-q="${q.id}"><span class="qt">${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</button>
-    <div class="qfoot"><span class="qup" title="${q.up} students asked">↑ ${q.up}</span><span class="qsame">Same question · ${q.same}</span></div></div>
+    <div class="qfoot"><span class="qup" title="${q.up} students asked">↑ ${q.up}</span><span class="qsame">Same question · ${q.same}</span><span class="spacer"></span><button class="qsave ${q.saved ? 'on' : ''}" data-a="qsave" data-q="${q.id}" aria-label="${q.saved ? 'Remove bookmark' : 'Bookmark this question'}" aria-pressed="${!!q.saved}"><svg width="16" height="16" viewBox="0 0 24 24" fill="${q.saved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button></div></div>
     ${open ? `<div class="qd">
       <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.same} same question</div>
       ${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
@@ -522,6 +539,8 @@ document.addEventListener('click', e => {
         goTo(s, np);
       }
       break;
+    case 'trtoggle': L.trShut = !L.trShut; break;
+    case 'qsave': q.saved = !q.saved; renderQP(); return;
     case 'rtab': L.rtab = a.dataset.t; renderQP(); return;
     case 'tile': goTo(s, +a.dataset.i); break;
     case 'artpick': A.q = +a.dataset.i; A.hold = Date.now(); break;

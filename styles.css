@@ -1016,3 +1016,42 @@ h1,h2,.wk h1,.qh h2,.ovhead h2{font-family:var(--serif);font-weight:700;letter-s
 .rightcol{padding-top:66px!important}
 .sess2.qclosed .rightcol{padding-top:0!important}
 #qbtn.qtoggle{width:46px!important;min-width:0;max-width:46px;flex:none;padding:0;border-radius:13px;display:grid;height:42px}
+
+/* ===== Tutor live screen, matched to the reference ===== */
+.livewrap{display:flex;flex-direction:column;height:100%;min-height:0}
+.livewrap>.sess2{flex:1;min-height:0}
+.crumbbar{flex:none;display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line)}
+.crumb{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink-2)}.crumb b{color:var(--ink);font-weight:700}.crumb .sep{color:var(--faint)}
+.crumbbar .tsearch{width:280px}
+.topbar{display:none}
+.rightcol{padding-top:16px!important}
+.wk2{display:flex;flex-direction:column;gap:6px;padding:6px 2px 4px}
+.livenow{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.16em;color:var(--ink-2)}
+.livenow i{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 3px var(--live-soft)}
+.wk2 h1{margin:0;font-family:var(--serif);font-weight:700;font-size:clamp(24px,2.7vw,36px);letter-spacing:-.01em;line-height:1.1}
+.wk2 p{margin:0;font-size:14px;color:var(--muted)}
+.wk{display:none}
+.slidepage .dotsov{display:none}
+.pgbadge{position:absolute;right:14px;bottom:12px;z-index:3;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px 9px;font-size:11.5px;color:var(--muted);box-shadow:var(--shadow);font-variant-numeric:tabular-nums}
+.pgbadge b{font-size:9.5px;letter-spacing:.1em;color:var(--tint-ink);background:var(--tint);border-radius:6px;padding:2px 6px}
+.trans{flex:none;background:#fbfaf3;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.trhead{display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--green)}.trhead b{font-size:15px;color:var(--ink)}
+.trans:not(.shut) .trhead{border-bottom:1px solid var(--line)}
+.rxrow{display:flex;gap:10px}
+.rxb{position:relative;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px}
+.rxb i{font-style:normal;line-height:1}
+.rxb small{position:absolute;right:-6px;bottom:-5px;min-width:18px;padding:1px 4px;border-radius:9px;background:#fff;border:1px solid var(--line);font-size:10px;font-weight:600;color:var(--muted);text-align:center}
+.rxb.pop{animation:ballPop .7s cubic-bezier(.2,.9,.3,1.4)}
+.trchev{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.trchev:hover{background:var(--tint)}
+.trbody{padding:10px 18px 14px;display:flex;flex-direction:column;gap:4px}
+.trbody small{font-size:12px;color:var(--muted)}
+.tren{margin:0;font-size:14px;color:var(--ink-2)}
+.trzh{margin:0;font-size:17px;color:var(--ink);font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif}
+.trans.shut .trbody{display:none}
+.left{gap:12px}
+.qfoot .spacer{flex:1}
+.qsave{color:var(--muted);display:grid;place-items:center;width:28px;height:28px;border-radius:8px}
+.qsave:hover{background:var(--tint)}.qsave.on{color:var(--green)}
+.livewrap .stagebox{background:none!important;box-shadow:none!important;border:0!important;padding:0!important}
+.livewrap .slidepage{box-shadow:var(--shadow);border:1px solid var(--line)}
