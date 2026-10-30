@@ -210,12 +210,10 @@ function liveLine(s, sl) {
   return line || '';
 }
 function transPanel(s, sl) {
-  const en = liveLine(s, sl), real = window.shell && window.shell.ai && window.shell.ai.translate;
-  let pair = TR_EXAMPLE, example = true;
-  if (en && real) { const c = (L.tr || (L.tr = {}))[en]; if (c && c.zh) { pair = [en, c.zh]; example = false; } else if (!c) { L.tr[en] = { pending: true }; window.shell.ai.translate({ text: en }).then(r => { L.tr[en] = r && r.zh ? { zh: r.zh } : { off: true }; if (V === 'live') render(); }); } }
+  const en = liveLine(s, sl) || TR_EXAMPLE[0];
   const rx = EMOJIS.map(e => `<span class="rxb" data-rk="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}"><i>${e.e}</i><small>${s.reactions[e.k]}</small></span>`).join('');
   return `<section class="trans ${L.trShut ? 'shut' : ''}"><div class="trhead"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/></svg><b>Live translation</b><span class="spacer"></span><div class="rxrow">${rx}</div><button class="trchev" data-a="trtoggle" aria-label="${L.trShut ? 'Show' : 'Hide'} translation" aria-expanded="${!L.trShut}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="${L.trShut ? 'm6 9 6 6 6-6' : 'm6 15 6-6 6 6'}"/></svg></button></div>
-  <div class="trbody"><small>English → 简体中文${example ? ' · example' : ''}</small><p class="tren">${esc(pair[0])}</p><p class="trzh" lang="zh-Hans">${esc(pair[1])}</p></div></section>`;
+  <div class="trbody"><p class="cap">${esc(en)}</p></div></section>`;
 }
 function renderQP() {
   const el = $('#qp'); if (!el) return;

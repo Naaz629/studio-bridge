@@ -1055,3 +1055,7 @@ h1,h2,.wk h1,.qh h2,.ovhead h2{font-family:var(--serif);font-weight:700;letter-s
 .qsave:hover{background:var(--tint)}.qsave.on{color:var(--green)}
 .livewrap .stagebox{background:none!important;box-shadow:none!important;border:0!important;padding:0!important}
 .livewrap .slidepage{box-shadow:var(--shadow);border:1px solid var(--line)}
+
+/* captions: English only, white text on see-through black, like video subtitles */
+.trbody{align-items:center;padding:14px 18px 16px}
+.cap{margin:0;max-width:92%;background:rgba(0,0,0,.72);color:#fff;font-size:16px;line-height:1.45;font-weight:600;text-align:center;padding:7px 14px;border-radius:4px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
