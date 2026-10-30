@@ -196,11 +196,13 @@ function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   return `<div class="sess2 ${L.qopen || (A && A.type === 'Q&A Session') ? '' : 'qclosed'} ${A && A.type === 'Q&A Session' ? 'qamode' : ''} ${A && A.type === 'Q&A Session' && L.qside ? 'qside' : ''}"><section class="left"><div class="wk"><div><small>WEEK ${s.liveWeek}</small><h1>${esc(t[0])}</h1></div></div>
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${planStrip(sl, s)}</section>
-  <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside></div>`;
+  <aside class="rightcol" id="qp" aria-label="Questions and answers"></aside>
+  <div class="topbar"><label class="tsearch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qSearch" type="search" placeholder="Search questions" value="${esc(L.qsearch || '')}" aria-label="Search questions" autocomplete="off"><kbd>Ctrl K</kbd></label>
+  <button class="qtoggle" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Show or hide the questions panel" data-tip="Questions"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button></div></div>`;
 }
 function renderQP() {
   const el = $('#qp'); if (!el) return;
-  const s = S(), list = [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
+  const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   const acts = flowOf(s).map((it, p) => ({ it, p })).filter(x => x.it.k === 'a'), tab = L.rtab === 'a' ? 'a' : 'q';
   const tabs = `<div class="rtabs" role="tablist"><button class="rtab ${tab === 'q' ? 'on' : ''}" role="tab" aria-selected="${tab === 'q'}" data-a="rtab" data-t="q"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>Questions</span><i class="cnt">${s.qs.length}</i></button><button class="rtab ${tab === 'a' ? 'on' : ''}" role="tab" aria-selected="${tab === 'a'}" data-a="rtab" data-t="a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Activities</span><i class="cnt">${acts.length}</i></button></div>`;
   if (tab === 'a') {
@@ -753,3 +755,7 @@ document.addEventListener('dblclick', e => {
   if (np >= f.length) { toast('This is the last slide.'); return; }
   goTo(s, np); render();
 });
+
+/* search the questions; Ctrl+K jumps to the search box */
+document.addEventListener('input', e => { if (e.target.id !== 'qSearch') return; L.qsearch = e.target.value; if (!L.qopen) { L.qopen = true; document.querySelector('.sess2')?.classList.remove('qclosed'); } L.rtab = 'q'; renderQP(); });
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { const i = document.getElementById('qSearch'); if (i) { e.preventDefault(); i.focus(); i.select(); } } });
