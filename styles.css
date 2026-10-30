@@ -1331,3 +1331,18 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 /* upvote sits at the right end of the top line */
 .qhead .qvote{margin-left:auto}
 .qreply{display:none!important}
+
+/* ===== Questions: the student card, with the tutor's tick ===== */
+.qtabs{display:none!important}
+.qrows .qr{background:rgba(255,255,255,.7);border:1px solid rgba(52,75,53,.09);border-radius:11px;padding:13px 14px 8px}
+.qrows .qr.done{background:#e6ede2;border-color:rgba(52,75,53,.18)}
+.qhead{display:flex;align-items:center;gap:10px;padding:0 0 8px}
+.qtick{margin-left:auto;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;flex:none}
+.qtext2{width:100%;text-align:left;cursor:pointer;border-radius:8px;padding:2px 0}
+.qtext2 .qt{font-size:12.5px;font-weight:550;line-height:1.45;color:var(--ink)}
+.qtext2:hover .qt{color:var(--green)}
+.qfoot2{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:6px;border-top:1px solid rgba(52,75,53,.08)}
+.qfoot2 .spacer{flex:1}
+.qfoot2 .qvote{margin:0;padding:4px 6px;font-size:12px}
+.qfoot2 .qslide{margin:0;padding:4px 0;font-size:12px}
+.qhead .qvote{margin-left:0}

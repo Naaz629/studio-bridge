@@ -240,18 +240,16 @@ function renderQP() {
   const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   const nOpen = s.qs.filter(q => q.st === 'open').length, nAns = s.qs.length - nOpen, qf = L.qf === 'open' || L.qf === 'ans' ? L.qf : 'all';
   const head0 = `<div class="rhead"><button class="qtoggle rhbulb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Hide questions" data-tip="Questions &amp; activities">${BULB_SVG}</button><b>Questions</b><i class="cnt">${s.qs.length}</i></div>`;
-  const head = head0 + `<div class="qtabs" role="tablist"><button class="qtab ${qf === 'all' ? 'on' : ''}" data-a="qfilter" data-f="all">All</button><button class="qtab ${qf === 'open' ? 'on' : ''}" data-a="qfilter" data-f="open">Unanswered <i>${nOpen}</i></button><button class="qtab ${qf === 'ans' ? 'on' : ''}" data-a="qfilter" data-f="ans">Answered <i>${nAns}</i></button></div>`;
-  el.innerHTML = head + `<div class="qrows">${list.filter(q => qf === 'all' || (qf === 'open' ? q.st === 'open' : q.st !== 'open')).map((q, i) => {
+  const head = head0;
+  el.innerHTML = head + `<div class="qrows">${list.map((q, i) => {
     const open = L.open === q.id && !(A && A.type === 'Q&A Session'), shown = q.tr && !q.showOrig ? q.tr : q.text, sn = qSlide(q);
     return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.q || 0) === i ? 'selq' : ''}">
     <div class="qwrap"><div class="qrow qhead"><button class="qn" data-a="qnum" data-q="${q.id}" aria-label="Mark question ${i + 1}">${pad(i + 1)}</button>
       <div class="qwho"><b>${esc(q.who)}</b><small>${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>
-      <button class="qvote ${q.voted ? 'on' : ''}" data-a="qup" data-q="${q.id}" aria-label="Upvote this question" aria-pressed="${!!q.voted}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>${q.up + (q.voted ? 1 : 0)}</span></button>
-</div>
-    <div class="qtline"><button class="qtxt qtext2" data-a="${q.tr ? 'qorig' : 'qopen'}" data-q="${q.id}"><span class="qt ${q.tr && q.showOrig ? 'zhtxt' : ''}">${esc(shown)}</span></button>
-      ${q.st !== 'open' ? '<span class="qmic" title="Answered"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}
-      <button class="qslide" data-a="qslide" data-n="${sn}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Slide ${sn}</span><i>›</i></button></div>
-    ${q.tr ? `<button class="qoriglink" data-a="qorig" data-q="${q.id}">${q.showOrig ? 'English' : 'Original'}</button>` : ''}</div>
+      ${q.st !== 'open' ? '<span class="qtick" title="Answered" aria-label="Answered"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
+    <button class="qtxt qtext2" data-a="qans" data-q="${q.id}" aria-pressed="${q.st !== 'open'}" title="Click to mark as answered"><span class="qt ${q.tr && q.showOrig ? 'zhtxt' : ''}">${esc(shown)}</span></button>
+    ${q.tr ? `<button class="qoriglink" data-a="qorig" data-q="${q.id}">${q.showOrig ? 'English' : 'Original'}</button>` : ''}
+    <div class="qfoot2"><button class="qvote ${q.voted ? 'on' : ''}" data-a="qup" data-q="${q.id}" aria-label="Upvote this question" aria-pressed="${!!q.voted}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>${q.up + (q.voted ? 1 : 0)}</span></button><span class="spacer"></span><button class="qslide" data-a="qslide" data-n="${sn}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Slide ${sn}</span><i>›</i></button></div></div>
     ${open ? `<div class="qd"><div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</div>${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`;
   }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
   const bd = $('#bdg'); if (bd) bd.textContent = unanswered();
@@ -585,6 +583,7 @@ document.addEventListener('click', e => {
       break;
     case 'actback': { const f = flowOf(s); let p = s.pos; while (p > 0 && f[p].k !== 's') p--; if (f[p].k !== 's') { p = f.findIndex(x => x.k === 's'); } goTo(s, Math.max(0, p)); break; }
     case 'qfilter': L.qf = a.dataset.f; renderQP(); return;
+    case 'qans': q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; renderQP(); return;
     case 'qup': q.voted = !q.voted; renderQP(); return;
     case 'qreply': q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; renderQP(); return;
     case 'qorig': q.showOrig = !q.showOrig; renderQP(); return;
