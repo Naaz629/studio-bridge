@@ -1382,3 +1382,12 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .rhead{cursor:pointer;transition:background .15s}
 .rhead:hover{background:rgba(255,255,255,.7)}
 .rhead:focus-visible{outline:2px solid var(--green-2);outline-offset:-2px}
+
+/* discussion cards: fill the card and sit in the middle, no empty strip */
+.classact.discuss .dwrap{flex:1;min-height:0;padding:6px 0 14px;display:flex;align-items:center;justify-content:center}
+.classact.discuss .dcards{justify-content:center;align-items:center;width:100%;gap:clamp(10px,1.6vw,22px)}
+.classact.discuss .cabody{padding-bottom:70px}
+.classact.discuss .cabody{gap:4px;padding-top:12px;padding-bottom:60px}
+.classact.discuss .cdq{font-size:clamp(20px,2.2vw,28px)}
+.classact.discuss .calabel{margin-top:4px}
+.classact.discuss .dwrap{padding-top:10px}
