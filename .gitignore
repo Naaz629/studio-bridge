@@ -4,3 +4,6 @@ _test.pdf
 _test/
 .claude/
 web/
+
+.vercel
+.env*

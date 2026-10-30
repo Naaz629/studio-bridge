@@ -1327,3 +1327,7 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .classact .artshow{flex:1;min-height:0}
 .classact .artbar{bottom:62px}
 .classact .arttitle,.classact .artx{display:none}
+
+/* upvote sits at the right end of the top line */
+.qhead .qvote{margin-left:auto}
+.qreply{display:none!important}
