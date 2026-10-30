@@ -204,11 +204,10 @@ function slideTitle(s, sl, fallback) {
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   const qa = A && A.type === 'Q&A Session';
-  return `<div class="livewrap"><div class="crumbbar"><span class="spacer"></span>
+  return `<div class="livewrap"><div class="crumbbar"><h1 class="crumbtitle">${esc(slideTitle(s, sl, t[0]))}</h1><span class="spacer"></span>
   <label class="tsearch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qSearch" type="search" placeholder="Search" value="${esc(L.qsearch || '')}" aria-label="Search questions" autocomplete="off"><kbd>Ctrl K</kbd></label>
   <button class="qtoggle" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Show or hide the questions panel" data-tip="Questions"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button></div>
   <div class="sess2 ${L.qopen || qa ? '' : 'qclosed'} ${qa ? 'qamode' : ''} ${qa && L.qside ? 'qside' : ''}"><section class="left">
-  <div class="wk2"><h1>${esc(slideTitle(s, sl, t[0]))}</h1></div>
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${transPanel(s, sl)}${planStrip(sl, s)}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and activities"></aside></div></div>`;
 }
@@ -216,7 +215,7 @@ function live() {
 const TR_EXAMPLE = ['A persona should reflect patterns in your research, not assumptions about your users.', '用户画像应体现研究中发现的共性，而不是你对用户的主观假设。'];
 function liveLine(s, sl) {
   const it = flowOf(s)[s.pos], cur = it && it.k === 's' ? sl[Math.min(it.i, sl.length - 1)] : null;
-  const line = cur && cur.text ? String(cur.text).split('\n').map(x => x.trim()).find(x => x.split(' ').length >= 6 && !/acknowledg|gadigal|copyright/i.test(x)) : '';
+  const line = cur && cur.text ? String(cur.text).split('\n').map(x => x.trim()).find(x => x.split(' ').length >= 6 && !/acknowledg|gadigal|copyright|click to edit|master text/i.test(x)) : '';
   return line || '';
 }
 function transPanel(s, sl) {

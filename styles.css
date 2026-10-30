@@ -1067,3 +1067,8 @@ h1,h2,.wk h1,.qh h2,.ovhead h2{font-family:var(--serif);font-weight:700;letter-s
 
 .wk2 h1{font-size:clamp(18px,1.9vw,24px)!important;font-weight:700}
 .wk2{padding:4px 2px 2px}
+
+/* the slide title sits in the top bar, level with search */
+.crumbtitle{margin:0;min-width:0;flex:1 1 auto;font-family:var(--serif);font-weight:700;font-size:clamp(18px,1.9vw,24px);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumbbar .spacer{flex:0 0 auto}
+.wk2{display:none}
