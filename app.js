@@ -442,7 +442,7 @@ function loPanel(o) {
        <div class="anslist">${pg.answers.map((a, i) => `<div class="ans2 ${a.ok ? 'good' : 'gap'}"><span class="ansmark">${a.ok ? '✓' : '!'}</span><div><b>${esc(who(a.who, i))}</b><p>${esc(a.en || a.t)}</p>${a.lang ? origHTML(a.t, a.lang) : ''}</div></div>`).join('')}</div>`
     : `<div class="qahead"><b>${esc(pg.topic)}</b></div>
        <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div></div>`; }).join('')}</div>`;
-  return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
+  return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
   <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o, ins)}</section>
   <section class="losec qasec"><div class="qanav"><button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>${qaSelect(pages, pi)}<span class="qacount">${pi + 1} / ${pages.length}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === pages.length - 1 ? 'disabled' : ''}>›</button></div>${body}</section></aside>`;
@@ -463,14 +463,14 @@ function classFeed(s, outs) {
 function overview() {
   const s = S(), { W, key, outs } = weekOutcomes();
   if (O.s !== key) O.s = key;
-  const open = outs.find(o => o.id === O.open);
+  const open = outs.find(o => o.id === O.open) || outs[0]; if (open) O.open = open.id;
   const total = outs[0] ? outs[0].total : 0, f = flowOf(s), nActs = f.filter(x => x.k === 'a').length;
   const nAns = s.qs.filter(q => q.st !== 'open').length;
   const levels = outs.flatMap(o => Object.values(o.lv).map(v => v[0] / o.total)), avg = levels.length ? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length * 100) : 0;
   const ft = ['all', 'q', 'r', 'a'].includes(O.ftab) ? O.ftab : 'all', feed = classFeed(s, outs).filter(x => ft === 'all' || x.k === ft);
   const feedHTML = feed.slice(0, 12).map(x => `<div class="feeditem"><span class="ficon k-${x.k}">${FEED_ICON[x.k]}</span><div class="fbody"><small>${x.label}</small><b>${esc(x.title)}</b><span>${esc(x.meta)}</span>${x.slide ? `<button class="flink" data-a="feedgo" data-n="${x.slide}">Slide ${x.slide} <i>↗</i></button>` : x.pos != null ? `<button class="flink" data-a="feedgo" data-p="${x.pos}">Open in Studio flow <i>↗</i></button>` : ''}</div></div>`).join('') || '<div class="none">Nothing here yet.</div>';
   const tabs = [['all', 'All'], ['q', 'Questions'], ['r', 'Responses'], ['a', 'Activities']].map(([k, n]) => `<button class="ftab ${ft === k ? 'on' : ''}" data-a="ftab" data-t="${k}">${n}</button>`).join('');
-  const right = open ? loPanel(open) : `<section class="ovc"><div class="ovch"><div><h3>Artefacts</h3><p>Uploaded by the class, one folder for each type</p></div></div>${artefactsHTML()}</section>`;
+  const right = open ? loPanel(open) : '';
   return `<div class="ovw2 ovpage">
     <div class="ovtop"><div class="ovintro"><small class="eyebrow">${esc(s.code)} · ${esc(s.name)}</small><h1 class="ovtitle">Class Learning</h1><p>How the whole class is doing, from everything students have answered and uploaded.</p></div><div class="ovweek"><span class="livedot"></span><select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w} of 12</option>`).join('')}</select></div></div>
     <div class="ovcols">
@@ -724,7 +724,7 @@ document.addEventListener('click', e => {
     case 'aiclear': window.shell.ai.clear().then(() => { $('#modal').innerHTML = ''; toast('Saved key removed.'); }); return;
     case 'ofolder': O.folder = a.dataset.f; break;
     case 'ofolderback': O.folder = null; break;
-    case 'olo': O.open = O.open === a.dataset.o ? null : a.dataset.o; O.qp = 0; break;
+    case 'olo': if (O.open !== a.dataset.o) O.qp = 0; O.open = a.dataset.o; break;
     case 'oqprev': O.qp = Math.max(0, (O.qp || 0) - 1); break;
     case 'oqnext': O.qp = (O.qp || 0) + 1; break;
     case 'oinsightretry': { const o = weekOutcomes().outs.find(x => x.id === O.open); if (o) o.insight = null; break; }
