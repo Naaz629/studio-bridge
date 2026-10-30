@@ -109,7 +109,7 @@ function discussionCard(s, f, m, p) {
   const cards = DISCUSS_CARDS.map(c => `<div class="dcard" data-card="${c.k}" data-tip="${c.label} · ${s.cards[c.k]} students"><img src="${c.img}" alt="${c.label}"><span class="dcount">${s.cards[c.k]}</span></div>`).join('');
   const n = DISCUSS_CARDS.reduce((a, c) => a + s.cards[c.k], 0);
   return `<div class="card2 actcard cdcard classact discuss">${caHead('Step ' + (s.pos + 1) + ' of ' + f.length)}
-  <div class="cabody">${caMeta('Discussion', 'Live · ' + n + ' cards played')}<h3 class="cdq">Discuss with your peers.</h3><p class="cdhint">Use your cards to share what you think.</p><small class="calabel">What the class played</small><div class="dwrap"><div class="dcards">${cards}</div></div></div>
+  <div class="cabody">${caMeta('Discussion', 'Live · ' + n + ' cards played')}<h3 class="cdq">Discuss with your peers.</h3><p class="cdhint">Use your cards to share what you think.</p><div class="dwrap"><div class="dcards">${cards}</div></div></div>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
 /* the question list for the running activity (Concept Development comes from Bloom's taxonomy) */
@@ -158,7 +158,21 @@ function qaScroll() {}
 const EXAMPLE_ARTS = [['Business model canvas', 'assets/artefacts/bmc-1.svg'], ['Value proposition canvas', 'assets/artefacts/vpc-2.svg']];
 const ART_IDLE = 120000;
 const artHeld = () => !!(A && A.hold && Date.now() - A.hold < ART_IDLE);
-function artItems(s) { return EXAMPLE_ARTS.map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(e => ({ n: artLabel(e), t: e[1], src: e[2] }))); }
+/* the examples follow what was just taught: after a persona slide they are persona templates */
+const PERSONA_EXAMPLES = [['Persona template', 'assets/artefacts/persona-template.svg'], ['Persona example', 'assets/artefacts/persona-example.svg']];
+const PERSONA_UPLOADS = [['Leo Park', 'Persona', 'assets/artefacts/persona-1.svg'], ['Yuki Tanaka', 'Persona', 'assets/artefacts/persona-2.svg', true], ['Amira Khan', 'Persona', 'assets/artefacts/persona-3.svg', false, 'Group 2'], ['Maya Chen', 'Persona', 'assets/artefacts/persona-example.svg']];
+function aboutPersona(s) {
+  const f = flowOf(s), sl = slidesFor(s); let n = 0;
+  for (let p = Math.min(s.pos, f.length) - 1; p >= 0 && n < 4; p--) {
+    if (f[p].k !== 's') continue; n++;
+    const c = sl[Math.min(f[p].i, sl.length - 1)] || {};
+    if (/persona/i.test(String(c.title || c.t || '') + ' ' + String(c.text || ''))) return true;
+  }
+  return false;
+}
+const artExamples = s => aboutPersona(s) ? PERSONA_EXAMPLES : EXAMPLE_ARTS;
+const artPool = s => aboutPersona(s) ? PERSONA_UPLOADS : (s.artefacts || []).slice(2);
+function artItems(s) { return artExamples(s).map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(e => ({ n: artLabel(e), t: e[1], src: e[2] }))); }
 function artefactCard(s, f, m) {
   const items = artItems(s), at = Math.max(0, Math.min(items.length - 1, A.q || 0)), it = items[at];
   const dots = items.map((x, i) => `<button class="artdot ${i === at ? 'on' : ''}" data-a="artpick" data-i="${i}" aria-label="Show ${esc(x.t)} ${i + 1}"></button>`).join('');
@@ -275,7 +289,7 @@ function outcomeCard(o) {
 }
 /* a file is named after the student, or the group name or number; an anonymous upload is just Student # or Group # */
 function artLabel(entry) {
-  const [nm, , , anon, group] = entry, i = S().artefacts.indexOf(entry);
+  const [nm, , , anon, group] = entry, i = S().artefacts.indexOf(entry) >= 0 ? S().artefacts.indexOf(entry) : PERSONA_UPLOADS.indexOf(entry) + 3;
   if (group) return group;
   return anon ? 'Student ' + (i + 1) : nm;
 }
@@ -819,7 +833,7 @@ setInterval(() => {
 }, 6000);
 setInterval(() => {
   if (!A || A.type !== 'Artefact upload' || V !== 'live') return;
-  const s = S(), got = s.liveArts || (s.liveArts = []), pool = (s.artefacts || []).slice(2);
+  const s = S(), got = s.liveArts || (s.liveArts = []), pool = artPool(s);
   if (got.length >= pool.length) return;
   got.push(pool[got.length]);
   if (!artHeld()) A.q = EXAMPLE_ARTS.length + got.length - 1;

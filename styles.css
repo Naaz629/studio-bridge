@@ -1391,3 +1391,8 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .classact.discuss .cdq{font-size:clamp(20px,2.2vw,28px)}
 .classact.discuss .calabel{margin-top:4px}
 .classact.discuss .dwrap{padding-top:10px}
+
+/* discussion cards: no label, spread evenly across the card */
+.classact.discuss .dwrap{padding:4px 0 12px}
+.classact.discuss .dcards{justify-content:space-between;gap:0;width:100%}
+.classact.discuss .dcard{--cw:min(calc((100cqw - 4 * 10px) / 5), calc(100cqh * 115 / 247))}
