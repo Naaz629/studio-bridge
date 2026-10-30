@@ -1257,3 +1257,5 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .crumbbar .qopen{margin-left:auto}
 .livewrap>.crumbbar{height:62px;min-height:62px;box-sizing:border-box;padding-top:0;padding-bottom:0}
 .rhead{height:62px}
+.rhbulb,#qbtn.rhbulb,#qbtn.qtoggle.rhbulb{background:#fff!important;border:1px solid rgba(52,75,53,.12)!important;box-shadow:0 1px 3px rgba(52,75,53,.06)!important}
+.rhbulb:hover,#qbtn.rhbulb:hover{background:#fff!important;border-color:rgba(52,75,53,.28)!important}
