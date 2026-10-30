@@ -655,7 +655,7 @@ setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift()
 (typeof BUNDLED_UNITS !== 'undefined' ? BUNDLED_UNITS : []).forEach(o => applyOutline(o, false));
 /* in a browser (no desktop app) the course slides shipped next to the page are shown */
 if (!(window.shell && window.shell.slides)) {
-  const sub = SUBJECTS.find(x => x.code === 'IDEA9301'), name = 'W06 IDEA9301 2026.pdf';
+  const sub = SUBJECTS.find(x => x.code === 'IDEA9301'), name = 'IDEA9106_Wk6_TUT_S2_2025.pdf';
   if (sub) fetch('slides/IDEA9301/' + encodeURIComponent(name)).then(r => r.ok ? r.blob() : Promise.reject()).then(async b => {
     const got = await readSlideFile(new File([b], name, { type: 'application/pdf' }));
     if (got && got.length) { sub.uploads = got; sub.upload = name; sub.flow = null; render(); }
