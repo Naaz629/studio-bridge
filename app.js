@@ -103,10 +103,14 @@ function slideCard(sl, s) {
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : cur.text ? `<div class="stext"><small>SLIDE ${it.i + 1} OF ${sl.length}</small><h2>${esc(cur.t)}</h2>${lines.length ? `<ul class="sbul">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}</div>` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
   return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}</div></div>`;
 }
+const CA_GRID = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
+const caHead = right => `<div class="cahead">${CA_GRID}<b>Class activity</b><span class="spacer"></span><small>${right}</small><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>`;
+const caMeta = (type, chip) => `<div class="cameta"><small>${esc(type)}</small><span class="cachip"><i></i>${esc(chip)}</span></div>`;
 function discussionCard(s, f, m, p) {
   const cards = DISCUSS_CARDS.map(c => `<div class="dcard" data-card="${c.k}" data-tip="${c.label} · ${s.cards[c.k]} students"><img src="${c.img}" alt="${c.label}"><span class="dcount">${s.cards[c.k]}</span></div>`).join('');
-  return `<div class="card2 actcard discuss" style="background:${m.color}"><div class="ahead"><div><small>DISCUSSION ACTIVITY</small><h2>Discuss with your peers.</h2><p class="dsub">Use your cards to share what you think.</p></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="dwrap"><div class="dcards">${cards}</div></div>
+  const n = DISCUSS_CARDS.reduce((a, c) => a + s.cards[c.k], 0);
+  return `<div class="card2 actcard cdcard classact discuss">${caHead('Step ' + (s.pos + 1) + ' of ' + f.length)}
+  <div class="cabody">${caMeta('Discussion', 'Live · ' + n + ' cards played')}<h3 class="cdq">Discuss with your peers.</h3><p class="cdhint">Use your cards to share what you think.</p><small class="calabel">What the class played</small><div class="dwrap"><div class="dcards">${cards}</div></div></div>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
 /* the question list for the running activity (Concept Development comes from Bloom's taxonomy) */
@@ -142,10 +146,12 @@ function qaListHTML(s) {
     <div class="qaans">${qaReplies(q).map((r, k) => `<div class="qar"><b>${esc(nm(r.who, k))}</b><p>${esc(r.en || r.t)}</p>${r.lang ? origHTML(r.t, r.lang) : ''}</div>`).join('')}${q.ans ? `<div class="qar tutor"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}</div></div>`).join('') || '<div class="none">No questions yet.</div>';
 }
 function qaCard(s, f, m) {
-  return `<div class="card2 actcard qacard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>Questions &amp; answers</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  const qs = sortedQs(s), at = Math.min(A.q || 0, Math.max(0, qs.length - 1)), q = qs[at];
+  return `<div class="card2 actcard classact qacard">${caHead('Question ' + (at + 1) + ' of ' + qs.length)}
+  <div class="cabody">${caMeta('Questions & answers', 'Live · ' + qs.length + ' questions')}<h3 class="cdq">${esc(q ? (q.tr || q.text) : 'No questions yet')}</h3>${q ? `<p class="cdhint">Asked by ${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</p>` : ''}<small class="calabel">What other students answered</small>
   <div class="qaline"><div class="qalist" id="qaList">${qaListHTML(s)}</div>
-  <div class="qanums" aria-label="Questions">${sortedQs(s).map((q, i) => `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${(A.q || 0) === i ? 'selq' : ''}"><div class="qwrap"><div class="qrow"><button class="qn" data-a="qnum" data-q="${q.id}" aria-label="Question ${i + 1}">${pad(i + 1)}</button></div></div></div>`).join('')}</div></div>
-  ${navOverlay(Math.min(A.q || 0, Math.max(0, sortedQs(s).length - 1)), Math.max(1, sortedQs(s).length), (A.q || 0) > 0 || s.pos > 0, (A.q || 0) < sortedQs(s).length - 1 || s.pos < f.length - 1)}</div>`;
+  <div class="qanums" aria-label="Questions">${qs.map((q2, i) => `<div class="qr ${q2.st !== 'open' ? 'done' : ''} ${q2.seen ? 'seen' : ''} ${at === i ? 'selq' : ''}"><div class="qwrap"><div class="qrow"><button class="qn" data-a="qnum" data-q="${q2.id}" aria-label="Question ${i + 1}">${pad(i + 1)}</button></div></div></div>`).join('')}</div></div></div>
+  ${navOverlay(at, Math.max(1, qs.length), at > 0 || s.pos > 0, at < qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function qaScroll() {}
 /* ---------- Artefact upload: an image slideshow. Examples first, then each student's upload (name + type) as it arrives.
@@ -157,10 +163,11 @@ function artItems(s) { return EXAMPLE_ARTS.map(([t, src]) => ({ ex: true, t, src
 function artefactCard(s, f, m) {
   const items = artItems(s), at = Math.max(0, Math.min(items.length - 1, A.q || 0)), it = items[at];
   const dots = items.map((x, i) => `<button class="artdot ${i === at ? 'on' : ''}" data-a="artpick" data-i="${i}" aria-label="Show ${esc(x.t)} ${i + 1}"></button>`).join('');
-  return `<div class="card2 actcard artcard" style="background:${m.color}"><h2 class="arttitle">Upload your artefact</h2><button class="x artx" data-a="actclose" aria-label="Close activity">✕</button>
+  return `<div class="card2 actcard artcard classact">${caHead('Artefact ' + (at + 1) + ' of ' + items.length)}
+  <div class="cameta artmeta"><small>Upload your artefact</small><span class="cachip"><i></i>${(s.liveArts || []).length} uploaded${artHeld() ? ' · Stopped' : ''}</span></div>
   <div class="artshow" id="artLive" data-a="artpause" title="Click to stop here">${artSlideHTML(it)}</div>
-  <div class="artbar"><span class="artstate">${artHeld() ? 'Stopped' : ''}</span><div class="artdots">${dots}</div></div>
-  ${navOverlay(0, 1, true, true)}</div>`;
+  <div class="artbar"><div class="artdots">${dots}</div></div>
+  ${navOverlay(at, items.length, true, true)}</div>`;
 }
 function artSlideHTML(it) {
   const cap = it.ex ? `<span class="extag">Example</span><b>${esc(it.t)}</b>` : `<b>${esc(it.n)}</b><span>${esc(it.t)}</span>`;
@@ -174,8 +181,9 @@ function actCard() {
   if (A.type === 'Concept Development') return cdCard(s, f, m);
   if (A.type === 'Q&A Session') return qaCard(s, f, m);
   if (A.type === 'Artefact upload') return artefactCard(s, f, m);
-  return `<div class="card2 actcard" style="background:${m.color}"><div class="ahead"><div><small>ACTIVITY</small><h2>${esc(m.title)}</h2></div><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="abody"><small>QUESTION ${A.q + 1} OF ${p.length}</small><h3>${esc(p[A.q])}</h3><textarea placeholder="Add your thoughts here…" aria-label="Your thoughts"></textarea><div class="meta">${8 + A.q * 3} students have responded</div></div>
+  const rr = seeded(hash(String(p[A.q]))), n = 8 + A.q * 3, shown = shuffled(SAMPLES.map((_, i) => i), hash(String(p[A.q]))).slice(0, 3);
+  return `<div class="card2 actcard classact">${caHead('Question ' + (A.q + 1) + ' of ' + p.length)}
+  <div class="cabody">${caMeta(m.title, 'Live · ' + n + ' responses')}<h3 class="cdq">${esc(p[A.q])}</h3><small class="calabel">What the class wrote</small><div class="cdopen">${shown.map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div></div>
   ${navOverlay(A.q, p.length, A.q > 0 || s.pos > 0, A.q < p.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function planStrip(sl, s) {
