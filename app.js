@@ -213,7 +213,6 @@ function renderQP() {
       <div class="qwho"><b>${esc(q.who)}</b><small>${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>
       ${q.st !== 'open' ? '<span class="qchip">✓ Answered</span>' : ''}</div>
     <button class="qtxt qtext2" data-a="qopen" data-q="${q.id}"><span class="qt">${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</button>
-    ${q.ans ? `<div class="box ans qans"><b>Dr. Priya Nair</b><small>Tutor answer</small><p>${esc(q.ans)}</p></div>` : ''}
     <div class="qfoot"><span class="qup" title="${q.up} students asked">↑ ${q.up}</span><span class="qsame">Same question · ${q.same}</span></div></div>
     ${open ? `<div class="qd">
       <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.same} same question</div>
