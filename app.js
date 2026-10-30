@@ -227,7 +227,7 @@ function renderQP() {
   const acts = flowOf(s).map((it, p) => ({ it, p })).filter(x => x.it.k === 'a'), tab = L.rtab === 'a' ? 'a' : 'q';
   const tabs = `<div class="rtabs" role="tablist"><button class="rtab ${tab === 'q' ? 'on' : ''}" role="tab" aria-selected="${tab === 'q'}" data-a="rtab" data-t="q"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>Questions</span><i class="cnt">${s.qs.length}</i></button><button class="rtab ${tab === 'a' ? 'on' : ''}" role="tab" aria-selected="${tab === 'a'}" data-a="rtab" data-t="a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Activities</span><i class="cnt">${acts.length}</i></button></div>`;
   if (tab === 'a') {
-    el.innerHTML = tabs + `<div class="qrows">${acts.map(({ it, p }) => { const m = ACT_META[it.act]; return `<button class="qr actrow ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" style="--ac:${m.color}"><span class="acdot"></span><span class="acname"><b>${esc(m.title)}</b><small>Step ${p + 1} of the Studio flow</small></span><span class="acgo">${p === s.pos ? 'Showing' : 'Open'}</span></button>`; }).join('') || '<div class="none">No activities yet. Drag one into the Studio flow.</div>'}</div>`;
+    el.innerHTML = tabs + `<div class="qrows">${acts.map(({ it, p }) => { const m = ACT_META[it.act]; return `<button class="qr actrow ${p === s.pos ? 'on' : ''}" data-a="${p === s.pos ? 'actback' : 'tile'}" data-i="${p}" style="--ac:${m.color}"><span class="acdot"></span><span class="acname"><b>${esc(m.title)}</b><small>Step ${p + 1} of the Studio flow</small></span><span class="acgo">${p === s.pos ? '‹ Go back' : 'Open'}</span></button>`; }).join('') || '<div class="none">No activities yet. Drag one into the Studio flow.</div>'}</div>`;
     return;
   }
   el.innerHTML = tabs + `
@@ -544,6 +544,7 @@ document.addEventListener('click', e => {
         goTo(s, np);
       }
       break;
+    case 'actback': { const f = flowOf(s); let p = s.pos; while (p > 0 && f[p].k !== 's') p--; if (f[p].k !== 's') { p = f.findIndex(x => x.k === 's'); } goTo(s, Math.max(0, p)); break; }
     case 'trtoggle': L.trShut = !L.trShut; break;
     case 'qsave': q.saved = !q.saved; renderQP(); return;
     case 'rtab': L.rtab = a.dataset.t; renderQP(); return;
