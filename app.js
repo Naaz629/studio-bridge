@@ -380,7 +380,7 @@ function overview() {
   if (O.s !== key) O.s = key;
   const open = outs.find(o => o.id === O.open);
   return `<div class="ovw2">
-    <div class="ovtop"><span class="ovunit">${esc(s.name)} · ${esc(s.code)}</span><select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w}</option>`).join('')}</select></div>
+    <div class="ovtop"><div class="ovintro"><small class="eyebrow">${esc(s.code)} · ${esc(s.name)}</small><h1 class="ovtitle">Class Learning</h1><p>How the whole class is doing, from everything students have answered and uploaded.</p></div><div class="ovweek"><span class="livedot"></span><select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w} of 12</option>`).join('')}</select></div></div>
     <div class="ovgrid">
       <section class="ovpanel"><div class="ovhead"><h2>Student Activity</h2><div class="seg2">${Object.entries(W.sessions).map(([k, v]) => `<button data-ss="${k}" aria-pressed="${k === key}">${v.name}</button>`).join('')}</div></div>
         <div class="loscroll">${outs.map(o => loBox(o, open && open.id === o.id)).join('')}</div></section>
@@ -745,8 +745,12 @@ function cdCard(s, f, m) {
   const cd = ensureCD(s, s.pos);
   if (!cd.qs.length) return cdEmpty(s, f, m, cd);
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
-  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdtake">Your take</span><span class="bloomchip">${esc(q.label)}</span><span class="spacer"></span><button class="cdeditbtn" data-a="cdedit" aria-label="Edit questions" data-tip="Edit questions">✎</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="cdbody"><small class="cdnum">QUESTION ${A.q + 1} OF ${cd.qs.length}</small><h3 class="cdq">${esc(q.text)}</h3>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}<div id="cdAns">${answersHTML(q)}</div></div>
+  const rs = ensureRes(q), n = q.type === 'mc' || q.type === 'scale' ? rs.counts.reduce((x, y) => x + y, 0) : rs.n;
+  return `<div class="card2 actcard cdcard classact"><div class="cahead"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><b>Class activity</b><span class="spacer"></span><small>Question ${A.q + 1} of ${cd.qs.length}</small><button class="cdeditbtn" data-a="cdedit" aria-label="Edit questions" data-tip="Edit questions">✎</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  <div class="cabody"><div class="cameta"><small>${esc(TYPE_NAMES[q.type] || '')}</small><span class="cachip"><i></i>Live · ${n} responses</span></div>
+  <h3 class="cdq">${esc(q.text)}</h3>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}
+  <small class="calabel">What the class answered</small><div id="cdAns">${answersHTML(q)}</div></div>
+  <span class="bloomchip">${esc(q.label)}</span>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 
