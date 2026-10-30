@@ -433,7 +433,7 @@ function loPanel(o) {
   const topic = ins.state === 'ready' && ins.stuck ? ins.stuck : 'Struggle to ' + loBit;
   const why = '';
   const insBody = ins.state === 'pending' ? '<p class="aiflag busy">✦ The AI is reading the class results…</p>'
-    : ins.state === 'ready' ? `<p class="insight-text">${esc(ins.summary)}</p><small class="muted">✦ AI summary · based on this week's results</small>`
+    : ins.state === 'ready' ? ''
     : `<p class="insight-text muted">${ins.state === 'off' ? 'AI is turned off, so there is no written summary.' : 'The AI could not write the summary: ' + esc(ins.error || '')}</p><div class="qacts">${ins.state === 'off' ? '<button class="sm p" data-a="aisettings">✦ Choose AI</button>' : '<button class="sm p" data-a="oinsightretry">↻ Try again</button>'}</div>`;
   const pages = qaPages(o), pi = Math.max(0, Math.min(O.qp || 0, pages.length - 1)), pg = pages[pi];
   const who = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
