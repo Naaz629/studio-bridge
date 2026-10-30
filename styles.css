@@ -1109,3 +1109,43 @@ h1,h2,.wk h1,.qh h2,.ovhead h2{font-family:var(--serif);font-weight:700;letter-s
 .qtline .qslide{flex:none;margin:0 0 3px;white-space:nowrap}
 .qoriglink{display:inline-block;margin-top:4px;padding-top:0}
 .qhead .qwho b,.qhead .qwho small{white-space:nowrap}.qhead{gap:8px;flex-wrap:nowrap}.qhead .qwho{min-width:0;overflow:hidden}.qhead .qwho b{overflow:hidden;text-overflow:ellipsis}
+
+/* ===== Student design system (IDEA9301 Prototype, Figma) applied to the tutor UI ===== */
+:root{
+  --win:#f6f3ea; --panel:#fbf9f3; --card:rgba(255,255,255,.64);
+  --line:rgba(52,75,53,.12); --line-2:rgba(52,75,53,.18);
+  --ink:#263026; --ink-2:#455044; --muted:#73796e;
+  --green:#344b35; --green-2:#3e6748; --tint:#e5ebe0; --tint-ink:#344b35;
+  --sidebar:#e4e9de; --topbar:#f9f6ef; --chip-lav:#e9e4ef; --chip-lav-ink:#665d73; --chip-ok:#e8eee3; --chip-ok-ink:#587058;
+  --av-a:#d7c8b7; --av-b:#cdd8c5; --av-c:#dcd5e7;
+  --shadow:0 2px 6px rgba(52,75,53,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro",system-ui,"Segoe UI","PingFang SC",sans-serif}
+.win{background:linear-gradient(180deg,#faf8f4 0,#eef0e6 55%,#e2e8dc 100%)}
+.rail,.side{background:linear-gradient(180deg,#e7ebe1,#e4e9de)}
+.crumbbar{background:var(--topbar);border-bottom:1px solid var(--line)}
+/* Questions column */
+.rightcol{background:var(--panel);border-left:1px solid var(--line)}
+.rhead{justify-content:flex-start;padding:10px 16px;margin:0 -16px;border-bottom:0;font-size:15px;letter-spacing:-.01em}
+.rhead b{font-weight:400;color:var(--ink)}
+.rhead .cnt{background:var(--tint);color:var(--green);font-size:11px;font-weight:700;border-radius:9px;padding:2px 7px;min-width:20px;text-align:center}
+.qtabs{display:flex;gap:17px;align-items:flex-end;margin:0 -16px 6px;padding:0 16px;border-bottom:1px solid var(--line)}
+.qtab{padding:11px 0 10px;font-size:11px;color:var(--muted);border-bottom:1.5px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:5px}
+.qtab i{font-style:normal;font-size:9px;background:rgba(52,75,53,.08);border-radius:5px;padding:1px 4px;color:var(--muted)}
+.qtab.on{font-weight:700;color:var(--green);border-bottom-color:var(--green)}
+.qtab.on i{font-weight:700;color:var(--green)}
+.qrows{gap:12px;margin-top:8px}
+.qrows .qr{background:var(--card);border:1.1px solid rgba(52,75,53,.09);border-radius:11px;padding:13px;box-shadow:var(--shadow)}
+.qwho b{font-size:11px;color:var(--ink)}
+.qwho small{font-size:9px;color:var(--muted)}
+.qtext2 .qt,.qt{font-size:12px;font-weight:550;line-height:1.45;color:var(--ink)}
+.qvote,.qreply{font-size:12px;color:var(--muted)}
+.qmic{background:var(--chip-ok);color:var(--chip-ok-ink);border-radius:6px;padding:3px 6px}
+.qslide{font-size:12px;color:var(--muted);font-weight:500}
+.qoriglink{font-size:12px;color:var(--green-2)}
+.qchip{background:var(--chip-ok);color:var(--chip-ok-ink)}
+.qr .qn{flex:none}
+
+.qhead{gap:8px}.qhead .qwho{flex:1 1 auto;min-width:48px}.qhead .qvote,.qhead .qreply{padding:4px;gap:4px}
+.qtline .qmic{margin:0 0 3px;flex:none}
+.qtline{gap:8px}
