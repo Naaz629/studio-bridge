@@ -226,10 +226,16 @@ async function demoGenerate(p = {}) {
 }
 function demoInsight(p = {}) {
   const right = (p.total || 0) - (p.stuckN || 0);
-  const gl = Array.isArray(p.groups) && p.groups.length === 3 ? p.groups[0].pct + '% of students are getting started, ' + p.groups[1].pct + '% are developing and ' + p.groups[2].pct + '% are fluent. ' : '';
   const weak = String(p.weakest || 'the weakest step').replace(/\s*\(.*$/, '');
+  const wk = weak.toLowerCase(), gap = (p.gaps || []).map(g => String(g).replace(/^[^:]*:\s*/, '')).find(g => g.split(' ').length > 3) || '';
+  const probs = {
+    start: 'Their answers stay general. They can repeat the idea but cannot link it to their own project' + (gap ? ', for example: "' + gap.slice(0, 70) + '"' : '') + '.',
+    dev: 'They understand the idea but are unsure how to use it. They hesitate at the "' + weak + '" step and ask for an example.',
+    fluent: 'They apply the idea to their own work and can explain why it matters.'
+  };
+  const next = 'Before moving on, spend five minutes on the "' + weak + '" step. Show one worked example, then ask groups to try it on their own project and share one result.';
   const quote = (p.gaps || [])[0] && String(p.gaps[0]).split(' ').length > 5 ? ' One weak answer was: "' + shortSentence(String(p.gaps[0]).replace(/^[^:]*:\s*/, ''), 12) + '".' : '';
-  return { summary: gl + right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
+  return { probs, next, summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
 }
 async function aiGenerate(p = {}) {
   const cfg = aiLoad();
@@ -319,11 +325,13 @@ async function aiAsk(system, user, schema) {
   }
 }
 const INSIGHT_SYSTEM = `You help a university design tutor read class results for ONE learning outcome. Use plain, simple English and short sentences. Use only the data you are given. Never name individual students.
-Reply with JSON only: {"summary":"...","stuck":"...","why":"..."}
-- summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the percentages of the three student groups (getting started, developing, fluent). Say what the largest group cannot yet do, in the words of the learning outcome.
+Reply with JSON only: {"summary":"...","stuck":"...","why":"...","probs":{"start":"...","dev":"...","fluent":"..."},"next":"..."}
+- summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the numbers.
 - stuck: ONE precise insight from the weak answers, in this form: "Struggle to <one action> as they couldn't <the specific thing they missed>". At most 14 words. Name the real cause you see in the answers. Example: "Struggle to plan as they couldn't choose a specific opportunity to work with." Do not copy the learning outcome and do not mention levels.
-- why: leave this as an empty string.`;
-const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' } } };
+- why: leave this as an empty string.
+- probs: for each student group, ONE short sentence on the problem those students are having with the topic, found by reading the weak answers, the strong answers and the questions students asked in the Q&A. start = students who are getting started and cannot yet do it; dev = students who are developing and are not yet sure how to apply it; fluent = students who already apply it. Describe understanding, not numbers. Do not write any numbers or percentages. Never name students.
+- next: ONE concrete next action for the tutor in the next few minutes, based on the problems above. At most 30 words, starting with a verb.`;
+const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why', 'probs', 'next'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' }, probs: { type: 'object', required: ['start', 'dev', 'fluent'], properties: { start: { type: 'string' }, dev: { type: 'string' }, fluent: { type: 'string' } } }, next: { type: 'string' } } };
 /* which learning outcome is this slide teaching? judged by meaning, not by shared words */
 const MATCH_SYSTEM = `You help a university design tutor. You are given one slide and a list of learning outcomes. Decide which ONE outcome the slide is helping students learn, by what the slide TEACHES (its idea and purpose), not by words that appear in both. If no outcome fits, answer "none". Reply with JSON only: {"lo":"<code of the outcome, or none>","why":"<one short sentence>"}`;
 ipcMain.handle('ai:match', async (e, p = {}) => {
@@ -341,9 +349,8 @@ ipcMain.handle('ai:insight', async (e, p = {}) => {
   const takes = (p.takes || []).slice(0, 4).map(n => '- "' + String(n).slice(0, 160) + '"').join(String.fromCharCode(10));
   const user = `Learning outcome (${p.lo}): ${p.out}
 Week ${p.week}. Class size: ${p.total}.
-Student groups (the four stages of competency folded into three groups):
-${(p.groups || []).map(g => `- ${g.label} (${g.stages}): ${g.pct}% (${g.n} students)`).join(String.fromCharCode(10))}
-Headline: ${p.headline || ''}
+Questions students asked in the Q&A:
+${(p.asked || []).slice(0, 8).map(n => '- ' + String(n).slice(0, 160)).join(String.fromCharCode(10))}
 Weakest level: ${p.weakest} (${p.stuckN} of ${p.total} students are stuck here).
 How many students got it right at each level:
 ${lv}
@@ -358,7 +365,7 @@ ${takes}`;
   const r = await aiAsk(INSIGHT_SYSTEM, user, INSIGHT_SCHEMA);
   if (!r.json) return r;
   const clip = (t, n) => String(t || '').trim().slice(0, n);
-  return { summary: clip(r.json.summary, 360), stuck: clip(r.json.stuck, 110), why: clip(r.json.why, 220) };
+  return { summary: clip(r.json.summary, 360), stuck: clip(r.json.stuck, 110), why: clip(r.json.why, 220), next: clip(r.json.next, 240), probs: r.json.probs ? { start: clip(r.json.probs.start, 200), dev: clip(r.json.probs.dev, 200), fluent: clip(r.json.probs.fluent, 200) } : undefined };
 });
 /* translate one line of what is on screen into Simplified Chinese (design meaning kept) */
 ipcMain.handle('ai:translate', async (e, p = {}) => {

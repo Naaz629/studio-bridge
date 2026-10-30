@@ -325,9 +325,9 @@ const STUCK_PHRASE = { k: 'Recalling the main idea', a: 'Using the idea in their
 function loTakes(o) { return shuffled(SAMPLES.map((_, k) => k), hash(o.id)).slice(0, 3); }
 /* the four stages of competency, folded into three groups of students. Only the grouping logic: it feeds the AI insight */
 const STAGE_GROUPS = [
-  { k: 'start', label: 'Getting started', stages: 'Unconscious + conscious incompetence' },
-  { k: 'dev', label: 'Developing', stages: 'Conscious competence' },
-  { k: 'fluent', label: 'Fluent', stages: 'Unconscious competence' }
+  { k: 'start', label: 'Getting started' },
+  { k: 'dev', label: 'Developing' },
+  { k: 'fluent', label: 'Fluent' }
 ];
 function levelGroups(o) {
   if (o.groups) return o.groups;
@@ -347,9 +347,10 @@ function groupHeadline(o) {
     : top.k === 'dev' ? 'Most students (' + top.pct + '%) are still building towards: ' + lo
     : 'Most students (' + top.pct + '%) can ' + lo;
 }
-function groupsHTML(o) {
-  const g = levelGroups(o);
-  return '<div class="lvgrp"><p class="lvhead">' + esc(groupHeadline(o)) + '</p>' + g.map(x => '<div class="lvrow ' + x.k + '"><span class="lvname"><b>' + x.label + '</b><small>' + x.stages + '</small></span><span class="lvbar"><i style="width:' + x.pct + '%"></i></span><span class="lvpct">' + x.pct + '%</span></div>').join('') + '</div>';
+function groupsHTML(o, ins) {
+  const g = levelGroups(o), ok = ins && ins.state === 'ready' && ins.probs;
+  const note = ins && ins.state === 'pending' ? 'The AI is reading the answers…' : '';
+  return '<div class="lvgrp">' + g.map(x => '<div class="lvrow ' + x.k + '"><b>' + x.label + '</b><p>' + esc(ok ? ins.probs[x.k] : note) + '</p></div>').join('') + (ok && ins.next ? '<div class="nextact"><small>✦ Suggested next step</small><p>' + esc(ins.next) + '</p></div>' : '') + '</div>';
 }
 function ensureInsight(o) {
   if (o.insight) return o.insight;
@@ -358,11 +359,11 @@ function ensureInsight(o) {
   o.insight = { state: 'pending' };
   const lv = Object.entries(o.lv);
   const weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
-  ai.insight({ groups: levelGroups(o).map(g => ({ label: g.label, stages: g.stages, n: g.n, pct: g.pct })), headline: groupHeadline(o), weakest: LVL[weak[0]][0] + ' (' + LVL[weak[0]][1].toLowerCase() + ')', stuckN: o.total - weak[1][0], lo: o.lo, out: S().ulo[o.lo] || o.out, week: O.w, total: o.total,
+  ai.insight({ asked: S().qs.map(q => q.tr || q.text), groups: levelGroups(o).map(g => ({ label: g.label, stages: g.stages, n: g.n, pct: g.pct })), headline: groupHeadline(o), weakest: LVL[weak[0]][0] + ' (' + LVL[weak[0]][1].toLowerCase() + ')', stuckN: o.total - weak[1][0], lo: o.lo, out: S().ulo[o.lo] || o.out, week: O.w, total: o.total,
     levels: lv.map(([k, [n, src]]) => ({ label: LVL[k][0], n, src })),
     notes: [...new Set(o.who.map(w => w[2]))], takes: loTakes(o).map(k => SAMPLES[k].en || SAMPLES[k].t),
     gaps: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => !a.ok).map(a => LVL[k][0] + ': ' + (a.en || a.t))), goods: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => a.ok).slice(0, 1).map(a => LVL[k][0] + ': ' + (a.en || a.t))) })
-    .then(r => { o.insight = r.summary ? { state: 'ready', summary: r.summary, stuck: r.stuck, why: r.why } : { state: r.off ? 'off' : 'error', error: r.error }; })
+    .then(r => { o.insight = r.summary ? { state: 'ready', summary: r.summary, stuck: r.stuck, why: r.why, probs: r.probs, next: r.next } : { state: r.off ? 'off' : 'error', error: r.error }; })
     .catch(e => { o.insight = { state: 'error', error: e.message }; })
     .then(() => { if (V === 'ov' && O.open === o.id) render(); });
   return o.insight;
@@ -443,7 +444,7 @@ function loPanel(o) {
        <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div></div>`; }).join('')}</div>`;
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
-  <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o)}</section>
+  <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o, ins)}</section>
   <section class="losec qasec"><div class="qanav"><button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>${qaSelect(pages, pi)}<span class="qacount">${pi + 1} / ${pages.length}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === pages.length - 1 ? 'disabled' : ''}>›</button></div>${body}</section></aside>`;
 }
 /* Class Learning: the tutor's view of everything the class has done, laid out like the student's My Learning page */

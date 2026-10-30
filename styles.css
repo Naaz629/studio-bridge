@@ -1440,3 +1440,12 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .qamode:not(.qside) .rxfoot{display:flex!important}
 .livewrap .sess2:not(.qclosed):not(.qamode)>.rightcol{padding-bottom:62px!important}
 .main:has(.livewrap) .botbar .studio~*{}
+
+/* group problems in words + suggested next step */
+.lvrow{display:block}
+.lvrow b{display:block;font-size:12.5px;font-weight:700;margin-bottom:1px}
+.lvrow p{margin:0;font-size:12.5px;line-height:1.4;color:var(--ink-2)}
+.lvrow.start b{color:#a4503f}.lvrow.dev b{color:#9a6a12}.lvrow.fluent b{color:#2f5a3a}
+.nextact{margin-top:4px;padding:10px 12px;border-radius:10px;background:#e5ebe0}
+.nextact small{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;color:#3e6748;margin-bottom:3px}
+.nextact p{margin:0;font-size:13px;line-height:1.4;color:var(--ink);font-weight:550}
