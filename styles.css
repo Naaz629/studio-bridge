@@ -1409,3 +1409,8 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .crumbbar .crumbtitle{font-size:clamp(26px,2.9vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.08;color:var(--ink);flex:none}
 .crumbsub{font-size:14px;color:var(--muted)}
 .crumbbar .qopen{margin-top:4px}
+
+/* reactions live at the bottom-right of the Studio flow bar and stay there */
+.livewrap .sess2:not(.qclosed):not(.qamode) .rxfoot{position:fixed;right:366px;bottom:8px;z-index:7;width:auto;margin:0;padding:0;border:0;background:none;gap:8px;justify-content:flex-end}
+.livewrap .sess2:not(.qclosed):not(.qamode) .rxfoot .rx{width:38px;max-width:none;flex:none}
+.livewrap .sess2:not(.qclosed):not(.qamode) .rxfoot .rx i{font-size:20px}
