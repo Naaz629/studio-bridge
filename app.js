@@ -421,9 +421,9 @@ function qaPages(o) {
 /* answers written in another language are shown in English first; the original is one tap away */
 function origHTML(t, lang) { return `<details class="orig"><summary>Original</summary><span lang="${'zh-Hans'}">${esc(t)}</span></details>`; }
 function qaSelect(pages, pi) {
-  const opt = (p, i) => '<option value="' + i + '"' + (i === pi ? ' selected' : '') + '>' + esc(p.k === 'take' ? 'Your take' : p.group ? p.title : p.title) + '</option>';
+  const opt = (p, i) => '<option value="' + i + '"' + (i === pi ? ' selected' : '') + '>' + esc(p.group ? p.title : p.k === 'take' ? 'Your take' : 'Question ' + (i + 1) + ' · ' + String(p.topic).replace(/[?.]+$/, '').slice(0, 46)) + '</option>';
   const qs = pages.map((p, i) => [p, i]), grp = (name, f) => '<optgroup label="' + name + '">' + qs.filter(([p]) => f(p)).map(([p, i]) => opt(p, i)).join('') + '</optgroup>';
-  return '<select class="qasel" data-a="oqsel" aria-label="Choose what to analyse">' + grp('Questions', p => !p.group || p.group === 'Questions') + grp('Activities', p => p.group === 'Activities') + '</select>';
+  return '<select class="qasel" data-sel="oqsel" aria-label="Choose what to analyse">' + grp('Questions', p => !p.group || p.group === 'Questions') + grp('Activities', p => p.group === 'Activities') + '</select>';
 }
 function loPanel(o) {
   const s = S(), anon = O.anon;
@@ -916,4 +916,4 @@ document.addEventListener('click', e => {
 });
 
 /* the analysis dropdown in the learning-outcome panel */
-document.addEventListener('change', e => { const t = e.target.closest && e.target.closest('select[data-a="oqsel"]'); if (t) { O.qp = +t.value; render(); } });
+document.addEventListener('change', e => { const t = e.target.closest && e.target.closest('select[data-sel="oqsel"]'); if (t) { O.qp = +t.value; render(); } });
