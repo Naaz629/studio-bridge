@@ -78,12 +78,13 @@ function botbar() {
   b.style.display = V === 'live' ? '' : 'none';
   b.className = 'botbar' + (L.plan ? ' open' : '');
   b.innerHTML = `<div class="barrow"><button class="${L.plan ? 'ptab flip' : 'bb planbtn'}" id="planbtn" data-a="toggleplan" aria-expanded="${L.plan}" aria-label="Studio flow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Studio flow</span><i class="caret">${L.plan ? '▾' : '▴'}</i></button><span class="spacer"></span>
-  </div>`;
+  
+  <span class="bb reactlbl" aria-label="Class reactions appear here"><span class="reactemo">${EMOJIS.map(e => `<i data-k="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}">${e.e}</i>`).join("")}</span></span></div>`;
 }
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function popBall(k) {
   const em = EMOJIS.find(x => x.k === k); if (!em) return;
-  const ball = document.querySelector(`.rxb[data-rk="${k}"]`); if (!ball) return;
+  const ball = document.querySelector(`.reactemo i[data-k="${k}"]`); if (!ball) return;
   ball.dataset.tip = `${em.l} · ${S().reactions[k]}`; const n = ball.querySelector('small'); if (n) n.textContent = S().reactions[k];
   if (REDUCED) return;
   ball.classList.remove('pop'); void ball.offsetWidth; ball.classList.add('pop');
@@ -211,9 +212,7 @@ function liveLine(s, sl) {
 }
 function transPanel(s, sl) {
   const en = liveLine(s, sl) || TR_EXAMPLE[0];
-  const rx = EMOJIS.map(e => `<span class="rxb" data-rk="${e.k}" data-tip="${e.l} · ${s.reactions[e.k]}"><i>${e.e}</i><small>${s.reactions[e.k]}</small></span>`).join('');
-  return `<section class="trans ${L.trShut ? 'shut' : ''}"><div class="trhead"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/></svg><b>Live translation</b><span class="spacer"></span><div class="rxrow">${rx}</div><button class="trchev" data-a="trtoggle" aria-label="${L.trShut ? 'Show' : 'Hide'} translation" aria-expanded="${!L.trShut}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="${L.trShut ? 'm6 9 6 6 6-6' : 'm6 15 6-6 6 6'}"/></svg></button></div>
-  <div class="trbody"><p class="cap">${esc(en)}</p></div></section>`;
+  return `<div class="capline"><p class="cap">${esc(en)}</p></div>`;
 }
 function renderQP() {
   const el = $('#qp'); if (!el) return;
