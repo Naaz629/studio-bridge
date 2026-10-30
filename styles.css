@@ -1396,3 +1396,8 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .classact.discuss .dwrap{padding:4px 0 12px}
 .classact.discuss .dcards{justify-content:space-between;gap:0;width:100%}
 .classact.discuss .dcard{--cw:min(calc((100cqw - 4 * 10px) / 5), calc(100cqh * 115 / 247))}
+
+/* Questions column runs the full height of the window, so the reactions sit at the very bottom */
+.livewrap:has(.sess2:not(.qclosed):not(.qamode)){padding-right:350px;box-sizing:border-box}
+.livewrap .sess2:not(.qclosed):not(.qamode)>.rightcol{position:fixed;top:0;right:0;bottom:0;width:350px;z-index:6}
+.main:has(.livewrap .sess2:not(.qclosed):not(.qamode)) .botbar{margin-right:350px}
