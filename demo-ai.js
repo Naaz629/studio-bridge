@@ -30,9 +30,10 @@
   async function insight(p = {}) {
     await wait(900);
     const right = (p.total || 0) - (p.stuckN || 0);
+    const gl = Array.isArray(p.groups) && p.groups.length === 3 ? p.groups[0].pct + '% of students are getting started, ' + p.groups[1].pct + '% are developing and ' + p.groups[2].pct + '% are fluent. ' : '';
     const weak = String(p.weakest || 'the weakest step').replace(/\s*\(.*$/, '');
     const quote = (p.gaps || [])[0] && String(p.gaps[0]).split(' ').length > 5 ? ' One weak answer was: "' + shortSentence(String(p.gaps[0]).replace(/^[^:]*:\s*/, ''), 12) + '".' : '';
-    return { summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
+    return { summary: gl + right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
   }
   window.demoAI = { status: async () => ({ provider: 'demo', enabled: true }), generate, insight };
 })();

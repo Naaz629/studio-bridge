@@ -226,9 +226,10 @@ async function demoGenerate(p = {}) {
 }
 function demoInsight(p = {}) {
   const right = (p.total || 0) - (p.stuckN || 0);
+  const gl = Array.isArray(p.groups) && p.groups.length === 3 ? p.groups[0].pct + '% of students are getting started, ' + p.groups[1].pct + '% are developing and ' + p.groups[2].pct + '% are fluent. ' : '';
   const weak = String(p.weakest || 'the weakest step').replace(/\s*\(.*$/, '');
   const quote = (p.gaps || [])[0] && String(p.gaps[0]).split(' ').length > 5 ? ' One weak answer was: "' + shortSentence(String(p.gaps[0]).replace(/^[^:]*:\s*/, ''), 12) + '".' : '';
-  return { summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
+  return { summary: gl + right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
 }
 async function aiGenerate(p = {}) {
   const cfg = aiLoad();
@@ -319,7 +320,7 @@ async function aiAsk(system, user, schema) {
 }
 const INSIGHT_SYSTEM = `You help a university design tutor read class results for ONE learning outcome. Use plain, simple English and short sentences. Use only the data you are given. Never name individual students.
 Reply with JSON only: {"summary":"...","stuck":"...","why":"..."}
-- summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the numbers. Say how many students are stuck at the weakest level.
+- summary: exactly 2 short sentences about how the whole class is doing on this outcome. Use the percentages of the three student groups (getting started, developing, fluent). Say what the largest group cannot yet do, in the words of the learning outcome.
 - stuck: ONE precise insight from the weak answers, in this form: "Struggle to <one action> as they couldn't <the specific thing they missed>". At most 14 words. Name the real cause you see in the answers. Example: "Struggle to plan as they couldn't choose a specific opportunity to work with." Do not copy the learning outcome and do not mention levels.
 - why: leave this as an empty string.`;
 const INSIGHT_SCHEMA = { type: 'object', required: ['summary', 'stuck', 'why'], properties: { summary: { type: 'string' }, stuck: { type: 'string' }, why: { type: 'string' } } };
@@ -340,6 +341,9 @@ ipcMain.handle('ai:insight', async (e, p = {}) => {
   const takes = (p.takes || []).slice(0, 4).map(n => '- "' + String(n).slice(0, 160) + '"').join(String.fromCharCode(10));
   const user = `Learning outcome (${p.lo}): ${p.out}
 Week ${p.week}. Class size: ${p.total}.
+Student groups (the four stages of competency folded into three groups):
+${(p.groups || []).map(g => `- ${g.label} (${g.stages}): ${g.pct}% (${g.n} students)`).join(String.fromCharCode(10))}
+Headline: ${p.headline || ''}
 Weakest level: ${p.weakest} (${p.stuckN} of ${p.total} students are stuck here).
 How many students got it right at each level:
 ${lv}

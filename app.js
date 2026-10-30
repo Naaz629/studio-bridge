@@ -323,6 +323,34 @@ function loBox(o, open) {
 /* the learning-outcome panel docks on the right of the Overview (no overlay): an AI class insight, who is stuck and why, then a section that opens to the questions and answers */
 const STUCK_PHRASE = { k: 'Recalling the main idea', a: 'Using the idea in their own project', e: 'Explaining why it matters' };
 function loTakes(o) { return shuffled(SAMPLES.map((_, k) => k), hash(o.id)).slice(0, 3); }
+/* the four stages of competency, folded into three groups of students. Only the grouping logic: it feeds the AI insight */
+const STAGE_GROUPS = [
+  { k: 'start', label: 'Getting started', stages: 'Unconscious + conscious incompetence' },
+  { k: 'dev', label: 'Developing', stages: 'Conscious competence' },
+  { k: 'fluent', label: 'Fluent', stages: 'Unconscious competence' }
+];
+function levelGroups(o) {
+  if (o.groups) return o.groups;
+  const lv = Object.entries(o.lv), cnt = [0, 0, 0];
+  const order = lv.map(([k]) => shuffled(Array.from({ length: o.total }, (_, i) => i), hash(o.id + 'grp' + k)));
+  for (let i = 0; i < o.total; i++) {
+    const right = lv.reduce((a, [, [n]], j) => a + (order[j].indexOf(i) < n ? 1 : 0), 0);
+    cnt[right >= lv.length ? 2 : right >= Math.ceil(lv.length / 2) ? 1 : 0]++;
+  }
+  const pct = cnt.map(n => Math.round(n / o.total * 100)); pct[1] += 100 - pct.reduce((a, b) => a + b, 0);
+  return (o.groups = STAGE_GROUPS.map((g, i) => Object.assign({ n: cnt[i], pct: pct[i] }, g)));
+}
+function groupHeadline(o) {
+  const g = levelGroups(o), top = g.reduce((m, x) => x.n > m.n ? x : m);
+  const lo = (S().ulo[o.lo] || o.out).replace(/[.]$/, '').replace(/^./, c => c.toLowerCase()).split(/ +/).slice(0, 12).join(' ');
+  return top.k === 'start' ? 'Most students (' + top.pct + '%) cannot yet ' + lo
+    : top.k === 'dev' ? 'Most students (' + top.pct + '%) are still building towards: ' + lo
+    : 'Most students (' + top.pct + '%) can ' + lo;
+}
+function groupsHTML(o) {
+  const g = levelGroups(o);
+  return '<div class="lvgrp"><p class="lvhead">' + esc(groupHeadline(o)) + '</p>' + g.map(x => '<div class="lvrow ' + x.k + '"><span class="lvname"><b>' + x.label + '</b><small>' + x.stages + '</small></span><span class="lvbar"><i style="width:' + x.pct + '%"></i></span><span class="lvpct">' + x.pct + '%</span></div>').join('') + '</div>';
+}
 function ensureInsight(o) {
   if (o.insight) return o.insight;
   const ai = (window.shell && window.shell.ai) || window.demoAI;
@@ -330,7 +358,7 @@ function ensureInsight(o) {
   o.insight = { state: 'pending' };
   const lv = Object.entries(o.lv);
   const weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
-  ai.insight({ weakest: LVL[weak[0]][0] + ' (' + LVL[weak[0]][1].toLowerCase() + ')', stuckN: o.total - weak[1][0], lo: o.lo, out: S().ulo[o.lo] || o.out, week: O.w, total: o.total,
+  ai.insight({ groups: levelGroups(o).map(g => ({ label: g.label, stages: g.stages, n: g.n, pct: g.pct })), headline: groupHeadline(o), weakest: LVL[weak[0]][0] + ' (' + LVL[weak[0]][1].toLowerCase() + ')', stuckN: o.total - weak[1][0], lo: o.lo, out: S().ulo[o.lo] || o.out, week: O.w, total: o.total,
     levels: lv.map(([k, [n, src]]) => ({ label: LVL[k][0], n, src })),
     notes: [...new Set(o.who.map(w => w[2]))], takes: loTakes(o).map(k => SAMPLES[k].en || SAMPLES[k].t),
     gaps: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => !a.ok).map(a => LVL[k][0] + ': ' + (a.en || a.t))), goods: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => a.ok).slice(0, 1).map(a => LVL[k][0] + ': ' + (a.en || a.t))) })
@@ -374,10 +402,28 @@ function qaPages(o) {
   const lv = Object.entries(o.lv), ans = loAnswers(o);
   const pages = lv.map(([k, [n, src]]) => ({ k, title: LVL[k][0], topic: askedQuestion(k), src, n, total: o.total, answers: ans[k] }));
   pages.push({ k: 'take', title: 'Your take', topic: askedQuestion('t'), src: 'Class discussion', answers: null });
+  const s = S(), row = (mark, name, text) => '<div class="ans2"><span class="ansmark">' + mark + '</span><div><b>' + name + '</b><p>' + text + '</p></div></div>';
+  pages.push({ k: 'qa', title: 'Q&A Session', group: 'Questions', body: who => {
+    const qs = s.qs.slice().sort((a, b) => b.up - a.up), done = qs.filter(q => q.st !== 'open').length;
+    return '<div class="qahead"><b>What students asked</b><small>' + qs.length + ' questions · ' + done + ' answered</small></div><div class="anslist">' + qs.map((q, i) => row(q.st === 'open' ? '!' : '✓', esc(who(q.who, i)), esc(q.tr || q.text) + ' · ' + q.up + ' upvotes')).join('') + '</div>';
+  } });
+  pages.push({ k: 'art', title: 'Artefact upload', group: 'Activities', body: () => {
+    const f = artefactFolders();
+    return '<div class="qahead"><b>What students uploaded</b><small>' + s.artefacts.length + ' files in ' + f.length + ' folders</small></div><div class="anslist">' + f.map(([t, l]) => row('▢', esc(t), l.length + ' files')).join('') + '</div>';
+  } });
+  pages.push({ k: 'disc', title: 'Discussion cards', group: 'Activities', body: () => {
+    const tot = DISCUSS_CARDS.reduce((a, c) => a + (s.cards[c.k] || 0), 0) || 1;
+    return '<div class="qahead"><b>What the class played</b><small>' + tot + ' cards played</small></div><div class="anslist">' + DISCUSS_CARDS.map(c => row('●', c.label, s.cards[c.k] + ' students · ' + Math.round(s.cards[c.k] / tot * 100) + '%')).join('') + '</div>';
+  } });
   return pages;
 }
 /* answers written in another language are shown in English first; the original is one tap away */
 function origHTML(t, lang) { return `<details class="orig"><summary>Original</summary><span lang="${'zh-Hans'}">${esc(t)}</span></details>`; }
+function qaSelect(pages, pi) {
+  const opt = (p, i) => '<option value="' + i + '"' + (i === pi ? ' selected' : '') + '>' + esc(p.k === 'take' ? 'Your take' : p.group ? p.title : p.title) + '</option>';
+  const qs = pages.map((p, i) => [p, i]), grp = (name, f) => '<optgroup label="' + name + '">' + qs.filter(([p]) => f(p)).map(([p, i]) => opt(p, i)).join('') + '</optgroup>';
+  return '<select class="qasel" data-a="oqsel" aria-label="Choose what to analyse">' + grp('Questions', p => !p.group || p.group === 'Questions') + grp('Activities', p => p.group === 'Activities') + '</select>';
+}
 function loPanel(o) {
   const s = S(), anon = O.anon;
   const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
@@ -390,15 +436,15 @@ function loPanel(o) {
     : `<p class="insight-text muted">${ins.state === 'off' ? 'AI is turned off, so there is no written summary.' : 'The AI could not write the summary: ' + esc(ins.error || '')}</p><div class="qacts">${ins.state === 'off' ? '<button class="sm p" data-a="aisettings">✦ Choose AI</button>' : '<button class="sm p" data-a="oinsightretry">↻ Try again</button>'}</div>`;
   const pages = qaPages(o), pi = Math.max(0, Math.min(O.qp || 0, pages.length - 1)), pg = pages[pi];
   const who = (n, i) => anon ? (n.startsWith('Team') ? n : 'Student ' + String.fromCharCode(65 + i)) : n;
-  const body = pg.answers
+  const body = pg.body ? pg.body(who) : pg.answers
     ? `<div class="qahead"><b>${esc(pg.topic)}</b><small>${pg.n} of ${pg.total} got it right</small></div>
        <div class="anslist">${pg.answers.map((a, i) => `<div class="ans2 ${a.ok ? 'good' : 'gap'}"><span class="ansmark">${a.ok ? '✓' : '!'}</span><div><b>${esc(who(a.who, i))}</b><p>${esc(a.en || a.t)}</p>${a.lang ? origHTML(a.t, a.lang) : ''}</div></div>`).join('')}</div>`
     : `<div class="qahead"><b>${esc(pg.topic)}</b></div>
        <div class="anslist">${loTakes(o).map((k, i) => { const sm = SAMPLES[k]; return `<div class="ans2"><span class="ansmark">“</span><div><b>${anon ? 'Student ' + String.fromCharCode(65 + i) : esc(NAMES[(hash(o.id) + k) % NAMES.length])}</b><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div></div>`; }).join('')}</div>`;
   return `<aside class="lopanel" aria-label="${esc(o.lo)}"><div class="lochead"><b>${esc(o.lo)}</b><button class="x" data-a="oloclose" aria-label="Close">✕</button></div>
   <p class="lodesc">${esc(s.ulo[o.lo] || o.out)}</p>
-  <section class="losec"><h4>Class insight</h4>${insBody}</section>
-  <section class="losec qasec"><div class="qanav"><button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button><h4>Concept check analysis</h4><span class="qacount">${pi + 1} / ${pages.length}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === pages.length - 1 ? 'disabled' : ''}>›</button></div>${body}</section></aside>`;
+  <section class="losec"><h4>Class insight</h4>${insBody}${groupsHTML(o)}</section>
+  <section class="losec qasec"><div class="qanav"><button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button>${qaSelect(pages, pi)}<span class="qacount">${pi + 1} / ${pages.length}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === pages.length - 1 ? 'disabled' : ''}>›</button></div>${body}</section></aside>`;
 }
 /* Class Learning: the tutor's view of everything the class has done, laid out like the student's My Learning page */
 const FEED_ICON = {
@@ -867,3 +913,6 @@ document.addEventListener('click', e => {
   q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true;
   renderQP();
 });
+
+/* the analysis dropdown in the learning-outcome panel */
+document.addEventListener('change', e => { const t = e.target.closest && e.target.closest('select[data-a="oqsel"]'); if (t) { O.qp = +t.value; render(); } });
