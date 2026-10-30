@@ -192,6 +192,15 @@ function planStrip(sl, s) {
   return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><h2 class="phead">Studio flow</h2><div class="tiles">${tiles}</div>
   <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">Drag an activity between slides to add it to the flow</span></div></div></div></section>`;
 }
+/* the heading is the title of the slide on screen (the last slide shown while an activity is open) */
+function slideTitle(s, sl, fallback) {
+  const f = flowOf(s); let p = s.pos; while (p > 0 && f[p].k !== 's') p--;
+  const cur = f[p] && f[p].k === 's' ? sl[Math.min(f[p].i, sl.length - 1)] : null;
+  let t = cur ? String(cur.title || cur.t || '').replace(/^[•·*–— -]+/, '').replace(/[ ]+/g, ' ').trim() : '';
+  if (/recognise and pay respect|acknowledg/i.test(t)) t = 'Acknowledgement of Country';
+  if (!t || /^slide [0-9]+$/i.test(t) || /[.](pdf|pptx?)/i.test(t)) t = fallback || 'Studio';
+  return t.length > 70 ? t.slice(0, 68).trim() + '…' : t;
+}
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   const qa = A && A.type === 'Q&A Session';
@@ -199,7 +208,7 @@ function live() {
   <label class="tsearch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qSearch" type="search" placeholder="Search" value="${esc(L.qsearch || '')}" aria-label="Search questions" autocomplete="off"><kbd>Ctrl K</kbd></label>
   <button class="qtoggle" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Show or hide the questions panel" data-tip="Questions"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button></div>
   <div class="sess2 ${L.qopen || qa ? '' : 'qclosed'} ${qa ? 'qamode' : ''} ${qa && L.qside ? 'qside' : ''}"><section class="left">
-  <div class="wk2"><small class="livenow"><i></i>LIVE NOW · TUTORIAL</small><h1>Week ${s.liveWeek}: ${esc(t[0])}</h1><p>Dr. Priya Nair · ${s.students || 42} students</p></div>
+  <div class="wk2"><h1>${esc(slideTitle(s, sl, t[0]))}</h1></div>
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${transPanel(s, sl)}${planStrip(sl, s)}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and activities"></aside></div></div>`;
 }
