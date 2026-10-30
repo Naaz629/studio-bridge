@@ -1242,3 +1242,18 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .livewrap .sess2>.left{grid-column:1;grid-row:2;min-height:0}
 .livewrap .sess2>.rightcol{grid-column:2;grid-row:1 / 3;align-self:stretch;min-height:0;border-left:1px solid rgba(52,75,53,.12)}
 .livewrap .sess2>.rightcol{padding-top:14px!important}
+
+/* column header: bulb, Questions, count, level with the title bar */
+.livewrap .sess2>.rightcol{padding-top:0!important}
+.rhead{height:69px;box-sizing:border-box;margin:0 -16px 6px;padding:0 16px;gap:10px;align-items:center;background:rgba(250,248,241,.78);border-bottom:1px solid rgba(52,75,53,.09);color:var(--green)}
+.rhead b{font-size:16px;font-weight:650;color:var(--green);letter-spacing:-.01em}
+.rhead .cnt{font-size:12px;font-weight:700;padding:3px 9px;border-radius:9px;background:var(--tint);color:var(--green)}
+.rhbulb,#qbtn.rhbulb,#qbtn.qtoggle.rhbulb{width:34px!important;height:34px!important;border-radius:10px!important;background:transparent!important;border:0!important;box-shadow:none!important;display:grid;place-items:center;padding:0;flex:none}
+.rhbulb:hover{background:rgba(52,75,53,.08)!important}
+.rhbulb .bulb{width:24px;height:24px}
+.qopen{display:none!important;width:42px;height:42px;border-radius:12px}
+.livewrap:has(.sess2.qclosed) .qopen{display:grid!important;place-items:center}
+.qopen .bulb{width:26px;height:26px}
+.crumbbar .qopen{margin-left:auto}
+.livewrap>.crumbbar{height:62px;min-height:62px;box-sizing:border-box;padding-top:0;padding-bottom:0}
+.rhead{height:62px}
