@@ -95,16 +95,13 @@ function popBall(k) {
 const ARROW_L = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>';
 const ARROW_R = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
 function navOverlay(idx, total, canPrev, canNext) {
-  const n = Math.min(total, 12), start = Math.max(0, Math.min(idx - 5, total - n));
-  let dots = '';
-  for (let i = start; i < start + n; i++) dots += i === idx ? `<i class="on"><b>${i + 1}</b></i>` : '<i></i>';
-  return `<button class="navarrow l" data-a="prev" aria-label="Previous" ${canPrev ? '' : 'disabled'}>${ARROW_L}</button><button class="navarrow r" data-a="next" aria-label="Next" ${canNext ? '' : 'disabled'}>${ARROW_R}</button>${total > 1 ? `<div class="dotsov" aria-hidden="true">${dots}</div>` : ''}`;
+  return `<nav class="presentation-arrows glass" aria-label="Move between steps"><button class="navarrow l" data-a="prev" aria-label="Previous" ${canPrev ? '' : 'disabled'}>${ARROW_L}</button><span class="pgnum"><b>${idx + 1}</b> / ${total}</span><button class="navarrow r" data-a="next" aria-label="Next" ${canNext ? '' : 'disabled'}>${ARROW_R}</button></nav>`;
 }
 function slideCard(sl, s) {
   const f = flowOf(s), it = f[s.pos], cur = sl[Math.min(it.i, sl.length - 1)];
   const lines = cur.text ? cur.text.split('\n').slice(1, 8) : [];
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : cur.text ? `<div class="stext"><small>SLIDE ${it.i + 1} OF ${sl.length}</small><h2>${esc(cur.t)}</h2>${lines.length ? `<ul class="sbul">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}</div>` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
-  return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}<span class="pgbadge">${it.i + 1} / ${sl.length}</span></div></div>`;
+  return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}</div></div>`;
 }
 function discussionCard(s, f, m, p) {
   const cards = DISCUSS_CARDS.map(c => `<div class="dcard" data-card="${c.k}" data-tip="${c.label} · ${s.cards[c.k]} students"><img src="${c.img}" alt="${c.label}"><span class="dcount">${s.cards[c.k]}</span></div>`).join('');

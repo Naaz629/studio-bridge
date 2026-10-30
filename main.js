@@ -60,7 +60,8 @@ function createWindow() {
           }
           return out;
         })()`;
-        report = await win.webContents.executeJavaScript(code);
+        if (process.env.STUDIO_SNAP_JS) { await new Promise(r => setTimeout(r, +(process.env.STUDIO_SNAP_WAIT || 15000))); report = await win.webContents.executeJavaScript(fs.readFileSync(process.env.STUDIO_SNAP_JS, 'utf8')); }
+        else report = await win.webContents.executeJavaScript(code);
       } catch (e) { report = { error: String(e && e.message || e) }; }
       fs.writeFileSync(process.env.STUDIO_TEST_OUT, JSON.stringify(report, null, 2));
       app.quit();
