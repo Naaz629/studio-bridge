@@ -376,16 +376,42 @@ function loPanel(o) {
   <section class="losec"><h4>Class insight</h4>${insBody}</section>
   <section class="losec qasec"><div class="qanav"><button class="qarrow" data-a="oqprev" aria-label="Previous question" ${pi === 0 ? 'disabled' : ''}>‹</button><h4>Concept check analysis</h4><span class="qacount">${pi + 1} / ${pages.length}</span><button class="qarrow" data-a="oqnext" aria-label="Next question" ${pi === pages.length - 1 ? 'disabled' : ''}>›</button></div>${body}</section></aside>`;
 }
+/* Class Learning: the tutor's view of everything the class has done, laid out like the student's My Learning page */
+const FEED_ICON = {
+  q: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  r: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12 3 3 5-6"/></svg>',
+  a: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>'
+};
+function classFeed(s, outs) {
+  const f = flowOf(s), items = [];
+  s.qs.forEach(q => items.push({ k: 'q', label: 'Question', title: q.tr || q.text, meta: (q.who || 'A student') + ' · ' + (q.st === 'open' ? 'Not answered yet' : 'Answered in class'), slide: qSlide(q) }));
+  outs.slice(0, 2).forEach(o => { const a = loAnswers(o); Object.values(a).forEach(list => list.slice(0, 1).forEach(x => items.push({ k: 'r', label: 'Response', title: x.en || x.t, meta: x.who + ' · ' + o.lo }))); });
+  f.forEach((it, p) => { if (it.k === 'a') items.push({ k: 'a', label: 'Activity', title: ACT_META[it.act].title, meta: 'Step ' + (p + 1) + ' of the Studio flow', pos: p }); });
+  return items;
+}
 function overview() {
   const s = S(), { W, key, outs } = weekOutcomes();
   if (O.s !== key) O.s = key;
   const open = outs.find(o => o.id === O.open);
-  return `<div class="ovw2">
+  const total = outs[0] ? outs[0].total : 0, f = flowOf(s), nActs = f.filter(x => x.k === 'a').length;
+  const nAns = s.qs.filter(q => q.st !== 'open').length;
+  const levels = outs.flatMap(o => Object.values(o.lv).map(v => v[0] / o.total)), avg = levels.length ? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length * 100) : 0;
+  const ft = ['all', 'q', 'r', 'a'].includes(O.ftab) ? O.ftab : 'all', feed = classFeed(s, outs).filter(x => ft === 'all' || x.k === ft);
+  const feedHTML = feed.slice(0, 12).map(x => `<div class="feeditem"><span class="ficon k-${x.k}">${FEED_ICON[x.k]}</span><div class="fbody"><small>${x.label}</small><b>${esc(x.title)}</b><span>${esc(x.meta)}</span>${x.slide ? `<button class="flink" data-a="feedgo" data-n="${x.slide}">Slide ${x.slide} <i>↗</i></button>` : x.pos != null ? `<button class="flink" data-a="feedgo" data-p="${x.pos}">Open in Studio flow <i>↗</i></button>` : ''}</div></div>`).join('') || '<div class="none">Nothing here yet.</div>';
+  const tabs = [['all', 'All'], ['q', 'Questions'], ['r', 'Responses'], ['a', 'Activities']].map(([k, n]) => `<button class="ftab ${ft === k ? 'on' : ''}" data-a="ftab" data-t="${k}">${n}</button>`).join('');
+  const right = open ? loPanel(open) : `<section class="ovc"><div class="ovch"><div><h3>Class activity</h3><p>${esc(s.topics[s.liveWeek] ? s.topics[s.liveWeek][0] : '')}</p></div></div><div class="ftabs" role="tablist">${tabs}</div><div class="feed">${feedHTML}</div></section>
+    <section class="ovc"><div class="ovch"><div><h3>Artefacts</h3><p>Uploaded by the class, one folder for each type</p></div></div>${artefactsHTML()}</section>`;
+  return `<div class="ovw2 ovpage">
     <div class="ovtop"><div class="ovintro"><small class="eyebrow">${esc(s.code)} · ${esc(s.name)}</small><h1 class="ovtitle">Class Learning</h1><p>How the whole class is doing, from everything students have answered and uploaded.</p></div><div class="ovweek"><span class="livedot"></span><select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w} of 12</option>`).join('')}</select></div></div>
-    <div class="ovgrid">
-      <section class="ovpanel"><div class="ovhead"><h2>Student Activity</h2><div class="seg2">${Object.entries(W.sessions).map(([k, v]) => `<button data-ss="${k}" aria-pressed="${k === key}">${v.name}</button>`).join('')}</div></div>
-        <div class="loscroll">${outs.map(o => loBox(o, open && open.id === o.id)).join('')}</div></section>
-      ${open ? loPanel(open) : `<section class="ovpanel"><div class="ovhead"><h2>Artefacts</h2></div>${artefactsHTML()}</section>`}
+    <div class="ovcols">
+      <div class="ovcol">
+        <section class="ovc"><div class="ovch"><div><h3>Class learning journey</h3><p>Small steps, growing understanding.</p></div><div class="bignum"><b>${total}</b> students</div></div>
+          <div class="pbar"><i style="width:${avg}%"></i></div><div class="pcap"><span>${avg}% of the class got it right on average</span><span>Goal 80%</span></div>
+          <div class="stats3"><div><b>${s.qs.length}</b><small>Questions asked</small></div><div><b>${nAns}</b><small>Answered in class</small></div><div><b>${nActs}</b><small>Activities in the flow</small></div></div></section>
+        <section class="ovc"><div class="ovch"><div><h3>Student activity</h3><p>How the class did on each learning outcome</p></div><div class="seg2">${Object.entries(W.sessions).map(([k, v]) => `<button data-ss="${k}" aria-pressed="${k === key}">${v.name}</button>`).join('')}</div></div>
+          <div class="loscroll">${outs.map(o => loBox(o, open && open.id === o.id)).join('')}</div></section>
+      </div>
+      <div class="ovcol">${right}</div>
     </div>
   </div>`;
 }
@@ -557,6 +583,8 @@ document.addEventListener('click', e => {
     case 'qreply': q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; renderQP(); return;
     case 'qorig': q.showOrig = !q.showOrig; renderQP(); return;
     case 'qslide': { const f = flowOf(s), idx = f.findIndex(x => x.k === 's' && x.i === +a.dataset.n - 1); if (idx >= 0) { goTo(s, idx); break; } return; }
+    case 'ftab': O.ftab = a.dataset.t; break;
+    case 'feedgo': { const f = flowOf(s); const idx = a.dataset.p != null ? +a.dataset.p : f.findIndex(x => x.k === 's' && x.i === +a.dataset.n - 1); if (idx >= 0) { goTo(s, idx); V = 'live'; } break; }
     case 'trtoggle': L.trShut = !L.trShut; break;
     case 'qsave': q.saved = !q.saved; renderQP(); return;
     case 'rtab': L.rtab = a.dataset.t; renderQP(); return;

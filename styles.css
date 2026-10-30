@@ -1259,3 +1259,38 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .rhead{height:62px}
 .rhbulb,#qbtn.rhbulb,#qbtn.qtoggle.rhbulb{background:#fff!important;border:1px solid rgba(52,75,53,.12)!important;box-shadow:0 1px 3px rgba(52,75,53,.06)!important}
 .rhbulb:hover,#qbtn.rhbulb:hover{background:#fff!important;border-color:rgba(52,75,53,.28)!important}
+
+/* ===== Class Learning, laid out like My Learning ===== */
+.ovpage{height:100%;overflow:auto;padding:18px clamp(20px,6vw,80px) 40px;box-sizing:border-box;max-width:1320px;margin:0 auto}
+.ovcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start;margin-top:14px}
+.ovcol{display:flex;flex-direction:column;gap:22px;min-width:0}
+.ovc{background:#fbf9f3;border:1px solid rgba(52,75,53,.1);border-radius:18px;padding:22px 24px;box-shadow:0 2px 6px rgba(52,75,53,.04);display:flex;flex-direction:column;gap:14px}
+.ovch{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.ovch h3{margin:0;font-size:17px;font-weight:700;letter-spacing:-.25px;color:var(--ink)}
+.ovch p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
+.bignum{display:flex;align-items:baseline;gap:6px;color:var(--muted);font-size:12px}.bignum b{font-size:30px;font-weight:600;color:var(--green);letter-spacing:-.5px}
+.pbar{height:8px;border-radius:4px;background:rgba(52,75,53,.1);overflow:hidden}.pbar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#2f4a35,#7d9a74)}
+.pcap{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}.pcap span:first-child{color:var(--green);font-weight:600}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(52,75,53,.1);padding-top:16px}
+.stats3>div{display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 8px}
+.stats3>div+div{border-left:1px solid rgba(52,75,53,.1)}
+.stats3 b{font-size:32px;font-weight:500;color:var(--green);letter-spacing:-.5px;line-height:1}
+.stats3 small{font-size:12px;color:var(--muted)}
+.ftabs{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:#f1eee3;border:1px solid rgba(52,75,53,.1);border-radius:11px;padding:4px}
+.ftab{padding:9px 6px;border-radius:8px;font-size:12.5px;color:var(--muted)}
+.ftab.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(52,75,53,.1)}
+.feed{display:flex;flex-direction:column}
+.feeditem{display:flex;gap:14px;padding:16px 0;border-top:1px solid rgba(52,75,53,.09)}
+.feeditem:first-child{border-top:0}
+.ficon{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center}
+.ficon.k-q{background:#e3ebdc;color:#344b35}.ficon.k-r{background:#ebe6f1;color:#665d73}.ficon.k-a{background:#f1e8d8;color:#7a6650}
+.fbody{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fbody small{font-size:11.5px;color:var(--muted)}
+.fbody b{font-size:15px;font-weight:650;color:var(--ink);line-height:1.35}
+.fbody>span{font-size:12.5px;color:var(--muted)}
+.flink{align-self:flex-start;margin-top:6px;font-size:12.5px;color:var(--ink-2);font-weight:500;padding:0}
+.flink i{font-style:normal;margin-left:4px}.flink:hover{color:var(--green)}
+.ovc .loscroll{display:flex;flex-direction:column;gap:6px}
+.ovc .ovch .seg2{flex:none}
+.ovpanel{box-shadow:none}
+.ovpage .lopanel{border-radius:18px}
