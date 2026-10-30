@@ -190,7 +190,7 @@ function planStrip(sl, s) {
     return gap(p) + `<div class="tile slide ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}" title="${esc(cur.t || '')}"><div class="tthumb">${thumb}</div><small class="tnum">${pad(p + 1)}</small></div>`;
   }).join('') + gap(f.length);
   return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><h2 class="phead">Studio flow</h2><div class="tiles">${tiles}</div>
-  <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}<span class="meta" style="align-self:center">Drag an activity between slides to add it to the flow</span></div></div></div></section>`;
+  <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}</div></div></div></section>`;
 }
 /* the heading is the title of the slide on screen (the last slide shown while an activity is open) */
 function slideTitle(s, sl, fallback) {
@@ -386,9 +386,10 @@ function overview() {
 
 
 /* ---------- actions ---------- */
-function insertAct(p, type) {
+function insertAct(p, type, stay) {
   if (!ACTIVITY_TYPES.includes(type)) return;
   const s = S(), f = flowOf(s); f.splice(p, 0, { k: 'a', act: type });
+  if (stay) { toast(`${ACT_META[type].title} added after this slide`); render(); return; }
   s.pos = p; syncA(s); toast(`${ACT_META[type].title} added at step ${p + 1}`); render();
 }
 /* ---------- import a unit outline (sydney.edu.au/units/...) ---------- */
@@ -782,3 +783,9 @@ document.addEventListener('dblclick', e => {
 /* search the questions; Ctrl+K jumps to the search box */
 document.addEventListener('input', e => { if (e.target.id !== 'qSearch') return; L.qsearch = e.target.value; if (!L.qopen) { L.qopen = true; document.querySelector('.sess2')?.classList.remove('qclosed'); } L.rtab = 'q'; renderQP(); });
 document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { const i = document.getElementById('qSearch'); if (i) { e.preventDefault(); i.focus(); i.select(); } } });
+
+/* click an activity to add it right after the slide (or activity) you are on; dragging still places it anywhere */
+document.addEventListener('click', e => {
+  const c = e.target.closest('.achip2'); if (!c || L.dragging) return;
+  const s = S(); flowOf(s); insertAct(s.pos + 1, c.dataset.act, true);
+});
