@@ -1234,3 +1234,11 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .ovpanel,.lopanel{border-radius:16px}
 .ovpanel{background:#fbf9f3;border:1px solid rgba(52,75,53,.1);box-shadow:0 2px 6px rgba(52,75,53,.04)}
 .ovhead h2{font-family:var(--sans);font-size:16px;font-weight:650;letter-spacing:-.25px}
+
+/* the Questions column runs the full height of the screen, from the very top */
+.livewrap{display:grid!important;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);height:100%;min-height:0}
+.livewrap>.sess2{display:contents}
+.livewrap>.crumbbar{grid-column:1;grid-row:1}
+.livewrap .sess2>.left{grid-column:1;grid-row:2;min-height:0}
+.livewrap .sess2>.rightcol{grid-column:2;grid-row:1 / 3;align-self:stretch;min-height:0;border-left:1px solid rgba(52,75,53,.12)}
+.livewrap .sess2>.rightcol{padding-top:14px!important}
