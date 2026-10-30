@@ -1414,3 +1414,10 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .livewrap .sess2:not(.qclosed):not(.qamode) .rxfoot{position:fixed;right:366px;bottom:8px;z-index:7;width:auto;margin:0;padding:0;border:0;background:none;gap:8px;justify-content:flex-end}
 .livewrap .sess2:not(.qclosed):not(.qamode) .rxfoot .rx{width:38px;max-width:none;flex:none}
 .livewrap .sess2:not(.qclosed):not(.qamode) .rxfoot .rx i{font-size:20px}
+
+/* header type sized like the student UI */
+.crumbbar .crumbtitle{font-size:24px;line-height:1.15;letter-spacing:-.01em}
+.crumbeye{font-size:10px;letter-spacing:.14em}
+.crumbsub{font-size:12.5px}
+.livewrap>.crumbbar{padding:16px 24px 8px}
+.crumbtxt{gap:3px}
