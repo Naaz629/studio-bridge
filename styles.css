@@ -1080,3 +1080,23 @@ h1,h2,.wk h1,.qh h2,.ovhead h2{font-family:var(--serif);font-weight:700;letter-s
 #qbtn:hover .bulb{transform:scale(1.12) rotate(-4deg)}
 #qbtn[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);right:0;white-space:nowrap;background:#1d1d1f;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;z-index:30;pointer-events:none}
 #qbtn{position:relative}
+
+/* ===== Questions column, as in the sent design ===== */
+.rtabs{display:none}
+.rhead{display:flex;align-items:center;gap:9px;padding:2px 4px 12px;border-bottom:1px solid var(--line);margin-bottom:8px;color:var(--ink-2);font-size:15px}
+.rhead b{font-weight:700;color:var(--ink)}
+.rhead .cnt{font-style:normal;font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:9px;background:rgba(47,75,58,.12);color:var(--muted)}
+.qamode:not(.qside) .rhead{display:none}
+.qact{display:flex;align-items:center;gap:16px;margin:2px 0 8px;font-size:12px}
+.qvote,.qreply{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:4px 6px;margin-left:-6px;border-radius:8px}
+.qvote:hover,.qreply:hover{background:var(--tint)}
+.qvote.on,.qreply.on{color:var(--green);font-weight:700}
+.qtline{display:flex;align-items:flex-start;gap:8px}
+.qtline .qtxt{flex:1}
+.zhtxt{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif}
+.qoriglink{flex:none;font-size:12px;color:var(--green-2);text-decoration:underline;text-underline-offset:2px;padding-top:3px}
+.qslide{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:12px;color:var(--ink-2);font-weight:600;padding:3px 0}
+.qslide i{font-style:normal;color:var(--muted)}
+.qslide:hover{color:var(--green)}
+.qmic{display:flex;align-items:center;gap:3px;color:var(--muted)}
+.qchip{display:none}.qfoot{display:none}.qorig{display:none}

@@ -104,7 +104,7 @@ function slideCard(sl, s) {
   const f = flowOf(s), it = f[s.pos], cur = sl[Math.min(it.i, sl.length - 1)];
   const lines = cur.text ? cur.text.split('\n').slice(1, 8) : [];
   const body = cur.img ? `<img class="simg" src="${esc(cur.img)}" alt="${esc(cur.t)}">` : cur.text ? `<div class="stext"><small>SLIDE ${it.i + 1} OF ${sl.length}</small><h2>${esc(cur.t)}</h2>${lines.length ? `<ul class="sbul">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}</div>` : `<div class="blank" title="${esc(cur.t)}">${s.upload ? '' : 'Upload slides to show them here'}</div>`;
-  return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}<span class="pgbadge">${it.i + 1} / ${sl.length} <b>LIVE</b></span></div></div>`;
+  return `<div class="slidewrap2"><div class="slidepage">${body}${navOverlay(s.pos, f.length, s.pos > 0, s.pos < f.length - 1)}<span class="pgbadge">${it.i + 1} / ${sl.length}</span></div></div>`;
 }
 function discussionCard(s, f, m, p) {
   const cards = DISCUSS_CARDS.map(c => `<div class="dcard" data-card="${c.k}" data-tip="${c.label} · ${s.cards[c.k]} students"><img src="${c.img}" alt="${c.label}"><span class="dcount">${s.cards[c.k]}</span></div>`).join('');
@@ -221,25 +221,30 @@ function transPanel(s, sl) {
   const en = liveLine(s, sl) || TR_EXAMPLE[0];
   return `<div class="capline"><p class="cap">${esc(en)}</p></div>`;
 }
+/* which slide a question was asked on (new questions: the slide on screen; the examples get a fixed one) */
+function qSlide(q) {
+  if (q.slide == null) {
+    const s0 = S(), n = Math.max(1, slidesFor(s0).length), f = flowOf(s0); let p = s0.pos; while (p > 0 && f[p].k !== 's') p--;
+    q.slide = q.ago ? 1 + hash(q.text) % n : (f[p] && f[p].k === 's' ? f[p].i + 1 : 1);
+  }
+  return q.slide;
+}
 function renderQP() {
   const el = $('#qp'); if (!el) return;
   const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
-  const acts = flowOf(s).map((it, p) => ({ it, p })).filter(x => x.it.k === 'a'), tab = L.rtab === 'a' ? 'a' : 'q';
-  const tabs = `<div class="rtabs" role="tablist"><button class="rtab ${tab === 'q' ? 'on' : ''}" role="tab" aria-selected="${tab === 'q'}" data-a="rtab" data-t="q"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>Questions</span><i class="cnt">${s.qs.length}</i></button><button class="rtab ${tab === 'a' ? 'on' : ''}" role="tab" aria-selected="${tab === 'a'}" data-a="rtab" data-t="a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Activities</span><i class="cnt">${acts.length}</i></button></div>`;
-  if (tab === 'a') {
-    el.innerHTML = tabs + `<div class="qrows">${acts.map(({ it, p }) => { const m = ACT_META[it.act]; return `<button class="qr actrow ${p === s.pos ? 'on' : ''}" data-a="${p === s.pos ? 'actback' : 'tile'}" data-i="${p}" style="--ac:${m.color}"><span class="acdot"></span><span class="acname"><b>${esc(m.title)}</b><small>Step ${p + 1} of the Studio flow</small></span><span class="acgo">${p === s.pos ? '‹ Go back' : 'Open'}</span></button>`; }).join('') || '<div class="none">No activities yet. Drag one into the Studio flow.</div>'}</div>`;
-    return;
-  }
-  el.innerHTML = tabs + `
-  <div class="qrows">${list.map((q, i) => { const open = L.open === q.id && !(A && A.type === 'Q&A Session'), en = q.tr || q.text, green = q.seen || q.st !== 'open'; return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.q || 0) === i ? 'selq' : ''}">
+  const head = `<div class="rhead"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><b>Questions</b><i class="cnt">${s.qs.length}</i></div>`;
+  el.innerHTML = head + `<div class="qrows">${list.map((q, i) => {
+    const open = L.open === q.id && !(A && A.type === 'Q&A Session'), shown = q.tr && !q.showOrig ? q.tr : q.text, sn = qSlide(q);
+    return `<div class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.q || 0) === i ? 'selq' : ''}">
     <div class="qwrap"><div class="qrow qhead"><button class="qn" data-a="qnum" data-q="${q.id}" aria-label="Mark question ${i + 1}">${pad(i + 1)}</button>
       <div class="qwho"><b>${esc(q.who)}</b><small>${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>
-      ${q.st !== 'open' ? '<span class="qchip">✓ Answered</span>' : ''}</div>
-    <button class="qtxt qtext2" data-a="qopen" data-q="${q.id}"><span class="qt">${esc(en)}</span>${q.tr ? `<span class="qorig">Original: ${esc(q.text)}</span>` : ''}</button>
-    <div class="qfoot"><span class="qup" title="${q.up} students asked">↑ ${q.up}</span><span class="qsame">Same question · ${q.same}</span><span class="spacer"></span><button class="qsave ${q.saved ? 'on' : ''}" data-a="qsave" data-q="${q.id}" aria-label="${q.saved ? 'Remove bookmark' : 'Bookmark this question'}" aria-pressed="${!!q.saved}"><svg width="16" height="16" viewBox="0 0 24 24" fill="${q.saved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button></div></div>
-    ${open ? `<div class="qd">
-      <div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'} · ${q.same} same question</div>
-      ${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`; }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
+      ${q.st !== 'open' ? '<span class="qmic" title="Answered"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
+    <div class="qact"><button class="qvote ${q.voted ? 'on' : ''}" data-a="qup" data-q="${q.id}" aria-label="Upvote this question" aria-pressed="${!!q.voted}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>${q.up + (q.voted ? 1 : 0)}</span></button>
+      <button class="qreply ${q.st !== 'open' ? 'on' : ''}" data-a="qreply" data-q="${q.id}" aria-pressed="${q.st !== 'open'}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>Reply</span></button></div>
+    <div class="qtline"><button class="qtxt qtext2" data-a="${q.tr ? 'qorig' : 'qopen'}" data-q="${q.id}"><span class="qt ${q.tr && q.showOrig ? 'zhtxt' : ''}">${esc(shown)}</span></button>${q.tr ? `<button class="qoriglink" data-a="qorig" data-q="${q.id}">${q.showOrig ? 'English' : 'Original'}</button>` : ''}</div>
+    <button class="qslide" data-a="qslide" data-n="${sn}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Slide ${sn}</span><i>›</i></button></div>
+    ${open ? `<div class="qd"><div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</div>${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`;
+  }).join('') || '<div class="none">No questions yet.</div>'}</div>`;
   const bd = $('#bdg'); if (bd) bd.textContent = unanswered();
 }
 
@@ -545,6 +550,10 @@ document.addEventListener('click', e => {
       }
       break;
     case 'actback': { const f = flowOf(s); let p = s.pos; while (p > 0 && f[p].k !== 's') p--; if (f[p].k !== 's') { p = f.findIndex(x => x.k === 's'); } goTo(s, Math.max(0, p)); break; }
+    case 'qup': q.voted = !q.voted; renderQP(); return;
+    case 'qreply': q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; renderQP(); return;
+    case 'qorig': q.showOrig = !q.showOrig; renderQP(); return;
+    case 'qslide': { const f = flowOf(s), idx = f.findIndex(x => x.k === 's' && x.i === +a.dataset.n - 1); if (idx >= 0) { goTo(s, idx); break; } return; }
     case 'trtoggle': L.trShut = !L.trShut; break;
     case 'qsave': q.saved = !q.saved; renderQP(); return;
     case 'rtab': L.rtab = a.dataset.t; renderQP(); return;
