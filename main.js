@@ -237,6 +237,27 @@ function demoInsight(p = {}) {
   const quote = (p.gaps || [])[0] && String(p.gaps[0]).split(' ').length > 5 ? ' One weak answer was: "' + shortSentence(String(p.gaps[0]).replace(/^[^:]*:\s*/, ''), 12) + '".' : '';
   return { probs, next, summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
 }
+const REFLECT_SYSTEM = `You write ONE reflection question for a university design tutor to ask the whole class. The students have just seen several slides. Many students are international students and English is an additional language, so use plain, simple English.
+- Read ALL the slide text you are given and ask about the whole lesson so far, not one slide.
+- The question asks students to look back and think about their own learning or project: what was new, what changed their mind, what is still unclear, or what they will do next. It must not be a quiz with one right answer.
+- Maximum 2 short sentences, maximum 18 words in a sentence. Everyday words, no idioms, no double questions.
+- Use the questions students asked, if any, to point at what is confusing.
+- Also write "hint": a short sentence starter for students, for example "One idea that was new to me was ...".
+Reply with JSON only: {"question":"...","hint":"..."}`;
+const REFLECT_SCHEMA = { type: 'object', required: ['question', 'hint'], properties: { question: { type: 'string' }, hint: { type: 'string' } } };
+async function demoReflect(p = {}) {
+  await demoWait(1400);
+  const title = shortSentence(String(p.title || 'this lesson').replace(/^Week\s*\d+\s*[:\-–]?\s*/i, '') || 'this lesson', 8);
+  return { question: 'Look back at what we covered so far on "' + title + '". What is one idea that was new to you? How could it change your own project?', hint: 'One idea that was new to me was ... because ...', provider: 'demo' };
+}
+ipcMain.handle('ai:reflect', async (e, p = {}) => {
+  if (aiLoad().provider === 'demo') return demoReflect(p);
+  const asked = (p.asked || []).slice(0, 5).map(a => '- ' + String(a.text).slice(0, 160)).join(String.fromCharCode(10));
+  const user = 'Learning outcome (' + (p.lo || '') + '): ' + (p.out || '') + String.fromCharCode(10) + 'Slides shown so far: ' + (p.slides || '') + String.fromCharCode(10) + 'Slide text:' + String.fromCharCode(10) + String(p.text || '').slice(0, 5000) + (asked ? String.fromCharCode(10) + 'Questions students asked:' + String.fromCharCode(10) + asked : '');
+  const r = await aiAsk(REFLECT_SYSTEM, user, REFLECT_SCHEMA);
+  if (!r.json) return r;
+  return { question: String(r.json.question || '').trim(), hint: String(r.json.hint || '').trim(), provider: aiLoad().provider };
+});
 async function aiGenerate(p = {}) {
   const cfg = aiLoad();
   if (cfg.provider === 'demo') return demoGenerate(p);

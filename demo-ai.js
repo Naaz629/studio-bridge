@@ -41,5 +41,10 @@
     const quote = (p.gaps || [])[0] && String(p.gaps[0]).split(' ').length > 5 ? ' One weak answer was: "' + shortSentence(String(p.gaps[0]).replace(/^[^:]*:\s*/, ''), 12) + '".' : '';
     return { probs, next, summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
   }
-  window.demoAI = { status: async () => ({ provider: 'demo', enabled: true }), generate, insight };
+  async function reflect(p = {}) {
+    await wait(1400);
+    const title = shortSentence(String(p.title || 'this lesson').replace(/^Week\s*\d+\s*[:\-–]?\s*/i, '') || 'this lesson', 8);
+    return { question: 'Look back at what we covered so far on "' + title + '". What is one idea that was new to you? How could it change your own project?', hint: 'One idea that was new to me was ... because ...', provider: 'demo' };
+  }
+  window.demoAI = { status: async () => ({ provider: 'demo', enabled: true }), generate, insight, reflect };
 })();

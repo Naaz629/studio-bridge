@@ -12,13 +12,15 @@ const ACT_META = {
   "Discussion Activity": { title: "Idea Exchange", tile: "D activity", color: "#e9e3f2" },
   "Concept Development": { title: "Concept Development", tile: "CD", color: "#f5e7b9" },
   "Q&A Session": { title: "Q&A Session", tile: "Q&A", color: "#d3e8d2" },
-  "Artefact upload": { title: "Artefact upload", tile: "Artefact", color: "#cfe3ea" }
+  "Artefact upload": { title: "Artefact upload", tile: "Artefact", color: "#cfe3ea" },
+  "Reflection": { title: "Reflection", tile: "Reflect", color: "#f4dfdc" }
 };
 const PROMPTS = {
   "Discussion Activity": ["Discuss with your peers. Use your cards to share what you think."],
   "Concept Development": ["Define the idea in your own words.", "Which user needs matter most?", "What would make it believable?", "Where could it mislead a team?", "Sketch one goal."],
   "Q&A Session": ["Ask anything about this week.", "Upvote questions you share.", "Clarify the top question.", "Answer a peer question.", "Final open questions."],
-  "Artefact upload": ["Upload your persona canvas.", "Upload a photo of your sketch.", "Add a caption explaining it.", "Tag the learning outcome it shows.", "Review a peer's upload."]
+  "Artefact upload": ["Upload your persona canvas.", "Upload a photo of your sketch.", "Add a caption explaining it.", "Tag the learning outcome it shows.", "Review a peer's upload."],
+  "Reflection": ["Reflect on what we covered so far."]
 };
 const DISCUSS_CARDS = [
   { k: 'agree', n: '01', label: 'Agree', img: 'assets/cards/agree.png' },

@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('shell', {
     match: payload => ipcRenderer.invoke('ai:match', payload),
     translate: payload => ipcRenderer.invoke('ai:translate', payload),
     insight: payload => ipcRenderer.invoke('ai:insight', payload),
-    generate: payload => ipcRenderer.invoke('ai:generate', payload)
+    generate: payload => ipcRenderer.invoke('ai:generate', payload),
+    reflect: payload => ipcRenderer.invoke('ai:reflect', payload)
   }
 });

@@ -117,6 +117,7 @@ function actQs() {
   if (A.type === 'Concept Development') { const s = S(); return ensureCD(s, s.pos).qs.map(q => q.text); }
   if (A.type === 'Q&A Session') return sortedQs(S()).map(q => q.text);
   if (A.type === 'Artefact upload') return ['upload'];
+  if (A.type === 'Reflection') return ['reflect'];
   return PROMPTS[A.type];
 }
 /* ---------- Q&A Session: full-screen questions with the other students' answers arriving live ---------- */
@@ -193,6 +194,7 @@ function actCard() {
   if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
   if (A.type === 'Concept Development') return cdCard(s, f, m);
   if (A.type === 'Q&A Session') return qaCard(s, f, m);
+  if (A.type === 'Reflection') return rfCard(s, f, m);
   if (A.type === 'Artefact upload') return artefactCard(s, f, m);
   const rr = seeded(hash(String(p[A.q]))), n = 8 + A.q * 3, shown = shuffled(SAMPLES.map((_, i) => i), hash(String(p[A.q]))).slice(0, 3);
   return `<div class="card2 actcard classact">${caHead('Question ' + (A.q + 1) + ' of ' + p.length)}
@@ -224,7 +226,7 @@ function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   const qa = A && A.type === 'Q&A Session';
   return `<div class="livewrap"><div class="crumbbar"><div class="crumbtxt"><small class="crumbeye">${esc(s.code)} Tutorial ${s.liveWeek}</small><h1 class="crumbtitle">${esc(slideTitle(s, sl, t[0]))}</h1><span class="crumbsub">Dr. Priya Nair · 42 students</span></div><span class="spacer"></span>
-  <button class="qtoggle qopen" data-a="toggleq" aria-label="Show questions" data-tip="Questions &amp; activities"><svg class="bulb" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><g stroke="#f5cf2a" stroke-width="3.4" stroke-linecap="round"><path d="M32 4v6"/><path d="M12.5 12l4.2 4.2"/><path d="M51.5 12l-4.2 4.2"/><path d="M4 31h6"/><path d="M54 31h6"/><path d="M12.5 50l4.2-4.2"/><path d="M51.5 50l-4.2-4.2"/></g><path d="M32 14c-8.3 0-14.5 6-14.5 14 0 5 2.6 8.6 5.2 11.4 1.2 1.3 1.8 2.8 1.8 4.6h15c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-8-6.2-14-14.5-14z" fill="#f7d63a"/><path d="M44 24c1.6 6-1 10.6-4.4 14.4-1.2 1.3-1.8 2.8-1.8 4.6h4.4c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-1.2-.2-2.4-.6-3.5z" fill="#f2b705"/><path d="M24 22c1.2-2.6 3.4-4.2 6-4.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".85"/><g fill="#5b5b5b"><rect x="24.5" y="48" width="15" height="3.4" rx="1.7"/><rect x="25.5" y="52.5" width="13" height="3.4" rx="1.7"/><rect x="27.5" y="57" width="9" height="3.4" rx="1.7"/></g></svg></button></div>
+  <button class="qtoggle qopen" data-a="toggleq" aria-label="Show questions" data-tip="Questions &amp; activities"><svg class="bulb" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><g stroke="#f5cf2a" stroke-width="3.4" stroke-linecap="round"><path d="M32 4v6"/><path d="M12.5 12l4.2 4.2"/><path d="M51.5 12l-4.2 4.2"/><path d="M4 31h6"/><path d="M54 31h6"/><path d="M12.5 50l4.2-4.2"/><path d="M51.5 50l-4.2-4.2"/></g><path d="M32 14c-8.3 0-14.5 6-14.5 14 0 5 2.6 8.6 5.2 11.4 1.2 1.3 1.8 2.8 1.8 4.6h15c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-8-6.2-14-14.5-14z" fill="#f7d63a"/><path d="M44 24c1.6 6-1 10.6-4.4 14.4-1.2 1.3-1.8 2.8-1.8 4.6h4.4c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-1.2-.2-2.4-.6-3.5z" fill="#f2b705"/><path d="M24 22c1.2-2.6 3.4-4.2 6-4.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".85"/><g fill="#5b5b5b"><rect x="24.5" y="48" width="15" height="3.4" rx="1.7"/><rect x="25.5" y="52.5" width="13" height="3.4" rx="1.7"/><rect x="27.5" y="57" width="9" height="3.4" rx="1.7"/></g></svg><span class="qcount" id="qcount" aria-label="Questions asked">${s.qs.length}</span></button></div>
   <div class="sess2 ${L.qopen || qa ? '' : 'qclosed'} ${qa ? 'qamode' : ''} ${qa && L.qside ? 'qside' : ''}"><section class="left">
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${transPanel(s, sl)}${planStrip(sl, s)}</section>
   <aside class="rightcol" id="qp" aria-label="Questions and activities"></aside></div></div>`;
@@ -271,7 +273,7 @@ function renderQP() {
     <div class="qfoot2"><button class="qvote ${q.voted ? 'on' : ''}" data-a="qup" data-q="${q.id}" aria-label="Upvote this question" aria-pressed="${!!q.voted}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>${q.up + (q.voted ? 1 : 0)}</span></button><span class="spacer"></span><button class="qslide" data-a="qslide" data-n="${sn}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Slide ${sn}</span><i>›</i></button></div></div>
     ${open ? `<div class="qd"><div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</div>${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`;
   }).join('') || '<div class="none">No questions yet.</div>'}</div>` + `<div class="rxfoot" aria-label="Class reactions">${EMOJIS.map(e => `<span class="rx" data-k="${e.k}" data-tip="${e.l}"><i>${e.e}</i><b>${s.reactions[e.k]}</b></span>`).join('')}</div>`;
-  const bd = $('#bdg'); if (bd) bd.textContent = unanswered();
+  const bd = $('#bdg'); if (bd) bd.textContent = unanswered(); const qc = $('#qcount'); if (qc) qc.textContent = S().qs.length;
 }
 
 /* ---------- overview ---------- */
@@ -696,6 +698,7 @@ document.addEventListener('click', e => {
     case 'unitfill': { const i = document.getElementById('unitUrl'); if (i) i.value = UNIT_EXAMPLE; return; }
     case 'unitgo': doUnitImport(); return;
     case 'cdretry': retryCD(s, s.pos); break;
+    case 'rfretry': retryRF(s, s.pos); break;
     case 'aisettings': L.menu = false; mainMenu(); openAISettings(); return;
     case 'aisave': {
       if (!(window.shell && window.shell.ai)) return;
@@ -775,6 +778,15 @@ setInterval(() => {
   el.innerHTML = answersHTML(q);
 }, 2500);
 
+/* simulated live class: reflections arriving */
+setInterval(() => {
+  if (V !== 'live' || !A || A.type !== 'Reflection') return;
+  const s = S(), rf = flowOf(s)[s.pos] && flowOf(s)[s.pos].rf; if (!rf || rf.state !== 'ready') return;
+  const r = rfRes(rf), el = document.getElementById('rfAns'); if (!el) return;
+  r.n++; r.shown = [...new Set([Math.floor(Math.random() * REFLECT_BANK.length), ...r.shown])].slice(0, 3);
+  el.innerHTML = rfAnsHTML(rf); const chip = document.querySelector('.reflect .cachip'); if (chip) chip.innerHTML = '<i></i>Live · ' + r.n + ' reflections';
+}, 3000);
+
 /* simulated live class: students playing discussion cards */
 setInterval(() => {
   if (V !== 'live' || !A || A.type !== 'Discussion Activity') return;
@@ -822,6 +834,30 @@ function answersHTML(q) {
     return `<div class="cdscale">${r.counts.map((c, i) => `<div class="sbox"><i class="rbar" style="height:${Math.round(c / mx * 100)}%"></i><b>${i + 1}</b><small>${c}</small></div>`).join('')}</div><div class="cdlabels"><span>${esc(q.lo || 'Not yet')}</span><span>Average ${avg.toFixed(1)}</span><span>${esc(q.hi || 'Very')}</span></div>`;
   }
   return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
+}
+function rfAnsHTML(rf) {
+  const r = rfRes(rf);
+  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> reflections · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = REFLECT_BANK[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
+}
+function rfEmpty(s, f, m, rf) {
+  const body = rf.pending ? '<div class="cdwait"><span class="aiflag busy">✦ The AI is writing a reflection question</span></div>'
+    : rf.state === 'notext' ? `<div class="cdwait"><b>The slides so far have no text to read</b><p>${esc(rf.aiError)} Upload the slides as PDF or PowerPoint.</p></div>`
+    : rf.state === 'off' ? `<div class="cdwait"><b>AI is turned off</b><p>${esc(rf.aiError || '')}</p><div class="qacts"><button class="sm p" data-a="aisettings">✦ Choose AI</button></div></div>`
+    : `<div class="cdwait"><b>The AI could not write the question</b><p>${esc(rf.aiError || 'Something went wrong.')}</p><div class="qacts"><button class="sm p" data-a="rfretry">↻ Try again</button><button class="sm" data-a="aisettings">✦ AI settings</button></div></div>`;
+  return `<div class="card2 actcard cdcard" style="background:${m.color}"><div class="cdtop"><span class="cdtake">Reflection</span><span class="spacer"></span><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
+  <div class="cdbody">${body}</div>
+  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
+}
+function rfCard(s, f, m) {
+  const rf = ensureRF(s, s.pos);
+  if (rf.state !== 'ready') return rfEmpty(s, f, m, rf);
+  const r = rfRes(rf);
+  return `<div class="card2 actcard cdcard classact reflect">${caHead('Reflection')}
+  <div class="cabody"><div class="cameta"><small>Reflection</small><span class="cachip"><i></i>Live · ${r.n} reflections</span></div>
+  <h3 class="cdq">${esc(rf.question)}</h3>${rf.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(rf.hint)}</b></p>` : ''}
+  <small class="calabel">What students wrote</small><div id="rfAns">${rfAnsHTML(rf)}</div></div>
+  <span class="bloomchip">${esc(rf.source)}</span><button class="rfnew" data-a="rfretry" data-tip="Ask the AI for a different question">↻ New question</button>
+  ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
 function cdEmpty(s, f, m, cd) {
   const own = '<button class="sm" data-a="cdedit">✎ Write my own questions</button>';

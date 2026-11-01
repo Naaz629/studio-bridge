@@ -151,3 +151,50 @@ function ensureRes(q) {
   else q.res = { n: 9 + Math.round(r() * 8), shown: shuffled(SAMPLES.map((_, i) => i), hash(q.text)).slice(0, 3) };
   return q.res;
 }
+
+/* ---------- Reflection: one AI-written reflection question about all the slides shown before the activity ---------- */
+const REFLECT_BANK = [
+  { t: 'The idea that was new to me is that a persona comes from research, not guesses.' },
+  { t: '我以前以为人物角色只是想象，现在我知道要用访谈证据。', en: 'I used to think a persona was only imagined. Now I know to use interview evidence.', lang: 'Chinese' },
+  { t: 'I am still not sure how to choose which insight matters most for my brief.' },
+  { t: 'This helped me see that my team was working from assumptions.' },
+  { t: '我想用今天学到的方法重新检查我们的用户。', en: 'I want to use what I learned today to check our users again.', lang: 'Chinese' },
+  { t: 'Next, I will go back to my interview notes and look for patterns.' },
+  { t: 'It changed how I will write my How Might We question.' },
+  { t: 'I want an example of a good reframed brief before I start.' }
+];
+function rfContext(s, pos) {
+  const c = cdContext(s, pos), f = flowOf(s);
+  const slides = f.slice(0, pos).filter(x => x.k === 's').length;
+  return { title: c.title, text: c.text, hasText: c.hasText, lo: c.lo, out: c.out, asked: c.asked, slides, source: slides + ' slide' + (slides === 1 ? '' : 's') + ' so far' };
+}
+async function aiBuildRF(ctx) {
+  const ai = (window.shell && window.shell.ai) || window.demoAI;
+  const fail = (state, msg) => Object.assign(new Error(msg), { state });
+  if (!ai || !ai.reflect) throw fail('off', 'The AI question writer runs in the desktop app.');
+  const st = await ai.status();
+  if (!st.enabled) throw fail('off', 'AI is turned off. Choose a question writer to create reflection questions.');
+  if (!ctx.hasText) throw fail('notext', 'The slides shown so far have no text the app can read, so the AI has nothing to work from.');
+  const res = await ai.reflect({ title: ctx.title, text: ctx.text, lo: ctx.lo, out: ctx.out, asked: ctx.asked, slides: ctx.slides });
+  if (res.error) throw fail('error', res.error);
+  const question = String(res.question || '').trim();
+  if (!question || wordCount(question) > 45) throw fail('error', 'The AI reply could not be used.');
+  return Object.assign({}, ctx, { question, hint: String(res.hint || '').trim().slice(0, 90), state: 'ready', pending: false, aiProvider: res.provider });
+}
+function ensureRF(s, pos) {
+  const item = flowOf(s)[pos];
+  if (!item.rf) {
+    const ctx = rfContext(s, pos);
+    item.rf = Object.assign({}, ctx, { state: 'pending', pending: true });
+    const here = () => typeof A !== 'undefined' && A && A.type === 'Reflection' && flowOf(s)[s.pos] === item;
+    aiBuildRF(ctx).then(rf => { item.rf = rf; if (here()) render(); }).catch(err => {
+      const rf = item.rf; if (!rf) return; rf.pending = false; rf.state = err.state || 'error'; rf.aiError = err.message; if (here()) render();
+    });
+  }
+  return item.rf;
+}
+function retryRF(s, pos) { flowOf(s)[pos].rf = null; return ensureRF(s, pos); }
+function rfRes(rf) {
+  if (!rf.res) { const r = seeded(hash(rf.question)); rf.res = { n: 6 + Math.round(r() * 6), shown: shuffled(REFLECT_BANK.map((_, i) => i), hash(rf.question)).slice(0, 3) }; }
+  return rf.res;
+}
