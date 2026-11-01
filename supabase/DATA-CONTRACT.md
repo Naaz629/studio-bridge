@@ -20,6 +20,7 @@ export const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.m
 ```
 
 Add both variables in Vercel (Project Settings > Environment Variables) and redeploy. The Tutor UI uses the same values.
+
 ## Session code
 The tutor starts a class and gets a 4-letter code (for example `K7QF`). Students type it in on the Student UI. Everything below is filtered by `session = <code>`.
 
@@ -60,3 +61,18 @@ Class Learning and the AI insight are computed from `responses` and `events`.
 
 ## Realtime
 Subscribe to changes on `questions`, `reactions`, `responses` (tutor) and on `sessions`, `activities` (student) filtered by `session`.
+
+## How the tutor app uses your rows (so the fields must match)
+- `activity_id` must be the id the tutor wrote in `sessions.state.activityId` (for example `K7QF-a5`). Always send it with a response.
+- `payload.q` is the question number inside a concept check (0 to 4). Without it every answer counts toward question 1.
+- `questions.text_en`: when a student writes in Chinese, put the Chinese in `text` and the English in `text_en` (the tutor shows English first, with "Original" underneath).
+- Reflection answers: `responses` `{ activity_id, kind:'reflection', payload:{ text, lang?, text_en? } }`.
+- Reactions: send `got`, `think`, `confused`, `insight` or `applause` in `reactions.kind`.
+- Join flow: the student types the 4-letter class code, checks it exists in `sessions`, then subscribes to `sessions` / `activities` for that code.
+
+## Quick test (no code needed)
+In Supabase > SQL Editor, using the code shown in the tutor app:
+```sql
+insert into questions (session, student, text, slide) values ('K7QF', 'Test', 'Hello from the student side', 4);
+```
+It should appear in the tutor's Questions column within a second.
