@@ -32,7 +32,7 @@ function render() {
   const oldStrip = document.querySelector('.planbody .tiles'), keepX = oldStrip ? oldStrip.scrollLeft : 0;
   $('#view').innerHTML = V === 'live' ? live() : overview();
   courseBtn(); mainMenu(); botbar();
-  if (V === 'live') { renderQP(); pulseDots(); syncStrip(keepX); if (A && A.type === 'Q&A Session') qaScroll(); }
+  if (V === 'live') { renderQP(); pulseDots(); syncStrip(keepX); if (A && A.type === 'Q&A Session') qaScroll(); Sync.push(); }
 }
 /* keep the Studio flow strip in step with the main screen: the current tile is always in view, and a manual scroll is kept while nothing changes */
 let stripKey = '';
@@ -188,7 +188,7 @@ function artSlideHTML(it) {
   return `<div class="artslide"><div class="artimg">${artPic(it.src)}</div><div class="artcap">${cap}</div></div>`;
 }
 /* artefacts are image files */
-function artPic(src) { return String(src).startsWith("assets/") ? `<img class="artpic" src="${esc(src)}" alt="" draggable="false">` : src; }
+function artPic(src) { return /^(assets\/|https?:)/.test(String(src)) ? `<img class="artpic" src="${esc(src)}" alt="" draggable="false">` : src; }
 function actCard() {
   const s = S(), f = flowOf(s), m = ACT_META[A.type], p = actQs();
   if (A.type === 'Discussion Activity') return discussionCard(s, f, m, p);
@@ -225,7 +225,7 @@ function slideTitle(s, sl, fallback) {
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   const qa = A && A.type === 'Q&A Session';
-  return `<div class="livewrap"><div class="crumbbar"><div class="crumbtxt"><small class="crumbeye">${esc(s.code)} Tutorial ${s.liveWeek}</small><h1 class="crumbtitle">${esc(slideTitle(s, sl, t[0]))}</h1><span class="crumbsub">Dr. Priya Nair · 42 students</span></div><span class="spacer"></span>
+  return `<div class="livewrap"><div class="crumbbar"><div class="crumbtxt"><small class="crumbeye">${esc(s.code)} Tutorial ${s.liveWeek}</small><h1 class="crumbtitle">${esc(slideTitle(s, sl, t[0]))}</h1><span class="crumbsub">Dr. Priya Nair · 42 students${Sync.on ? ` · <button class="codechip" data-a="classcode" data-tip="Students join with this code. Click to copy, shift+click for a new class">Class code <b>${Sync.code}</b></button>` : ''}</span></div><span class="spacer"></span>
   <button class="qtoggle qopen" data-a="toggleq" aria-label="Show questions" data-tip="Questions &amp; activities"><svg class="bulb" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><g stroke="#f5cf2a" stroke-width="3.4" stroke-linecap="round"><path d="M32 4v6"/><path d="M12.5 12l4.2 4.2"/><path d="M51.5 12l-4.2 4.2"/><path d="M4 31h6"/><path d="M54 31h6"/><path d="M12.5 50l4.2-4.2"/><path d="M51.5 50l-4.2-4.2"/></g><path d="M32 14c-8.3 0-14.5 6-14.5 14 0 5 2.6 8.6 5.2 11.4 1.2 1.3 1.8 2.8 1.8 4.6h15c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-8-6.2-14-14.5-14z" fill="#f7d63a"/><path d="M44 24c1.6 6-1 10.6-4.4 14.4-1.2 1.3-1.8 2.8-1.8 4.6h4.4c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-1.2-.2-2.4-.6-3.5z" fill="#f2b705"/><path d="M24 22c1.2-2.6 3.4-4.2 6-4.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".85"/><g fill="#5b5b5b"><rect x="24.5" y="48" width="15" height="3.4" rx="1.7"/><rect x="25.5" y="52.5" width="13" height="3.4" rx="1.7"/><rect x="27.5" y="57" width="9" height="3.4" rx="1.7"/></g></svg><span class="qcount" id="qcount" aria-label="Questions asked">${s.qs.length}</span></button></div>
   <div class="sess2 ${L.qopen || qa ? '' : 'qclosed'} ${qa ? 'qamode' : ''} ${qa && L.qside ? 'qside' : ''}"><section class="left">
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${transPanel(s, sl)}${planStrip(sl, s)}</section>
@@ -642,9 +642,9 @@ document.addEventListener('click', e => {
       break;
     case 'actback': { const f = flowOf(s); let p = s.pos; while (p > 0 && f[p].k !== 's') p--; if (f[p].k !== 's') { p = f.findIndex(x => x.k === 's'); } goTo(s, Math.max(0, p)); break; }
     case 'qfilter': L.qf = a.dataset.f; renderQP(); return;
-    case 'qans': q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; renderQP(); return;
+    case 'qans': q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; Sync.setQuestion(q); renderQP(); return;
     case 'qup': q.voted = !q.voted; renderQP(); return;
-    case 'qreply': q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; renderQP(); return;
+    case 'qreply': q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; Sync.setQuestion(q); renderQP(); return;
     case 'qorig': q.showOrig = !q.showOrig; renderQP(); return;
     case 'qslide': { const f = flowOf(s), idx = f.findIndex(x => x.k === 's' && x.i === +a.dataset.n - 1); if (idx >= 0) { goTo(s, idx); break; } return; }
     case 'ftab': O.ftab = a.dataset.t; break;
@@ -661,7 +661,7 @@ document.addEventListener('click', e => {
     case 'qnum': if (A && A.type === 'Q&A Session') { A.q = Math.max(0, sortedQs(s).findIndex(x => x.id === q.id)); q.seen = true; render(); return; } q.seen = !q.seen; renderQP(); return;
     case 'qopen': q.seen = true; L.open = L.open === q.id ? null : q.id; L.reply = L.open === q.id && q.st === 'open' ? q.id : null; renderQP(); document.querySelector('.inl input')?.focus(); return;
     case 'reply': L.reply = L.reply === q.id ? null : q.id; renderQP(); document.querySelector('.inl input')?.focus(); return;
-    case 'reopen': q.st = 'open'; q.ans = null; renderQP(); return;
+    case 'reopen': q.st = 'open'; q.ans = null; Sync.setQuestion(q); renderQP(); return;
     case 'cdedit': {
       const cd = ensureCD(s, s.pos); cdDraft = cd.qs.length ? JSON.parse(JSON.stringify(cd.qs)) : LEVELS.map(l => ({ level: l.k, label: l.label, note: l.note, source: cd.source, type: 'open', text: '', hint: '' }));
       return modal(`<div class="k2">Concept check · ${esc(cd.lo)}: ${esc(cd.out)}</div><h4>Edit the five questions</h4>
@@ -698,6 +698,7 @@ document.addEventListener('click', e => {
     case 'unitfill': { const i = document.getElementById('unitUrl'); if (i) i.value = UNIT_EXAMPLE; return; }
     case 'unitgo': doUnitImport(); return;
     case 'cdretry': retryCD(s, s.pos); break;
+    case 'classcode': { if (e.shiftKey) { Sync.newClass().then(() => toast('New class code ' + Sync.code)); return; } try { navigator.clipboard.writeText(Sync.code); } catch (x) {} toast('Class code ' + Sync.code + ' copied. Students enter it on the Student UI.'); return; }
     case 'rfretry': retryRF(s, s.pos); break;
     case 'aisettings': L.menu = false; mainMenu(); openAISettings(); return;
     case 'aisave': {
@@ -741,7 +742,7 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('submit', e => {
   e.preventDefault(); const q = S().qs.find(x => x.id == e.target.dataset.q), v = e.target.querySelector('input').value.trim();
-  if (!v) return; q.ans = v; q.st = 'ans'; L.reply = null; toast('Answer posted to the class'); renderQP();
+  if (!v) return; q.ans = v; q.st = 'ans'; L.reply = null; Sync.setQuestion(q); toast('Answer posted to the class'); renderQP();
 });
 document.addEventListener('change', e => { if (e.target.id === 'wk') { O.w = +e.target.value; O.open = null; render(); } });
 $('#slideFile').addEventListener('change', async e => {
@@ -769,6 +770,7 @@ document.addEventListener('drop', e => { const d = e.target.closest('[data-ins]'
 
 /* simulated live class: answers arriving on a concept check */
 setInterval(() => {
+  if (Sync.real) return;
   if (V !== 'live' || !A || A.type !== 'Concept Development') return;
   const s = S(), cd = flowOf(s)[s.pos] && flowOf(s)[s.pos].cd; if (!cd || !cd.qs.length) return;
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)], r = ensureRes(q), el = document.getElementById('cdAns'); if (!el) return;
@@ -780,6 +782,7 @@ setInterval(() => {
 
 /* simulated live class: reflections arriving */
 setInterval(() => {
+  if (Sync.real) return;
   if (V !== 'live' || !A || A.type !== 'Reflection') return;
   const s = S(), rf = flowOf(s)[s.pos] && flowOf(s)[s.pos].rf; if (!rf || rf.state !== 'ready') return;
   const r = rfRes(rf), el = document.getElementById('rfAns'); if (!el) return;
@@ -789,6 +792,7 @@ setInterval(() => {
 
 /* simulated live class: students playing discussion cards */
 setInterval(() => {
+  if (Sync.real) return;
   if (V !== 'live' || !A || A.type !== 'Discussion Activity') return;
   const s = S(), c = DISCUSS_CARDS[Math.floor(Math.random() * DISCUSS_CARDS.length)];
   s.cards[c.k]++;
@@ -800,8 +804,8 @@ setInterval(() => {
 
 /* simulated live class: reactions and new questions */
 const busy = () => V !== 'live' || L.reply || L.dragging || document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.closest?.('.inl');
-setInterval(() => { if (V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; popBall(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
-setInterval(() => { if (busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
+setInterval(() => { if (Sync.real || V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; popBall(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
+setInterval(() => { if (Sync.real || busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
 
 (typeof BUNDLED_UNITS !== 'undefined' ? BUNDLED_UNITS : []).forEach(o => applyOutline(o, false));
 /* in a browser (no desktop app) the course slides shipped next to the page are shown */
@@ -837,7 +841,7 @@ function answersHTML(q) {
 }
 function rfAnsHTML(rf) {
   const r = rfRes(rf);
-  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> reflections · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = REFLECT_BANK[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
+  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> reflections · students can write in any language · only you see these</div>${(r.real || []).map(sm => `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`).join('')}${r.shown.slice(0, Math.max(0, 3 - (r.real || []).length)).map(k => { const sm = REFLECT_BANK[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
 }
 function rfEmpty(s, f, m, rf) {
   const body = rf.pending ? '<div class="cdwait"><span class="aiflag busy">✦ The AI is writing a reflection question</span></div>'
@@ -892,6 +896,7 @@ document.addEventListener('click', e => {
 
 /* simulated live class: other students' answers keep arriving in the Q&A Session */
 setInterval(() => {
+  if (Sync.real) return;
   if (!A || A.type !== 'Q&A Session' || V !== 'live') return;
   const s = S(), list = sortedQs(s); if (!list.length) return;
   const q = list[Math.floor(Math.random() * list.length)], used = qaReplies(q);
@@ -903,10 +908,12 @@ setInterval(() => {
 
 /* the slideshow plays by itself unless the tutor has stopped it; students' uploads arrive one by one */
 setInterval(() => {
+  if (Sync.real) return;
   if (!A || A.type !== 'Artefact upload' || V !== 'live' || artHeld()) return;
   const n = artItems(S()).length; A.q = ((A.q || 0) + 1) % n; render();
 }, 6000);
 setInterval(() => {
+  if (Sync.real) return;
   if (!A || A.type !== 'Artefact upload' || V !== 'live') return;
   const s = S(), got = s.liveArts || (s.liveArts = []), pool = artPool(s);
   if (got.length >= pool.length) return;
@@ -939,7 +946,7 @@ document.addEventListener('click', e => {
   const c = e.target.closest('.qrows .qr[data-qid]');
   if (!c || e.target.closest('button, a')) return;
   const q = S().qs.find(x => String(x.id) === c.dataset.qid); if (!q) return;
-  q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true;
+  q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; Sync.setQuestion(q);
   renderQP();
 });
 

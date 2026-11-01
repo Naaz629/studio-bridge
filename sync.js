@@ -1,0 +1,103 @@
+/* Studio Bridge sync: connects the Tutor UI to the Student UI through Supabase (see supabase/DATA-CONTRACT.md).
+   The tutor opens a class (a short code); students join it. Questions, reactions and answers arrive live, and the tutor's
+   slide, activity and "answered" marks go back. Every action is also written to the events table (the log).
+   Without a connection (or with ?nosync in the address) the app keeps working on its sample data. */
+const Sync = (() => {
+  const URL = 'https://nqalksankethoskforml.supabase.co';
+  const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xYWxrc2Fua2V0aG9za2Zvcm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1MTExMDQsImV4cCI6MjEwOTA4NzEwNH0.qEUGoFSJ0daEi_pXkAzibT9PUhmZ7rmlfO8UrRMBgf8';
+  const ACT_KIND = { 'Concept Development': 'concept', 'Q&A Session': 'qa', 'Discussion Activity': 'discussion', 'Artefact upload': 'artefact', 'Reflection': 'reflection' };
+  const REACT_MAP = { got: 'und', think: 'con', confused: 'qst', insight: 'idea', applause: 'great' };   // student kind -> tutor emoji
+  const TUTOR = 'Dr. Priya Nair';
+  const me = { on: false, real: 0, code: null, client: null, error: null };
+  let lastKey = '', timer = null;
+
+  const newCode = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for (let i = 0; i < 4; i++) c += a[Math.floor(Math.random() * a.length)]; return c; };
+  function pickCode(fresh) {
+    const q = new URLSearchParams(location.search).get('code'); if (q && !fresh) return q.toUpperCase();
+    try { const k = localStorage.getItem('sb-class-code'); if (k && !fresh) return k; const c = newCode(); localStorage.setItem('sb-class-code', c); return c; } catch (e) { return newCode(); }
+  }
+  const tick = () => { if (typeof V !== 'undefined' && V === 'live' && typeof renderQP === 'function') renderQP(); };
+  const refresh = () => { if (typeof render === 'function' && typeof V !== 'undefined' && V === 'live') render(); };
+  const err = (what, e) => { me.error = what + ': ' + ((e && e.message) || e); console.warn('[sync]', me.error); };
+
+  function log(type, payload = {}) {
+    if (!me.on) return;
+    me.client.from('events').insert({ session: me.code, role: 'tutor', type, actor: TUTOR, payload }).then(r => r.error && err('log', r.error.message));
+  }
+  /* ---- database rows <-> tutor questions ---- */
+  function fromRow(r) {
+    return { id: qid++, dbId: r.id, who: r.anonymous ? 'Anonymous' : (r.student || 'Student'), av: r.anonymous ? 'lav' : '', text: r.text, tr: r.text_en || undefined,
+      ago: Math.max(0, Math.round((Date.now() - new Date(r.created_at).getTime()) / 60000)), up: r.upvotes || 1, same: 0, st: r.status === 'ans' ? 'ans' : 'open', ans: r.answer || undefined, slide: r.slide, real: true };
+  }
+  function addQuestion(r) {
+    const qs = S().qs; if (qs.some(q => q.dbId === r.id)) return;
+    qs.push(fromRow(r)); me.real++; tick(); refresh();
+  }
+  function updateQuestion(r) {
+    const q = S().qs.find(x => x.dbId === r.id); if (!q) return addQuestion(r);
+    q.up = r.upvotes || q.up; q.st = r.status === 'ans' ? 'ans' : 'open'; q.ans = r.answer || q.ans; tick();
+  }
+  function onResponse(r) {
+    me.real++;
+    const s = S(), p = r.payload || {}, f = flowOf(s), pos = f.findIndex((it, i) => it.k === 'a' && (me.code + '-a' + i) === r.activity_id);
+    if (r.kind === 'discussion') { const c = DISCUSS_CARDS[p.card]; if (c) { s.cards[c.k]++; refresh(); } return; }
+    if (r.kind === 'choice' || r.kind === 'rating') {
+      const cd = pos >= 0 && f[pos].cd, q = cd && cd.qs && cd.qs[p.q || 0]; if (!q) return;
+      const res = ensureRes(q); if (q.type === 'mc') { if (res.counts[p.answer] != null) res.counts[p.answer]++; } else if (q.type === 'scale') { const k = Math.max(1, Math.min(5, +p.answer)) - 1; res.counts[k]++; } else res.n++;
+      refresh(); return;
+    }
+    if (r.kind === 'reflection') {
+      const rf = pos >= 0 && f[pos].rf; if (!rf || rf.state !== 'ready') return;
+      const res = rfRes(rf); (res.real = res.real || []).unshift({ t: p.text || '', en: p.text_en, lang: p.lang }); res.real = res.real.slice(0, 3); res.n++; refresh(); return;
+    }
+    if (r.kind === 'artefact' && p.url) { (s.liveArts = s.liveArts || []).push([r.student || 'Student', p.name || 'Artefact', p.url, !r.student, r.team || null]); refresh(); }
+  }
+  function onReaction(r) { const k = REACT_MAP[r.kind] || r.kind; if (S().reactions[k] != null) { S().reactions[k]++; me.real++; popBall(k); } }
+
+  async function start(fresh) {
+    if (!window.supabase || /[?&]nosync/.test(location.search)) return;
+    try {
+      if (!me.client) me.client = window.supabase.createClient(URL, KEY, { realtime: { params: { eventsPerSecond: 10 } } });
+      const c = me.client; me.code = pickCode(fresh);
+      const up = await c.from('sessions').upsert({ code: me.code, unit: S().code, week: S().liveWeek }, { onConflict: 'code', ignoreDuplicates: false });
+      if (up.error) throw up.error;
+      me.on = true; me.error = null; lastKey = '';
+      if (me.chan) c.removeChannel(me.chan);
+      const f = 'session=eq.' + me.code;
+      me.chan = c.channel('class-' + me.code)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'questions', filter: f }, p => addQuestion(p.new))
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'questions', filter: f }, p => updateQuestion(p.new))
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reactions', filter: f }, p => onReaction(p.new))
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'responses', filter: f }, p => onResponse(p.new))
+        .subscribe();
+      const old = await c.from('questions').select('*').eq('session', me.code).order('created_at');
+      if (old.data) old.data.forEach(addQuestion);
+      log(fresh ? 'session_started' : 'session_resumed', { unit: S().code, week: S().liveWeek });
+      refresh();
+    } catch (e) { me.on = false; err('connect', e); }
+  }
+
+  /* ---- tutor -> students: slide, activity and the AI-written questions ---- */
+  function push() {
+    if (!me.on) return; clearTimeout(timer);
+    timer = setTimeout(() => {
+      const s = S(), f = flowOf(s), it = f[s.pos]; if (!it) return;
+      let slide = null; for (let p = s.pos; p >= 0; p--) if (f[p].k === 's') { slide = f[p].i + 1; break; }
+      const act = it.k === 'a' ? { id: me.code + '-a' + s.pos, kind: ACT_KIND[it.act] || it.act } : null;
+      const spec = !act ? null : it.act === 'Concept Development' ? { questions: (it.cd && it.cd.state === 'ready' ? it.cd.qs : []) } : it.act === 'Reflection' ? { question: it.rf && it.rf.state === 'ready' ? it.rf.question : '', hint: it.rf && it.rf.hint || '' } : {};
+      const key = JSON.stringify([slide, act, spec]); if (key === lastKey) return;
+      const first = lastKey === ''; lastKey = key;
+      me.client.from('sessions').update({ state: { slide, activityId: act && act.id, activityKind: act && act.kind, updatedAt: new Date().toISOString() } }).eq('code', me.code).then(r => r.error && err('state', r.error.message));
+      if (act) me.client.from('activities').upsert({ id: act.id, session: me.code, kind: act.kind, slide, spec }, { onConflict: 'id' }).then(r => r.error && err('activity', r.error.message));
+      if (!first) log(act ? 'activity_started' : 'slide_changed', { slide, activity: act && act.kind });
+    }, 350);
+  }
+  /* the tutor marked a question answered / open again, or wrote an answer */
+  function setQuestion(q) {
+    if (!me.on || !q || !q.dbId) return;
+    me.client.from('questions').update({ status: q.st === 'open' ? 'open' : 'ans', answer: q.ans || null }).eq('id', q.dbId).then(r => r.error && err('question', r.error.message));
+    log(q.st === 'open' ? 'question_reopened' : 'question_answered', { question: q.dbId });
+  }
+  return Object.assign(me, { start, push, log, setQuestion, newClass: () => start(true) });
+})();
+window.addEventListener('load', () => setTimeout(() => Sync.start(false), 800));

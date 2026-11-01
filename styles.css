@@ -1513,3 +1513,8 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .qopen .qcount{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#344b35;color:#fff;font:700 11px/20px var(--sans);text-align:center;box-shadow:0 0 0 2px #fbf9f3}
 
 .chips2{padding-right:230px;flex-wrap:wrap}
+
+/* class code for students */
+.codechip{margin-left:6px;padding:2px 9px;border-radius:999px;border:1px solid rgba(52,75,53,.18);background:#fff;color:var(--green);font:600 11px var(--sans);cursor:pointer}
+.codechip b{letter-spacing:.14em;margin-left:3px}
+.codechip:hover{background:#eef3e9}
