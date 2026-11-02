@@ -64,7 +64,6 @@ const Cap = (() => {
       '<button type="button" data-a="captoggle" aria-pressed="' + st.on + '" data-tip="' + (SR ? 'Live captions: your voice becomes English captions for you and your students' : 'Live captions need Chrome or Edge') + '">' +
       '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>' +
       '<span>' + (st.on ? 'Captions on' : 'Captions') + '</span></button>' +
-      '<select data-sel="caplang" aria-label="Language you speak"><option value="en-US"' + (st.lang === 'en-US' ? ' selected' : '') + '>I speak English</option><option value="zh-CN"' + (st.lang === 'zh-CN' ? ' selected' : '') + '>我说中文</option></select>' +
       (st.err ? '<small class="caperr">' + esc(st.err) + '</small>' : '') + '</div>';
   }
   function refreshCtl() { const c = document.querySelector('.capctl'); if (c) c.outerHTML = ctlHTML(); }
