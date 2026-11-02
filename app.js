@@ -857,7 +857,7 @@ function peerHTML(it) {
 }
 function rfAnsHTML(rf) {
   const r = rfRes(rf);
-  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> reflections · students can write in any language · only you see these</div>${(r.real || []).map(sm => `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`).join('')}${r.shown.slice(0, Math.max(0, 3 - (r.real || []).length)).map(k => { const sm = REFLECT_BANK[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
+  return `<div class="cdopen">${(r.real || []).map(sm => `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`).join('')}${r.shown.slice(0, Math.max(0, 3 - (r.real || []).length)).map(k => { const sm = REFLECT_BANK[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
 }
 function rfEmpty(s, f, m, rf) {
   const body = rf.pending ? '<div class="cdwait"><span class="aiflag busy">✦ The AI is writing a reflection question</span></div>'
@@ -875,7 +875,7 @@ function rfCard(s, f, m) {
   return `<div class="card2 actcard cdcard classact reflect">${caHead('Reflection')}
   <div class="cabody"><div class="cameta"><small>Reflection</small><span class="cachip"><i></i>Live · ${r.n} reflections</span></div>
   <h3 class="cdq">${esc(rf.question)}</h3>${rf.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(rf.hint)}</b></p>` : ''}
-  <small class="calabel">What students wrote</small><div id="rfAns">${rfAnsHTML(rf)}</div>${peerHTML(flowOf(s)[s.pos])}</div>
+  <div id="rfAns">${rfAnsHTML(rf)}</div>${peerHTML(flowOf(s)[s.pos])}</div>
   <span class="bloomchip">${esc(rf.source)}</span><button class="rfnew" data-a="rfretry" data-tip="Ask the AI for a different question">↻ New question</button>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
