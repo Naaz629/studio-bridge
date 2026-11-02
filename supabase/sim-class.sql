@@ -70,11 +70,13 @@ begin
           select ses.code, roster[1 + floor(random() * 22)::int], false, item->>'t', item->>'e', case when item ? 'e' then 'zh' end, 6 + floor(random() * 6)::int, 1 + floor(random() * 9)::int, now() - random() * interval '14 minutes'
           where not exists (select 1 from questions where session = ses.code and text = item->>'t');
       end loop;
-      insert into reactions (session, kind, student)
-        select ses.code, (array['got','got','got','applause','think','insight','confused'])[1 + floor(random() * 7)::int], roster[1 + floor(random() * 22)::int] from generate_series(1, 28);
     end if;
 
-    -- (no live reactions: the numbers stay as they are)
+    -- reactions: none at first; once the demo has started (the tutor left the first slide or opened an activity) the class reacts as it goes
+    if (coalesce((ses.state->>'slide')::int, 1) > 1 or ses.state->>'activityId' is not null) and random() < 0.8 then
+      insert into reactions (session, kind, student)
+        values (ses.code, (array['got','got','got','applause','applause','think','insight','confused'])[1 + floor(random() * 8)::int], roster[1 + floor(random() * 22)::int]);
+    end if;
     -- a new question now and then
     if random() < 0.06 and (select count(*) from questions where session = ses.code and student = any(roster)) < 14 then
       item := qpool -> floor(random() * jsonb_array_length(qpool))::int;
