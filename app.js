@@ -183,8 +183,9 @@ function aboutPersona(s) {
   }
   return false;
 }
-const artExamples = s => aboutPersona(s) ? PERSONA_EXAMPLES : EXAMPLE_ARTS;
-const artPool = s => aboutPersona(s) ? PERSONA_UPLOADS : (s.artefacts || []).slice(2);
+/* only artefacts that belong to these slides (personas and reframing): no business model or value proposition canvases */
+const artExamples = s => PERSONA_EXAMPLES;
+const artPool = s => PERSONA_UPLOADS;
 const artVisible = s => resShown() ? artItems(s) : artItems(s).filter(x => x.ex);
 function artItems(s) { return artExamples(s).map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(e => ({ n: artLabel(e), t: e[1], src: e[2] }))); }
 function artefactCard(s, f, m) {

@@ -57,8 +57,7 @@ declare
     {"t":"I agree. It also helped us."}]'::jsonb;
   art_pool jsonb := '[
     {"u":"persona-1.svg","n":"Persona card"},{"u":"persona-2.svg","n":"Persona card"},{"u":"persona-3.svg","n":"Persona card"},
-    {"u":"persona-example.svg","n":"Persona example"},{"u":"persona-template.svg","n":"Persona template"},
-    {"u":"bmc-1.svg","n":"Business model canvas"},{"u":"vpc-2.svg","n":"Value proposition canvas"}]'::jsonb;
+    {"u":"persona-example.svg","n":"Persona example"},{"u":"persona-template.svg","n":"Persona template"}]'::jsonb;
   site text := 'https://studio-bridge-theta.vercel.app/assets/artefacts/';
   ses record; stu text; aid text; akind text; aspec jsonb; nq int; qi int; qtype text; item jsonb; n int; rx float; k text; qid uuid; opts int; okidx int; ans int; txt text;
 begin
