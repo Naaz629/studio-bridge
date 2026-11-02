@@ -97,6 +97,7 @@ begin
   -- only these are edited after they are created
   create policy "demo update" on sessions  for update using (true) with check (true);
   create policy "demo update" on questions for update using (true) with check (true);
+  create policy "demo update" on activities for update using (true) with check (true);
 end $$;
 
 -- live updates for both apps
@@ -104,3 +105,7 @@ alter publication supabase_realtime add table sessions, activities, questions, r
 
 -- artefact photos: create a PUBLIC storage bucket called "artefacts" in Supabase > Storage
 -- (or run:)  insert into storage.buckets (id, name, public) values ('artefacts','artefacts',true) on conflict do nothing;
+
+-- students upvote through this function so two votes at the same time are not lost
+create or replace function public.upvote_question(qid uuid) returns integer language sql security invoker set search_path = public as $$ update public.questions set upvotes = upvotes + 1 where id = qid returning upvotes; $$;
+grant execute on function public.upvote_question(uuid) to anon, authenticated;
