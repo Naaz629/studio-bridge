@@ -133,6 +133,7 @@ const REPLY_BANK = [
 ];
 const sortedQs = s => [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
 function qaReplies(q) {
+  if (!q.replies && q.real) q.replies = [];
   if (!q.replies) {
     const r = seeded(hash('qa' + q.id + q.text)), n = 2 + Math.floor(r() * 2);
     q.replies = shuffled(REPLY_BANK.map((_, i) => i), hash('rp' + q.id)).slice(0, n).map(k => Object.assign({ who: NAMES[(hash(q.text) + k) % NAMES.length] }, REPLY_BANK[k]));
@@ -837,7 +838,11 @@ function answersHTML(q) {
     const tot = r.counts.reduce((x, y) => x + y, 0) || 1, avg = r.counts.reduce((x, c, i) => x + c * (i + 1), 0) / tot, mx = Math.max(...r.counts, 1);
     return `<div class="cdscale">${r.counts.map((c, i) => `<div class="sbox"><i class="rbar" style="height:${Math.round(c / mx * 100)}%"></i><b>${i + 1}</b><small>${c}</small></div>`).join('')}</div><div class="cdlabels"><span>${esc(q.lo || 'Not yet')}</span><span>Average ${avg.toFixed(1)}</span><span>${esc(q.hi || 'Very')}</span></div>`;
   }
-  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${r.shown.map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
+  return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${(r.real || []).map(sm => `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`).join('')}${r.shown.slice(0, Math.max(0, 3 - (r.real || []).length)).map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
+}
+function peerHTML(it) {
+  const list = it && it.peer; if (!list || !list.length) return '';
+  return `<small class="calabel">Replies between students</small><div class="peerlist">${list.map(x => `<div class="oresp"><p>${esc(x.en || x.t)}</p>${x.lang ? origHTML(x.t, x.lang) : ''}</div>`).join('')}</div>`;
 }
 function rfAnsHTML(rf) {
   const r = rfRes(rf);
@@ -859,7 +864,7 @@ function rfCard(s, f, m) {
   return `<div class="card2 actcard cdcard classact reflect">${caHead('Reflection')}
   <div class="cabody"><div class="cameta"><small>Reflection</small><span class="cachip"><i></i>Live · ${r.n} reflections</span></div>
   <h3 class="cdq">${esc(rf.question)}</h3>${rf.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(rf.hint)}</b></p>` : ''}
-  <small class="calabel">What students wrote</small><div id="rfAns">${rfAnsHTML(rf)}</div></div>
+  <small class="calabel">What students wrote</small><div id="rfAns">${rfAnsHTML(rf)}</div>${peerHTML(flowOf(s)[s.pos])}</div>
   <span class="bloomchip">${esc(rf.source)}</span><button class="rfnew" data-a="rfretry" data-tip="Ask the AI for a different question">↻ New question</button>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
@@ -881,7 +886,7 @@ function cdCard(s, f, m) {
   return `<div class="card2 actcard cdcard classact"><div class="cahead"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><b>Class activity</b><span class="spacer"></span><small>Question ${A.q + 1} of ${cd.qs.length}</small><button class="cdeditbtn" data-a="cdedit" aria-label="Edit questions" data-tip="Edit questions">✎</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="cabody"><div class="cameta"><small>${esc(TYPE_NAMES[q.type] || '')}</small><span class="cachip"><i></i>Live · ${n} responses</span></div>
   <h3 class="cdq">${esc(q.text)}</h3>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}
-  <small class="calabel">What the class answered</small><div id="cdAns">${answersHTML(q)}</div></div>
+  <small class="calabel">What the class answered</small><div id="cdAns">${answersHTML(q)}</div>${peerHTML(flowOf(s)[s.pos])}</div>
   <span class="bloomchip">${esc(q.label)}</span>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }

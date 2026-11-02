@@ -1518,3 +1518,5 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .codechip{margin-left:6px;padding:2px 9px;border-radius:999px;border:1px solid rgba(52,75,53,.18);background:#fff;color:var(--green);font:600 11px var(--sans);cursor:pointer}
 .codechip b{letter-spacing:.14em;margin-left:3px}
 .codechip:hover{background:#eef3e9}
+
+.peerlist{display:flex;flex-direction:column;gap:6px}

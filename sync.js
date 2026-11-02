@@ -46,6 +46,21 @@ const Sync = (() => {
       const res = ensureRes(q); if (q.type === 'mc') { if (res.counts[p.answer] != null) res.counts[p.answer]++; } else if (q.type === 'scale') { const k = Math.max(1, Math.min(5, +p.answer)) - 1; res.counts[k]++; } else res.n++;
       refresh(); return;
     }
+    const txt = () => ({ t: p.text || '', en: p.text_en || undefined, lang: p.text_en && p.lang && /^zh/i.test(p.lang) ? 'Chinese' : undefined });   // the Original link only when there is an English version
+    if (r.kind === 'open') {   // a free-text answer: to a concept-check question, or to a reflection
+      const it = pos >= 0 && f[pos];
+      if (it && it.cd && it.cd.qs) { const q = it.cd.qs[p.q || 0]; if (!q) return; const res = ensureRes(q); (res.real = res.real || []).unshift(txt()); res.real = res.real.slice(0, 3); res.n++; refresh(); return; }
+      if (it && it.rf && it.rf.state === 'ready') { const res = rfRes(it.rf); (res.real = res.real || []).unshift(txt()); res.real = res.real.slice(0, 3); res.n++; refresh(); }
+      return;
+    }
+    if (r.kind === 'peer_reply') {   // a student's reply to a classmate, shown under the activity
+      const it = pos >= 0 && f[pos]; if (!it) return;
+      (it.peer = it.peer || []).unshift(Object.assign(txt(), { who: r.student || 'Student' })); it.peer = it.peer.slice(0, 4); refresh(); return;
+    }
+    if (r.kind === 'qa_reply') {   // a student's reply to a question in the Q&A session
+      const q = S().qs.find(x => x.dbId === p.questionId); if (!q) return;
+      (q.replies = q.replies || []).push(Object.assign(txt(), { who: r.student || 'Student' })); refresh(); return;
+    }
     if (r.kind === 'reflection') {
       const rf = pos >= 0 && f[pos].rf; if (!rf || rf.state !== 'ready') return;
       const res = rfRes(rf); (res.real = res.real || []).unshift({ t: p.text || '', en: p.text_en, lang: p.lang }); res.real = res.real.slice(0, 3); res.n++; refresh(); return;

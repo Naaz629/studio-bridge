@@ -76,3 +76,9 @@ In Supabase > SQL Editor, using the code shown in the tutor app:
 insert into questions (session, student, text, slide) values ('K7QF', 'Test', 'Hello from the student side', 4);
 ```
 It should appear in the tutor's Questions column within a second.
+## Update: free text, peer replies, Q&A replies, upvotes
+The Tutor UI now shows these live:
+- `responses.kind = 'open'`, `payload { q, text, lang?, text_en? }`: shown under the concept-check question `q` (or under a reflection). Chinese without `text_en` is shown as written.
+- `responses.kind = 'peer_reply'`, `payload { parentId?, text, lang?, text_en? }` with the exact tutor `activity_id`: shown under the activity as "Replies between students".
+- `responses.kind = 'qa_reply'`, `payload { questionId, text, lang?, text_en? }` (`questionId` = `questions.id`): shown as an answer from a student under that question in the Q&A session. No open `qa` activity is needed.
+- Upvotes: call the RPC `upvote_question(qid uuid)` (it adds 1 and returns the new total, so simultaneous votes are not lost): `supabase.rpc('upvote_question', { qid })`.
