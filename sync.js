@@ -73,7 +73,8 @@ const Sync = (() => {
     }
     if (r.kind === 'artefact' && p.url) { (s.liveArts = s.liveArts || []).push([r.student || 'Student', p.name || 'Artefact', p.url, !r.student, r.team || null]); refresh(); }
   }
-  function onReaction(r) { const k = REACT_MAP[r.kind] || r.kind; if (S().reactions[k] != null) { S().reactions[k]++; me.real++; popBall(k); } }
+  /* the reaction numbers stay as they are: no live counting and no pop animation (they are loaded once when the class opens) */
+  function onReaction(r) { me.real++; }
 
   async function start(fresh) {
     if (!window.supabase || /[?&]nosync/.test(location.search)) return;
@@ -97,7 +98,7 @@ const Sync = (() => {
       S().qs.splice(0);   // the shared class is the one list: the tutor and the students see the same questions
       const old = await c.from('questions').select('*').eq('session', me.code).order('created_at');
       if (old.data) old.data.forEach(addQuestion);
-      await loadReactions(); clearInterval(me.recountTimer); me.recountTimer = setInterval(loadReactions, 20000);
+      await loadReactions(); clearInterval(me.recountTimer);
       log(fresh ? 'session_started' : 'session_resumed', { unit: S().code, week: S().liveWeek });
       refresh();
     } catch (e) { me.on = false; err('connect', e); }

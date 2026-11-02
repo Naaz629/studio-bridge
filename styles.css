@@ -1619,3 +1619,8 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .resbtn[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
 .cameta{align-items:center}
 .hideres .dcount{display:none}
+
+.capstatus{position:absolute;top:42px;right:0;white-space:nowrap;background:#fff;border:1px solid rgba(52,75,53,.18);color:var(--green);border-radius:8px;padding:4px 8px;font-size:11px}
+
+/* captions control removed from the tutor screen */
+.capctl,.capstatus,.caperr,#livecap{display:none!important}

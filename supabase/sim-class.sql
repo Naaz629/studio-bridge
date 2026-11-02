@@ -74,11 +74,7 @@ begin
         select ses.code, (array['got','got','got','applause','think','insight','confused'])[1 + floor(random() * 7)::int], roster[1 + floor(random() * 22)::int] from generate_series(1, 28);
     end if;
 
-    -- reactions
-    if random() < 0.7 then
-      insert into reactions (session, kind, student)
-        values (ses.code, (array['got','got','got','applause','applause','think','insight','confused'])[1 + floor(random() * 8)::int], roster[1 + floor(random() * 22)::int]);
-    end if;
+    -- (no live reactions: the numbers stay as they are)
     -- a new question now and then
     if random() < 0.06 and (select count(*) from questions where session = ses.code and student = any(roster)) < 14 then
       item := qpool -> floor(random() * jsonb_array_length(qpool))::int;
