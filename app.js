@@ -226,7 +226,7 @@ function slideTitle(s, sl, fallback) {
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   const qa = A && A.type === 'Q&A Session';
-  return `<div class="livewrap"><div class="crumbbar"><div class="crumbtxt"><small class="crumbeye">${esc(s.code)} Tutorial ${s.liveWeek}</small><h1 class="crumbtitle">${esc(slideTitle(s, sl, t[0]))}</h1><span class="crumbsub">Dr. Priya Nair · 42 students${Sync.on ? ` · <button class="codechip" data-a="classcode" data-tip="Students join with this code. Click to copy, shift+click for a new class">Class code <b>${Sync.code}</b></button>` : ''}</span></div><span class="spacer"></span>
+  return `<div class="livewrap"><div class="crumbbar"><div class="crumbtxt"><small class="crumbeye">${esc(s.code)} Tutorial ${s.liveWeek}</small><h1 class="crumbtitle">${esc(slideTitle(s, sl, t[0]))}</h1><span class="crumbsub">Dr. Priya Nair · 42 students</span></div><span class="spacer"></span>
   <button class="qtoggle qopen" data-a="toggleq" aria-label="Show questions" data-tip="Questions &amp; activities"><svg class="bulb" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><g stroke="#f5cf2a" stroke-width="3.4" stroke-linecap="round"><path d="M32 4v6"/><path d="M12.5 12l4.2 4.2"/><path d="M51.5 12l-4.2 4.2"/><path d="M4 31h6"/><path d="M54 31h6"/><path d="M12.5 50l4.2-4.2"/><path d="M51.5 50l-4.2-4.2"/></g><path d="M32 14c-8.3 0-14.5 6-14.5 14 0 5 2.6 8.6 5.2 11.4 1.2 1.3 1.8 2.8 1.8 4.6h15c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-8-6.2-14-14.5-14z" fill="#f7d63a"/><path d="M44 24c1.6 6-1 10.6-4.4 14.4-1.2 1.3-1.8 2.8-1.8 4.6h4.4c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-1.2-.2-2.4-.6-3.5z" fill="#f2b705"/><path d="M24 22c1.2-2.6 3.4-4.2 6-4.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".85"/><g fill="#5b5b5b"><rect x="24.5" y="48" width="15" height="3.4" rx="1.7"/><rect x="25.5" y="52.5" width="13" height="3.4" rx="1.7"/><rect x="27.5" y="57" width="9" height="3.4" rx="1.7"/></g></svg><span class="qcount" id="qcount" aria-label="Questions asked">${s.qs.length}</span></button></div>
   <div class="sess2 ${L.qopen || qa ? '' : 'qclosed'} ${qa ? 'qamode' : ''} ${qa && L.qside ? 'qside' : ''}"><section class="left">
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${transPanel(s, sl)}${planStrip(sl, s)}</section>
@@ -468,7 +468,7 @@ function overview() {
   const tabs = [['all', 'All'], ['q', 'Questions'], ['r', 'Responses'], ['a', 'Activities']].map(([k, n]) => `<button class="ftab ${ft === k ? 'on' : ''}" data-a="ftab" data-t="${k}">${n}</button>`).join('');
   const [right, qaFull] = open ? loPanel(open).split(String.fromCharCode(1)) : ['', ''];
   return `<div class="ovw2 ovpage">
-    <div class="ovtop"><div class="ovintro"><small class="eyebrow">${esc(s.code)} · ${esc(s.name)}</small><h1 class="ovtitle">Class Learning</h1><p>How the whole class is doing, from everything students have answered and uploaded.</p></div><div class="ovweek"><span class="livedot"></span><select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w} of 12</option>`).join('')}</select></div></div>
+    <div class="ovtop"><div class="ovintro"><small class="eyebrow">${esc(s.code)} · ${esc(s.name)}</small><h1 class="ovtitle">Class Learning</h1><p>How the whole class is doing, from everything students have answered and uploaded.</p></div>${Sync.on ? `<div class="ovcode"><small>Students join with this class code</small><button class="codebig" data-a="classcode" data-tip="Click to copy. Shift+click for a new class"><b>${Sync.code}</b><span>Copy</span></button></div>` : ''}<div class="ovweek"><span class="livedot"></span><select id="wk" aria-label="Week">${Object.keys(s.weeks).map(w => `<option value="${w}" ${+w === O.w ? 'selected' : ''}>Week ${w} of 12</option>`).join('')}</select></div></div>
     <div class="ovcols">
       <div class="ovcol">
         <section class="ovc"><div class="ovch"><div><h3>Student activity</h3><p>How the class did on each learning outcome</p></div><div class="seg2">${Object.entries(W.sessions).map(([k, v]) => `<button data-ss="${k}" aria-pressed="${k === key}">${v.name}</button>`).join('')}</div></div>
@@ -699,7 +699,7 @@ document.addEventListener('click', e => {
     case 'unitfill': { const i = document.getElementById('unitUrl'); if (i) i.value = UNIT_EXAMPLE; return; }
     case 'unitgo': doUnitImport(); return;
     case 'cdretry': retryCD(s, s.pos); break;
-    case 'classcode': { if (e.shiftKey) { Sync.newClass().then(() => toast('New class code ' + Sync.code)); return; } try { navigator.clipboard.writeText(Sync.code); } catch (x) {} toast('Class code ' + Sync.code + ' copied. Students enter it on the Student UI.'); return; }
+    case 'classcode': { if (e.shiftKey && !confirm('Start a new class with a new code? Students will need the new code.')) return; if (e.shiftKey) { Sync.newClass().then(() => toast('New class code ' + Sync.code)); return; } try { navigator.clipboard.writeText(Sync.code); } catch (x) {} toast('Class code ' + Sync.code + ' copied. Students enter it on the Student UI.'); return; }
     case 'rfretry': retryRF(s, s.pos); break;
     case 'aisettings': L.menu = false; mainMenu(); openAISettings(); return;
     case 'aisave': {
@@ -771,7 +771,7 @@ document.addEventListener('drop', e => { const d = e.target.closest('[data-ins]'
 
 /* simulated live class: answers arriving on a concept check */
 setInterval(() => {
-  if (Sync.real) return;
+  if (Sync.on) return;
   if (V !== 'live' || !A || A.type !== 'Concept Development') return;
   const s = S(), cd = flowOf(s)[s.pos] && flowOf(s)[s.pos].cd; if (!cd || !cd.qs.length) return;
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)], r = ensureRes(q), el = document.getElementById('cdAns'); if (!el) return;
@@ -783,7 +783,7 @@ setInterval(() => {
 
 /* simulated live class: reflections arriving */
 setInterval(() => {
-  if (Sync.real) return;
+  if (Sync.on) return;
   if (V !== 'live' || !A || A.type !== 'Reflection') return;
   const s = S(), rf = flowOf(s)[s.pos] && flowOf(s)[s.pos].rf; if (!rf || rf.state !== 'ready') return;
   const r = rfRes(rf), el = document.getElementById('rfAns'); if (!el) return;
@@ -793,7 +793,7 @@ setInterval(() => {
 
 /* simulated live class: students playing discussion cards */
 setInterval(() => {
-  if (Sync.real) return;
+  if (Sync.on) return;
   if (V !== 'live' || !A || A.type !== 'Discussion Activity') return;
   const s = S(), c = DISCUSS_CARDS[Math.floor(Math.random() * DISCUSS_CARDS.length)];
   s.cards[c.k]++;
@@ -805,8 +805,8 @@ setInterval(() => {
 
 /* simulated live class: reactions and new questions */
 const busy = () => V !== 'live' || L.reply || L.dragging || document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.closest?.('.inl');
-setInterval(() => { if (Sync.real || V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; popBall(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
-setInterval(() => { if (Sync.real || busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
+setInterval(() => { if (Sync.on || V !== 'live' || L.dragging) return; const k = EMOJIS[Math.floor(Math.random() * EMOJIS.length)].k; S().reactions[k]++; popBall(k); if (!busy() && Math.random() < .4) { const qs = S().qs; qs[Math.floor(Math.random() * qs.length)].up++; renderQP(); } }, 1300);
+setInterval(() => { if (Sync.on || busy() || !POOLQ.length) return; const p = POOLQ.shift(), s = S(); s.qs.forEach(q => { q.ago++; }); s.qs.push({ id: qid++, who: p[0], av: p[1], text: p[2], tr: p[3], ago: 0, up: 1, same: 0, st: 'open' }); renderQP(); }, 25000);
 
 (typeof BUNDLED_UNITS !== 'undefined' ? BUNDLED_UNITS : []).forEach(o => applyOutline(o, false));
 /* in a browser (no desktop app) the course slides shipped next to the page are shown */
@@ -901,7 +901,7 @@ document.addEventListener('click', e => {
 
 /* simulated live class: other students' answers keep arriving in the Q&A Session */
 setInterval(() => {
-  if (Sync.real) return;
+  if (Sync.on) return;
   if (!A || A.type !== 'Q&A Session' || V !== 'live') return;
   const s = S(), list = sortedQs(s); if (!list.length) return;
   const q = list[Math.floor(Math.random() * list.length)], used = qaReplies(q);
@@ -913,12 +913,12 @@ setInterval(() => {
 
 /* the slideshow plays by itself unless the tutor has stopped it; students' uploads arrive one by one */
 setInterval(() => {
-  if (Sync.real) return;
+  if (Sync.on) return;
   if (!A || A.type !== 'Artefact upload' || V !== 'live' || artHeld()) return;
   const n = artItems(S()).length; A.q = ((A.q || 0) + 1) % n; render();
 }, 6000);
 setInterval(() => {
-  if (Sync.real) return;
+  if (Sync.on) return;
   if (!A || A.type !== 'Artefact upload' || V !== 'live') return;
   const s = S(), got = s.liveArts || (s.liveArts = []), pool = artPool(s);
   if (got.length >= pool.length) return;

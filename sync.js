@@ -77,6 +77,8 @@ const Sync = (() => {
       const up = await c.from('sessions').upsert({ code: me.code, unit: S().code, week: S().liveWeek }, { onConflict: 'code', ignoreDuplicates: false });
       if (up.error) throw up.error;
       me.on = true; me.error = null; lastKey = '';
+      const beat = () => me.client.from('sessions').update({ tutor_seen: new Date().toISOString() }).eq('code', me.code).then(r => r.error && err('heartbeat', r.error.message));
+      beat(); clearInterval(me.beatTimer); me.beatTimer = setInterval(beat, 40000);
       if (me.chan) c.removeChannel(me.chan);
       const f = 'session=eq.' + me.code;
       me.chan = c.channel('class-' + me.code)

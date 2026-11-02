@@ -82,3 +82,12 @@ The Tutor UI now shows these live:
 - `responses.kind = 'peer_reply'`, `payload { parentId?, text, lang?, text_en? }` with the exact tutor `activity_id`: shown under the activity as "Replies between students".
 - `responses.kind = 'qa_reply'`, `payload { questionId, text, lang?, text_en? }` (`questionId` = `questions.id`): shown as an answer from a student under that question in the Q&A session. No open `qa` activity is needed.
 - Upvotes: call the RPC `upvote_question(qid uuid)` (it adds 1 and returns the new total, so simultaneous votes are not lost): `supabase.rpc('upvote_question', { qid })`.
+
+## Demo class (22 simulated students)
+A database job (`supabase/sim-class.sql`, pg_cron every 5 seconds) keeps 22 imaginary students active in any class whose tutor app is open (the tutor app updates `sessions.tutor_seen` every 40 seconds). They ask questions (some in Chinese with `text_en`), upvote, react, answer the running activity (`choice`, `rating`, `open`, `reflection`, discussion cards, artefact links), send `peer_reply` and `qa_reply` rows. Their rows have `payload.sim = true` (questions and reactions use the roster names). **The Student UI does not need to do anything special: it should just show everyone's rows**, so a real tester sees a live class around them:
+- questions list: all rows from `questions`, newest first, with upvote counts
+- reaction counts: count of `reactions` rows per kind
+- discussion card counts: count of `responses` where `kind='discussion'`, grouped by `payload.card`
+- concept-check results after a student answers: count `choice` / `rating` rows per `payload.q`
+- reflections, peer replies, artefacts: list the other students' rows for the running `activity_id`
+To switch the simulator off: `select cron.unschedule('sim_class_tick');`
