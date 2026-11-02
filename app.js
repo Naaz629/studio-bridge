@@ -105,7 +105,8 @@ function slideCard(sl, s) {
 const CA_GRID = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
 const caHead = right => `<div class="cahead">${CA_GRID}<b>Class activity</b><span class="spacer"></span><small>${right}</small><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>`;
 /* every activity starts with only the question and the instructions; the tutor chooses to show the results */
-const resShown = () => !!(A && A.rs && A.rs[A.q || 0]);
+const resKey = () => (A && A.type === 'Concept Development' ? (A.q || 0) : 0);
+const resShown = () => !!(A && A.rs && A.rs[resKey()]);
 const resBtn = () => `<button type="button" class="resbtn" data-a="showres" aria-pressed="${resShown()}">${resShown() ? 'Hide results' : 'Show results'}</button>`;
 const caMeta = (type, chip) => `<div class="cameta"><small>${esc(type)}</small><span class="cachip"><i></i>${esc(chip)}</span>${resBtn()}</div>`;
 function discussionCard(s, f, m, p) {
@@ -627,7 +628,7 @@ document.addEventListener('click', e => {
       break;
     case 'next':
       if (A && A.type === 'Artefact upload') {
-        const n = artItems(s).length; A.hold = Date.now();
+        const n = artVisible(s).length; A.hold = Date.now();
         if ((A.q || 0) < n - 1) A.q = (A.q || 0) + 1;
         else if (!L.warnNext) {
           /* last artefact: warn once before moving on to the next slide */
@@ -714,7 +715,11 @@ document.addEventListener('click', e => {
     case 'unitfill': { const i = document.getElementById('unitUrl'); if (i) i.value = UNIT_EXAMPLE; return; }
     case 'unitgo': doUnitImport(); return;
     case 'captoggle': Cap.toggle(); return;
-    case 'showres': A.rs = A.rs || {}; A.rs[A.q || 0] = !A.rs[A.q || 0]; break;
+    case 'showres':
+      A.rs = A.rs || {}; A.rs[resKey()] = !A.rs[resKey()];
+      // artefacts: stop the slideshow and land on the first student's artefact; hiding the results goes back to the examples
+      if (A.type === 'Artefact upload') { A.hold = Date.now(); A.q = A.rs[resKey()] ? artItems(s).filter(x => x.ex).length : 0; }
+      break;
     case 'cdretry': retryCD(s, s.pos); break;
     case 'classcode': { if (e.shiftKey && !confirm('Start a new class with a new code? Students will need the new code.')) return; if (e.shiftKey) { Sync.newClass().then(() => toast('New class code ' + Sync.code)); return; } try { navigator.clipboard.writeText(Sync.code); } catch (x) {} toast('Class code ' + Sync.code + ' copied. Students enter it on the Student UI.'); return; }
     case 'rfretry': retryRF(s, s.pos); break;
@@ -928,10 +933,16 @@ setInterval(() => {
   const l = document.getElementById('qaList'); if (l) { const top = l.scrollTop; l.innerHTML = qaListHTML(s); l.scrollTop = top; }
 }, 4500);
 
+/* with the results shown, the tutor steps through the artefacts with the arrow keys too */
+document.addEventListener('keydown', e => {
+  if (V !== 'live' || !A || A.type !== 'Artefact upload' || !resShown() || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+  const n = artVisible(S()).length; A.hold = Date.now(); A.q = Math.max(0, Math.min(n - 1, (A.q || 0) + (e.key === 'ArrowRight' ? 1 : -1))); render(); e.preventDefault();
+});
 /* the slideshow plays by itself unless the tutor has stopped it; students' uploads arrive one by one */
 setInterval(() => {
   if (Sync.on) return;
-  if (!A || A.type !== 'Artefact upload' || V !== 'live' || artHeld()) return;
+  if (!A || A.type !== 'Artefact upload' || V !== 'live' || artHeld() || resShown()) return;
   const n = artVisible(S()).length; A.q = ((A.q || 0) + 1) % n; render();
 }, 6000);
 setInterval(() => {
