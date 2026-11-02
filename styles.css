@@ -1558,3 +1558,12 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 #qp .qfoot2 .qslide{height:28px;padding:0 4px!important;gap:4px!important;font-size:9px!important;font-weight:550!important;color:#456045!important;border-radius:6px}
 #qp .qfoot2 .qslide svg{width:13px;height:13px}
 #qp .qfoot2 .qslide i{font-size:11px}
+
+/* the bulb: green and filled, one fixed button at the top-right that stays put whether the Questions panel is open or closed */
+.bulb path[fill="#f7d63a"]{fill:#3e6748}
+.bulb path[fill="#f2b705"]{fill:#2f5140}
+.bulb g[stroke="#f5cf2a"]{stroke:#3e6748}
+.bulb g[fill="#5b5b5b"]{fill:#2f5140}
+.livewrap .qopen,.livewrap:has(.sess2.qclosed) .qopen{display:grid!important;place-items:center;position:fixed!important;top:13px;right:16px;margin:0!important;z-index:12;width:34px;height:34px}
+#qp .rhbulb{display:none!important}
+#qp .rhead{padding-right:62px!important}
