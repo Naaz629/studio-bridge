@@ -223,7 +223,7 @@ function planStrip(sl, s) {
     const thumb = cur.img ? `<img src="${esc(cur.img)}" alt="" draggable="false">` : cur.text ? `<div class="ttext"><b>${esc(cur.t)}</b><span>${esc((cur.text.split(String.fromCharCode(10))[1] || ''))}</span></div>` : `<div class="ttext"><b>${esc(cur.t || 'Slide ' + (it.i + 1))}</b></div>`;
     return gap(p) + `<div class="tile slide ${p === s.pos ? 'on' : ''}" data-a="tile" data-i="${p}" data-ins="${p + 1}" title="${esc(cur.t || '')}"><div class="tthumb">${thumb}</div><small class="tnum">${pad(p + 1)}</small></div>`;
   }).join('') + gap(f.length);
-  return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><h2 class="phead">Studio flow</h2><div class="tiles">${tiles}</div>
+  return `<section class="plan2 ${L.plan ? '' : 'collapsed'}"><div class="planclip"><div class="planbody"><h2 class="phead"><button type="button" class="pheadbtn" data-a="toggleplan" aria-label="Close the Studio flow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/></svg><span>Studio flow</span><i class="caret">▾</i></button></h2><div class="tiles">${tiles}</div>
   <div class="chips2">${ACTIVITY_TYPES.map(a => `<div class="achip2" draggable="true" data-act="${esc(a)}" style="background:${ACT_META[a].color}">${esc(a)}</div>`).join('')}</div></div></div></section>`;
 }
 /* the heading is the title of the slide on screen (the last slide shown while an activity is open) */
