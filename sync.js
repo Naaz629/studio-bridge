@@ -12,10 +12,8 @@ const Sync = (() => {
   let lastKey = '', timer = null;
 
   const newCode = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for (let i = 0; i < 4; i++) c += a[Math.floor(Math.random() * a.length)]; return c; };
-  function pickCode(fresh) {
-    const q = new URLSearchParams(location.search).get('code'); if (q && !fresh) return q.toUpperCase();
-    try { const k = localStorage.getItem('sb-class-code'); if (k && !fresh) return k; const c = newCode(); localStorage.setItem('sb-class-code', c); return c; } catch (e) { return newCode(); }
-  }
+  /* this is a demo: everyone joins the same class, so nobody has to type a code (add ?code=XXXX to try a private class) */
+  function pickCode() { const q = new URLSearchParams(location.search).get('code'); return q ? q.toUpperCase() : 'DEMO'; }
   const tick = () => { if (typeof V !== 'undefined' && V === 'live' && typeof renderQP === 'function') renderQP(); };
   const refresh = () => { if (typeof render === 'function' && typeof V !== 'undefined' && V === 'live') render(); };
   const err = (what, e) => { me.error = what + ': ' + ((e && e.message) || e); console.warn('[sync]', me.error); };
@@ -73,7 +71,8 @@ const Sync = (() => {
     if (!window.supabase || /[?&]nosync/.test(location.search)) return;
     try {
       if (!me.client) me.client = window.supabase.createClient(URL, KEY, { realtime: { params: { eventsPerSecond: 10 } } });
-      const c = me.client; me.code = pickCode(fresh);
+      const c = me.client; me.code = pickCode();
+      if (me.code === 'DEMO') await c.rpc('demo_fresh', { c: 'DEMO' });   // a new test starts clean when the last one ended a while ago
       const up = await c.from('sessions').upsert({ code: me.code, unit: S().code, week: S().liveWeek }, { onConflict: 'code', ignoreDuplicates: false });
       if (up.error) throw up.error;
       me.on = true; me.error = null; lastKey = '';
