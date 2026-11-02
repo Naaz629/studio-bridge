@@ -19,15 +19,16 @@ const Cap = (() => {
         if (!out) st.noBuiltIn = true;   // not usable here: do not wait for it again
       }
     } catch (e) { out = ''; st.noBuiltIn = true; }
-    if (!out) {
+    for (let attempt = 0; attempt < 2 && !out; attempt++) {   // the free service now and then answers late or not at all: try twice
+      if (attempt) await new Promise(r => setTimeout(r, 700));
       try {
         const pair = (from === 'zh' ? 'zh-CN' : from) + '|' + (to === 'zh' ? 'zh-CN' : to);
-        const r = await timeout(fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text.slice(0, 450)) + '&langpair=' + encodeURIComponent(pair)), 3500);
-        const j = r && r.json ? await r.json() : null; out = (j && j.responseData && j.responseData.translatedText) || '';
+        const r = await timeout(fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text.slice(0, 450)) + '&langpair=' + encodeURIComponent(pair)), 4000);
+        const j = r && r.json ? await r.json() : null;
+        out = j && +j.responseStatus === 200 ? (j.responseData && j.responseData.translatedText) || '' : '';
         if (/MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(out)) out = '';
       } catch (e) { out = ''; }
-    }
-    if (out) { cache.set(key, out); if (cache.size > 200) cache.delete(cache.keys().next().value); }
+    }    if (out) { cache.set(key, out); if (cache.size > 200) cache.delete(cache.keys().next().value); }
     return out;
   }
 
@@ -47,7 +48,7 @@ const Cap = (() => {
   /* ---- what the tutor sees ---- */
   function esc(t) { return String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch])); }
   function draw() {
-    const host = document.querySelector('.livewrap'); if (!host) return;
+    const host = document.querySelector('.livewrap .left') || document.querySelector('.livewrap'); if (!host) return;
     let el = document.getElementById('livecap');
     const recent = st.last && Date.now() - st.last.at < 12000;
     if (!st.on || (!st.interim && !recent)) { if (el) el.remove(); return; }

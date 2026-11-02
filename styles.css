@@ -1587,3 +1587,28 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 #livecap .lc-interim{opacity:.7;font-style:italic;font-weight:500}
 #livecap .lc-src{font-size:12px;opacity:.7}
 .livewrap{position:relative}
+
+/* Q&A session: no number rings beside the answers */
+.qanums{display:none!important}
+.qaline{display:block!important}
+
+.livewrap .left{position:relative}
+#livecap{bottom:62px!important}
+
+/* Q&A: the question card, bigger (same look as the Student UI's question card) */
+.qa-bigcard{margin-top:10px;padding:22px 26px 14px;border-radius:18px;background:rgba(255,255,255,.64);border:1px solid rgba(52,75,53,.09);box-shadow:0 2px 6px rgba(52,75,53,.035);max-width:760px}
+.qa-bigcard.done{background:#e7eee2;border-color:rgba(91,123,76,.19)}
+.qa-bigcard .qbh{display:flex;align-items:center;gap:14px}
+.qa-bigcard .qav{width:52px!important;height:52px!important;font-size:15px!important;line-height:1!important}
+.qa-bigcard .qwho b{display:block;font-size:18px!important;line-height:1.25!important;font-weight:700!important}
+.qa-bigcard .qwho small{font-size:14px!important;line-height:1.3!important;color:#73796e}
+.qa-bigcard .qtick{width:30px!important;height:30px!important;margin-left:auto;display:grid;place-items:center;color:#456045!important;background:none!important}
+.qa-bigcard .qtick svg{width:22px;height:22px}
+.qa-bigcard .qbt{margin:20px 0 6px;font-size:clamp(20px,2.1vw,26px);line-height:1.35;font-weight:550;color:var(--ink)}
+.qa-bigcard .qbo{display:block;font-size:13px;color:#73796e;margin-bottom:4px}
+.qa-bigcard .qbf{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid rgba(52,75,53,.1);color:#73796e;font-size:15px}
+.qa-bigcard .qbv,.qa-bigcard .qbs{display:flex;align-items:center;gap:7px}
+.qa-bigcard .qbs{color:#456045;font-weight:550}
+.qa-bigcard .qbs i{font-style:normal;font-size:18px}
+.qacard .qaline{margin-top:8px;max-width:760px}
+.qacard .qalist{display:flex;flex-direction:column;gap:8px}

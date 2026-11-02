@@ -124,14 +124,14 @@ const Sync = (() => {
   /* the tutor marked a question answered / open again, or wrote an answer */
   /* the whole state object is written each time, so the latest caption is never lost when the slide changes (and the reverse) */
   let cur = {};
-  function writeState(patch) {
-    if (!me.on) return; cur = Object.assign(cur, patch, { updatedAt: new Date().toISOString() });
+  function writeState(patch, bump = true) {   // a caption must not look like a new slide or activity command, so it keeps the old updatedAt
+    if (!me.on) return; cur = Object.assign(cur, patch); if (bump || !cur.updatedAt) cur.updatedAt = new Date().toISOString();
     me.client.from('sessions').update({ state: cur }).eq('code', me.code).then(r => r.error && err('state', r.error.message));
   }
   /* a live caption: English + Chinese, shown to students */
   function setCaption(c) {
     if (!me.on || !c) return;
-    writeState({ caption: { en: c.en, zh: c.zh, src: c.src, lang: c.lang, at: new Date(c.at).toISOString() } });
+    writeState({ caption: { en: c.en, zh: c.zh, src: c.src, lang: c.lang, at: new Date(c.at).toISOString() } }, false);
     log('caption', { lang: c.lang, en: c.en });
   }
   function setQuestion(q) {

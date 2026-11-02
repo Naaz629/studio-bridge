@@ -140,18 +140,26 @@ function qaReplies(q) {
   }
   return q.replies;
 }
+/* the replies under the question that is on screen */
 function qaListHTML(s) {
-  const list = sortedQs(s), at = Math.max(0, Math.min(list.length - 1, A && A.q || 0)), sel = list[at] && list[at].id;
+  const list = sortedQs(s), at = Math.max(0, Math.min(list.length - 1, A && A.q || 0)), q = list[at];
+  if (!q) return '<div class="none">No questions yet.</div>';
   const nm = (n, i) => O.anon ? 'Student ' + String.fromCharCode(65 + i) : n;
-  return list.map((q, i) => [q, i]).filter(([q]) => q.id === sel).map(([q, i]) => `<div class="qablk sel" data-qb="${q.id}"><div class="qahd"><span class="qanum">${pad(i + 1)}</span><div class="qatxt"><b>${esc(q.tr || q.text)}</b>${q.tr ? `<small>Original: ${esc(q.text)}</small>` : ''}<small>${esc(q.who)} · ${agoLabel(q)}</small></div>${q.up ? `<span class="asked">${q.up}</span>` : ''}</div>
-    <div class="qaans">${qaReplies(q).map((r, k) => `<div class="qar"><b>${esc(nm(r.who, k))}</b><p>${esc(r.en || r.t)}</p>${r.lang ? origHTML(r.t, r.lang) : ''}</div>`).join('')}${q.ans ? `<div class="qar tutor"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}</div></div>`).join('') || '<div class="none">No questions yet.</div>';
+  const rows = qaReplies(q).map((r, k) => `<div class="qar"><b>${esc(nm(r.who, k))}</b><p>${esc(r.en || r.t)}</p>${r.lang ? origHTML(r.t, r.lang) : ''}</div>`).join('') + (q.ans ? `<div class="qar tutor"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : '');
+  return rows;
+}
+/* the question on screen looks like the question card students see, only bigger */
+function qaBigCard(q) {
+  const shown = q.tr ? q.tr : q.text, sn = qSlide(q), done = q.st !== 'open';
+  return `<div class="qa-bigcard ${done ? 'done' : ''}"><div class="qbh"><span class="qav av-${qAvatarTone(q)}" aria-hidden="true">${qInitials(q)}</span><div class="qwho"><b>${esc(q.who)}</b><small>${agoLabel(q)}</small></div>${done ? '<span class="qtick" aria-label="Answered"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
+    <p class="qbt">${esc(shown)}</p>${q.tr ? `<small class="qbo">Original · ${esc(q.text)}</small>` : ''}
+    <div class="qbf"><span class="qbv"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>${q.up}</span><span class="qbs"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Slide ${sn}<i>›</i></span></div></div>`;
 }
 function qaCard(s, f, m) {
   const qs = sortedQs(s), at = Math.min(A.q || 0, Math.max(0, qs.length - 1)), q = qs[at];
   return `<div class="card2 actcard classact qacard">${caHead('Question ' + (at + 1) + ' of ' + qs.length)}
-  <div class="cabody">${caMeta('Questions & answers', 'Live · ' + qs.length + ' questions')}<h3 class="cdq">${esc(q ? (q.tr || q.text) : 'No questions yet')}</h3>${q ? `<p class="cdhint">Asked by ${esc(q.who)} · ${agoLabel(q)}</p>` : ''}<small class="calabel">What other students answered</small>
-  <div class="qaline"><div class="qalist" id="qaList">${qaListHTML(s)}</div>
-  <div class="qanums" aria-label="Questions">${qs.map((q2, i) => `<div class="qr ${q2.st !== 'open' ? 'done' : ''} ${q2.seen ? 'seen' : ''} ${at === i ? 'selq' : ''}"><div class="qwrap"><div class="qrow"><button class="qn" data-a="qnum" data-q="${q2.id}" aria-label="Question ${i + 1}">${pad(i + 1)}</button></div></div></div>`).join('')}</div></div></div>
+  <div class="cabody">${caMeta('Questions & answers', 'Live · ' + qs.length + ' questions')}${q ? qaBigCard(q) : '<h3 class="cdq">No questions yet</h3>'}
+  <div class="qaline"><div class="qalist" id="qaList">${qaListHTML(s)}</div></div></div>
   ${navOverlay(at, Math.max(1, qs.length), at > 0 || s.pos > 0, at < qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function qaScroll() {}
