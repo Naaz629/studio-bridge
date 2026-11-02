@@ -25,7 +25,7 @@ const Sync = (() => {
   /* ---- database rows <-> tutor questions ---- */
   function fromRow(r) {
     return { id: qid++, dbId: r.id, who: r.anonymous ? 'Anonymous' : (r.student || 'Student'), av: r.anonymous ? 'lav' : '', text: r.text, tr: r.text_en || undefined,
-      ago: Math.max(0, Math.round((Date.now() - new Date(r.created_at).getTime()) / 60000)), up: r.upvotes || 1, same: 0, st: r.status === 'ans' ? 'ans' : 'open', ans: r.answer || undefined, slide: r.slide, real: true };
+      ago: Math.max(0, Math.round((Date.now() - new Date(r.created_at).getTime()) / 60000)), at: new Date(r.created_at).getTime(), up: r.upvotes || 1, same: 0, st: r.status === 'ans' ? 'ans' : 'open', ans: r.answer || undefined, slide: r.slide, real: true };
   }
   function addQuestion(r) {
     const qs = S().qs; if (qs.some(q => q.dbId === r.id)) return;
@@ -75,7 +75,7 @@ const Sync = (() => {
       if (me.code === 'DEMO') await c.rpc('demo_fresh', { c: 'DEMO' });   // a new test starts clean when the last one ended a while ago
       const up = await c.from('sessions').upsert({ code: me.code, unit: S().code, week: S().liveWeek }, { onConflict: 'code', ignoreDuplicates: false });
       if (up.error) throw up.error;
-      me.on = true; me.error = null; lastKey = '';
+      me.on = true; me.error = null; lastKey = ''; cur = {};
       const beat = () => me.client.from('sessions').update({ tutor_seen: new Date().toISOString() }).eq('code', me.code).then(r => r.error && err('heartbeat', r.error.message));
       beat(); clearInterval(me.beatTimer); me.beatTimer = setInterval(beat, 40000);
       if (me.chan) c.removeChannel(me.chan);
@@ -86,13 +86,26 @@ const Sync = (() => {
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reactions', filter: f }, p => onReaction(p.new))
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'responses', filter: f }, p => onResponse(p.new))
         .subscribe();
+      S().qs.splice(0);   // the shared class is the one list: the tutor and the students see the same questions
       const old = await c.from('questions').select('*').eq('session', me.code).order('created_at');
       if (old.data) old.data.forEach(addQuestion);
+      await loadReactions(); clearInterval(me.recountTimer); me.recountTimer = setInterval(loadReactions, 20000);
       log(fresh ? 'session_started' : 'session_resumed', { unit: S().code, week: S().liveWeek });
       refresh();
     } catch (e) { me.on = false; err('connect', e); }
   }
 
+  /* reaction numbers: the database is the one source for both apps, so they always show the same count */
+  async function loadReactions() {
+    if (!me.on) return;
+    try {
+      const kinds = Object.keys(REACT_MAP);
+      const rs = await Promise.all(kinds.map(k => me.client.from('reactions').select('*', { count: 'exact', head: true }).eq('session', me.code).eq('kind', k)));
+      if (rs.some(r => r.error)) throw rs.find(r => r.error).error;
+      kinds.forEach((k, i) => { S().reactions[REACT_MAP[k]] = rs[i].count || 0; });
+      if (typeof renderQP === 'function' && typeof V !== 'undefined' && V === 'live') renderQP();
+    } catch (e) { err('reactions', e); }
+  }
   /* ---- tutor -> students: slide, activity and the AI-written questions ---- */
   function push() {
     if (!me.on) return; clearTimeout(timer);
@@ -103,17 +116,29 @@ const Sync = (() => {
       const spec = !act ? null : it.act === 'Concept Development' ? { questions: (it.cd && it.cd.state === 'ready' ? it.cd.qs : []) } : it.act === 'Reflection' ? { question: it.rf && it.rf.state === 'ready' ? it.rf.question : '', hint: it.rf && it.rf.hint || '' } : {};
       const key = JSON.stringify([slide, act, spec]); if (key === lastKey) return;
       const first = lastKey === ''; lastKey = key;
-      me.client.from('sessions').update({ state: { slide, activityId: act && act.id, activityKind: act && act.kind, updatedAt: new Date().toISOString() } }).eq('code', me.code).then(r => r.error && err('state', r.error.message));
+      writeState({ slide, activityId: act && act.id, activityKind: act && act.kind });
       if (act) me.client.from('activities').upsert({ id: act.id, session: me.code, kind: act.kind, slide, spec }, { onConflict: 'id' }).then(r => r.error && err('activity', r.error.message));
       if (!first) log(act ? 'activity_started' : 'slide_changed', { slide, activity: act && act.kind });
     }, 350);
   }
   /* the tutor marked a question answered / open again, or wrote an answer */
+  /* the whole state object is written each time, so the latest caption is never lost when the slide changes (and the reverse) */
+  let cur = {};
+  function writeState(patch) {
+    if (!me.on) return; cur = Object.assign(cur, patch, { updatedAt: new Date().toISOString() });
+    me.client.from('sessions').update({ state: cur }).eq('code', me.code).then(r => r.error && err('state', r.error.message));
+  }
+  /* a live caption: English + Chinese, shown to students */
+  function setCaption(c) {
+    if (!me.on || !c) return;
+    writeState({ caption: { en: c.en, zh: c.zh, src: c.src, lang: c.lang, at: new Date(c.at).toISOString() } });
+    log('caption', { lang: c.lang, en: c.en });
+  }
   function setQuestion(q) {
     if (!me.on || !q || !q.dbId) return;
     me.client.from('questions').update({ status: q.st === 'open' ? 'open' : 'ans', answer: q.ans || null }).eq('id', q.dbId).then(r => r.error && err('question', r.error.message));
     log(q.st === 'open' ? 'question_reopened' : 'question_answered', { question: q.dbId });
   }
-  return Object.assign(me, { start, push, log, setQuestion, newClass: () => start(true) });
+  return Object.assign(me, { start, push, log, setQuestion, setCaption, newClass: () => start(true) });
 })();
 window.addEventListener('load', () => setTimeout(() => Sync.start(false), 800));

@@ -32,7 +32,7 @@ function render() {
   const oldStrip = document.querySelector('.planbody .tiles'), keepX = oldStrip ? oldStrip.scrollLeft : 0;
   $('#view').innerHTML = V === 'live' ? live() : overview();
   courseBtn(); mainMenu(); botbar();
-  if (V === 'live') { renderQP(); pulseDots(); syncStrip(keepX); if (A && A.type === 'Q&A Session') qaScroll(); Sync.push(); }
+  if (V === 'live') { renderQP(); pulseDots(); syncStrip(keepX); if (A && A.type === 'Q&A Session') qaScroll(); Sync.push(); Cap.draw(); }
 }
 /* keep the Studio flow strip in step with the main screen: the current tile is always in view, and a manual scroll is kept while nothing changes */
 let stripKey = '';
@@ -131,7 +131,7 @@ const REPLY_BANK = [
   { t: '我觉得应该先和客户确认。', en: 'I think we should check with the client first.', lang: 'Chinese' },
   { t: 'I agree with this question, we have the same problem.' }
 ];
-const sortedQs = s => [...s.qs].sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
+const sortedQs = s => [...s.qs].sort((x, y) => Sync.on ? (y.at || 0) - (x.at || 0) : (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
 function qaReplies(q) {
   if (!q.replies && q.real) q.replies = [];
   if (!q.replies) {
@@ -143,13 +143,13 @@ function qaReplies(q) {
 function qaListHTML(s) {
   const list = sortedQs(s), at = Math.max(0, Math.min(list.length - 1, A && A.q || 0)), sel = list[at] && list[at].id;
   const nm = (n, i) => O.anon ? 'Student ' + String.fromCharCode(65 + i) : n;
-  return list.map((q, i) => [q, i]).filter(([q]) => q.id === sel).map(([q, i]) => `<div class="qablk sel" data-qb="${q.id}"><div class="qahd"><span class="qanum">${pad(i + 1)}</span><div class="qatxt"><b>${esc(q.tr || q.text)}</b>${q.tr ? `<small>Original: ${esc(q.text)}</small>` : ''}<small>${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>${q.up ? `<span class="asked">${q.up}</span>` : ''}</div>
+  return list.map((q, i) => [q, i]).filter(([q]) => q.id === sel).map(([q, i]) => `<div class="qablk sel" data-qb="${q.id}"><div class="qahd"><span class="qanum">${pad(i + 1)}</span><div class="qatxt"><b>${esc(q.tr || q.text)}</b>${q.tr ? `<small>Original: ${esc(q.text)}</small>` : ''}<small>${esc(q.who)} · ${agoLabel(q)}</small></div>${q.up ? `<span class="asked">${q.up}</span>` : ''}</div>
     <div class="qaans">${qaReplies(q).map((r, k) => `<div class="qar"><b>${esc(nm(r.who, k))}</b><p>${esc(r.en || r.t)}</p>${r.lang ? origHTML(r.t, r.lang) : ''}</div>`).join('')}${q.ans ? `<div class="qar tutor"><b>Dr. Priya Nair</b><p>${esc(q.ans)}</p></div>` : ''}</div></div>`).join('') || '<div class="none">No questions yet.</div>';
 }
 function qaCard(s, f, m) {
   const qs = sortedQs(s), at = Math.min(A.q || 0, Math.max(0, qs.length - 1)), q = qs[at];
   return `<div class="card2 actcard classact qacard">${caHead('Question ' + (at + 1) + ' of ' + qs.length)}
-  <div class="cabody">${caMeta('Questions & answers', 'Live · ' + qs.length + ' questions')}<h3 class="cdq">${esc(q ? (q.tr || q.text) : 'No questions yet')}</h3>${q ? `<p class="cdhint">Asked by ${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</p>` : ''}<small class="calabel">What other students answered</small>
+  <div class="cabody">${caMeta('Questions & answers', 'Live · ' + qs.length + ' questions')}<h3 class="cdq">${esc(q ? (q.tr || q.text) : 'No questions yet')}</h3>${q ? `<p class="cdhint">Asked by ${esc(q.who)} · ${agoLabel(q)}</p>` : ''}<small class="calabel">What other students answered</small>
   <div class="qaline"><div class="qalist" id="qaList">${qaListHTML(s)}</div>
   <div class="qanums" aria-label="Questions">${qs.map((q2, i) => `<div class="qr ${q2.st !== 'open' ? 'done' : ''} ${q2.seen ? 'seen' : ''} ${at === i ? 'selq' : ''}"><div class="qwrap"><div class="qrow"><button class="qn" data-a="qnum" data-q="${q2.id}" aria-label="Question ${i + 1}">${pad(i + 1)}</button></div></div></div>`).join('')}</div></div></div>
   ${navOverlay(at, Math.max(1, qs.length), at > 0 || s.pos > 0, at < qs.length - 1 || s.pos < f.length - 1)}</div>`;
@@ -226,7 +226,7 @@ function slideTitle(s, sl, fallback) {
 function live() {
   const s = S(), sl = slidesFor(s), t = s.topics[s.liveWeek]; flowOf(s);
   const qa = A && A.type === 'Q&A Session';
-  return `<div class="livewrap"><div class="crumbbar"><div class="crumbtxt"><small class="crumbeye">${esc(s.code)} Tutorial ${s.liveWeek}</small><h1 class="crumbtitle">${esc(slideTitle(s, sl, t[0]))}</h1><span class="crumbsub">Dr. Priya Nair · 42 students</span></div><span class="spacer"></span>
+  return `<div class="livewrap"><div class="crumbbar"><div class="crumbtxt"><small class="crumbeye">${esc(s.code)} Tutorial ${s.liveWeek}</small><h1 class="crumbtitle">${esc(slideTitle(s, sl, t[0]))}</h1><span class="crumbsub">Dr. Priya Nair · 42 students</span></div><span class="spacer"></span>${Cap.ctlHTML()}
   <button class="qtoggle qopen" data-a="toggleq" aria-label="Show questions" data-tip="Questions &amp; activities"><svg class="bulb" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><g stroke="#f5cf2a" stroke-width="3.4" stroke-linecap="round"><path d="M32 4v6"/><path d="M12.5 12l4.2 4.2"/><path d="M51.5 12l-4.2 4.2"/><path d="M4 31h6"/><path d="M54 31h6"/><path d="M12.5 50l4.2-4.2"/><path d="M51.5 50l-4.2-4.2"/></g><path d="M32 14c-8.3 0-14.5 6-14.5 14 0 5 2.6 8.6 5.2 11.4 1.2 1.3 1.8 2.8 1.8 4.6h15c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-8-6.2-14-14.5-14z" fill="#f7d63a"/><path d="M44 24c1.6 6-1 10.6-4.4 14.4-1.2 1.3-1.8 2.8-1.8 4.6h4.4c0-1.8.6-3.3 1.8-4.6 2.6-2.8 5.2-6.4 5.2-11.4 0-1.2-.2-2.4-.6-3.5z" fill="#f2b705"/><path d="M24 22c1.2-2.6 3.4-4.2 6-4.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".85"/><g fill="#5b5b5b"><rect x="24.5" y="48" width="15" height="3.4" rx="1.7"/><rect x="25.5" y="52.5" width="13" height="3.4" rx="1.7"/><rect x="27.5" y="57" width="9" height="3.4" rx="1.7"/></g></svg><span class="qcount" id="qcount" aria-label="Questions asked">${s.qs.length}</span></button></div>
   <div class="sess2 ${L.qopen || qa ? '' : 'qclosed'} ${qa ? 'qamode' : ''} ${qa && L.qside ? 'qside' : ''}"><section class="left">
   <div class="stagebox" data-ins="${s.pos + 1}">${A ? actCard() : slideCard(sl, s)}</div>${transPanel(s, sl)}${planStrip(sl, s)}</section>
@@ -257,9 +257,11 @@ function qInitials(q) {
   return /^anonymous$/i.test(q.who) ? 'A' : (w[0][0] + (w[1] ? w[1][0] : '')).toUpperCase();
 }
 function qAvatarTone(q) { return /^anonymous$/i.test(q.who) ? 2 : hash(String(q.who)) % 2; }
+/* how long ago a question was asked: counted from the real time when it comes from the shared class */
+function agoLabel(q) { const m = q.at ? Math.max(0, Math.floor((Date.now() - q.at) / 60000)) : (q.ago || 0); return m < 1 ? 'just now' : m + ' min ago'; }
 function renderQP() {
   const el = $('#qp'); if (!el) return;
-  const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
+  const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => Sync.on ? (y.at || 0) - (x.at || 0) : (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
   const nOpen = s.qs.filter(q => q.st === 'open').length, nAns = s.qs.length - nOpen, qf = L.qf === 'open' || L.qf === 'ans' ? L.qf : 'all';
   const head0 = `<div class="rhead" data-a="toggleq" role="button" tabindex="0" aria-label="Close the questions panel"><button class="qtoggle rhbulb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Hide questions" data-tip="Questions &amp; activities">${BULB_SVG}</button><b>Questions</b><i class="cnt">${s.qs.length}</i></div>`;
   const head = head0;
@@ -267,12 +269,12 @@ function renderQP() {
     const open = L.open === q.id && !(A && A.type === 'Q&A Session'), shown = q.tr && !q.showOrig ? q.tr : q.text, sn = qSlide(q);
     return `<div data-qid="${q.id}" class="qr ${q.st !== 'open' ? 'done' : ''} ${q.seen ? 'seen' : ''} ${A && A.type === 'Q&A Session' && (A.q || 0) === i ? 'selq' : ''}">
     <div class="qwrap"><div class="qrow qhead"><span class="qav av-${qAvatarTone(q)}" aria-hidden="true">${qInitials(q)}</span>
-      <div class="qwho"><b>${esc(q.who)}</b><small>${q.ago ? q.ago + ' min ago' : 'just now'}</small></div>
+      <div class="qwho"><b>${esc(q.who)}</b><small>${agoLabel(q)}</small></div>
       ${q.st !== 'open' ? '<span class="qtick" title="Answered" aria-label="Answered"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
     <button class="qtxt qtext2" data-a="qans" data-q="${q.id}" aria-pressed="${q.st !== 'open'}" title="Click to mark as answered"><span class="qt ${q.tr && q.showOrig ? 'zhtxt' : ''}">${esc(shown)}</span></button>
     ${q.tr ? `<button class="qoriglink" data-a="qorig" data-q="${q.id}">${q.showOrig ? 'English' : 'Original'}</button>` : ''}
     <div class="qfoot2"><button class="qvote ${q.voted ? 'on' : ''}" data-a="qup" data-q="${q.id}" aria-label="Upvote this question" aria-pressed="${!!q.voted}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>${q.up + (q.voted ? 1 : 0)}</span></button><span class="spacer"></span><button class="qslide" data-a="qslide" data-n="${sn}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Slide ${sn}</span><i>›</i></button></div></div>
-    ${open ? `<div class="qd"><div class="meta">${esc(q.who)} · ${q.ago ? q.ago + ' min ago' : 'just now'}</div>${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`;
+    ${open ? `<div class="qd"><div class="meta">${esc(q.who)} · ${agoLabel(q)}</div>${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`;
   }).join('') || '<div class="none">No questions yet.</div>'}</div>` + `<div class="rxfoot" aria-label="Class reactions">${EMOJIS.map(e => `<span class="rx" data-k="${e.k}" data-tip="${e.l}"><i>${e.e}</i><b>${s.reactions[e.k]}</b></span>`).join('')}</div>`;
   const bd = $('#bdg'); if (bd) bd.textContent = unanswered(); const qc = $('#qcount'); if (qc) qc.textContent = S().qs.length;
 }
@@ -698,6 +700,7 @@ document.addEventListener('click', e => {
     case 'unitimport': L.menu = false; mainMenu(); openUnitImport(); return;
     case 'unitfill': { const i = document.getElementById('unitUrl'); if (i) i.value = UNIT_EXAMPLE; return; }
     case 'unitgo': doUnitImport(); return;
+    case 'captoggle': Cap.toggle(); return;
     case 'cdretry': retryCD(s, s.pos); break;
     case 'classcode': { if (e.shiftKey && !confirm('Start a new class with a new code? Students will need the new code.')) return; if (e.shiftKey) { Sync.newClass().then(() => toast('New class code ' + Sync.code)); return; } try { navigator.clipboard.writeText(Sync.code); } catch (x) {} toast('Class code ' + Sync.code + ' copied. Students enter it on the Student UI.'); return; }
     case 'rfretry': retryRF(s, s.pos); break;
@@ -745,7 +748,7 @@ document.addEventListener('submit', e => {
   e.preventDefault(); const q = S().qs.find(x => x.id == e.target.dataset.q), v = e.target.querySelector('input').value.trim();
   if (!v) return; q.ans = v; q.st = 'ans'; L.reply = null; Sync.setQuestion(q); toast('Answer posted to the class'); renderQP();
 });
-document.addEventListener('change', e => { if (e.target.id === 'wk') { O.w = +e.target.value; O.open = null; render(); } });
+document.addEventListener('change', e => { const cl = e.target.closest && e.target.closest('select[data-sel="caplang"]'); if (cl) { Cap.setLang(cl.value); return; } if (e.target.id === 'wk') { O.w = +e.target.value; O.open = null; render(); } });
 $('#slideFile').addEventListener('change', async e => {
   const files = [...e.target.files], s = S(); e.target.value = ''; if (!files.length) return;
   toast('Reading slides…');
