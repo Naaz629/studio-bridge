@@ -9,7 +9,7 @@ const Sync = (() => {
   const REACT_MAP = { got: 'und', think: 'con', confused: 'qst', insight: 'idea', applause: 'great' };   // student kind -> tutor emoji
   const TUTOR = 'Dr. Priya Nair';
   const me = { on: false, real: 0, code: null, client: null, error: null };
-  let lastKey = '', timer = null;
+  let lastKey = '', lastQa = null, timer = null;
 
   const newCode = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for (let i = 0; i < 4; i++) c += a[Math.floor(Math.random() * a.length)]; return c; };
   /* this is a demo: everyone joins the same class, so nobody has to type a code (add ?code=XXXX to try a private class) */
@@ -27,9 +27,17 @@ const Sync = (() => {
     return { id: qid++, dbId: r.id, who: r.anonymous ? 'Anonymous' : (r.student || 'Student'), av: r.anonymous ? 'lav' : '', text: r.text, tr: r.text_en || undefined,
       ago: Math.max(0, Math.round((Date.now() - new Date(r.created_at).getTime()) / 60000)), at: new Date(r.created_at).getTime(), up: r.upvotes || 1, same: 0, st: r.status === 'ans' ? 'ans' : 'open', ans: r.answer || undefined, slide: r.slide, real: true };
   }
+  /* a question written in Chinese is always shown in English first (with "Show original"); the English is also saved for the students */
+  function translateQuestion(q, r) {
+    if (q.tr || !/[\u3400-\u9fff]/.test(q.text) || typeof Cap === 'undefined') return;
+    Cap.translate(q.text, 'zh', 'en').then(en => {
+      if (!en) return; q.tr = en; tick(); refresh();
+      me.client.from('questions').update({ text_en: en, lang: 'zh' }).eq('id', r.id).is('text_en', null).then(x => x.error && err('translate', x.error.message));
+    });
+  }
   function addQuestion(r) {
     const qs = S().qs; if (qs.some(q => q.dbId === r.id)) return;
-    qs.push(fromRow(r)); me.real++; tick(); refresh();
+    const q = fromRow(r); qs.push(q); me.real++; translateQuestion(q, r); tick(); refresh();
   }
   function updateQuestion(r) {
     const q = S().qs.find(x => x.dbId === r.id); if (!q) return addQuestion(r);
@@ -114,6 +122,9 @@ const Sync = (() => {
       let slide = null; for (let p = s.pos; p >= 0; p--) if (f[p].k === 's') { slide = f[p].i + 1; break; }
       const act = it.k === 'a' ? { id: me.code + '-a' + s.pos, kind: ACT_KIND[it.act] || it.act } : null;
       const spec = !act ? null : it.act === 'Concept Development' ? { questions: (it.cd && it.cd.state === 'ready' ? it.cd.qs : []) } : it.act === 'Reflection' ? { question: it.rf && it.rf.state === 'ready' ? it.rf.question : '', hint: it.rf && it.rf.hint || '' } : {};
+      // the question the tutor is showing in the Q&A: students see the same card (a quiet update, not a slide or activity command)
+      const qaId = act && it.act === 'Q&A Session' ? ((sortedQs(s)[(A && A.q) || 0] || {}).dbId || null) : null;
+      if (qaId !== lastQa) { lastQa = qaId; writeState({ qaQuestion: qaId }, false); }
       const key = JSON.stringify([slide, act, spec]); if (key === lastKey) return;
       const first = lastKey === ''; lastKey = key;
       writeState({ slide, activityId: act && act.id, activityKind: act && act.kind });

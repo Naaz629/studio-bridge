@@ -104,12 +104,15 @@ function slideCard(sl, s) {
 }
 const CA_GRID = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
 const caHead = right => `<div class="cahead">${CA_GRID}<b>Class activity</b><span class="spacer"></span><small>${right}</small><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>`;
-const caMeta = (type, chip) => `<div class="cameta"><small>${esc(type)}</small><span class="cachip"><i></i>${esc(chip)}</span></div>`;
+/* every activity starts with only the question and the instructions; the tutor chooses to show the results */
+const resShown = () => !!(A && A.rs && A.rs[A.q || 0]);
+const resBtn = () => `<button type="button" class="resbtn" data-a="showres" aria-pressed="${resShown()}">${resShown() ? 'Hide results' : 'Show results'}</button>`;
+const caMeta = (type, chip) => `<div class="cameta"><small>${esc(type)}</small><span class="cachip"><i></i>${esc(chip)}</span>${resBtn()}</div>`;
 function discussionCard(s, f, m, p) {
   const cards = DISCUSS_CARDS.map(c => `<div class="dcard" data-card="${c.k}" data-tip="${c.label} · ${s.cards[c.k]} students"><img src="${c.img}" alt="${c.label}"><span class="dcount">${s.cards[c.k]}</span></div>`).join('');
   const n = DISCUSS_CARDS.reduce((a, c) => a + s.cards[c.k], 0);
-  return `<div class="card2 actcard cdcard classact discuss">${caHead('Step ' + (s.pos + 1) + ' of ' + f.length)}
-  <div class="cabody">${caMeta('Discussion', 'Live · ' + n + ' cards played')}<h3 class="cdq">Discuss with your peers.</h3><p class="cdhint">Use your cards to share what you think.</p><div class="dwrap"><div class="dcards">${cards}</div></div></div>
+  return `<div class="card2 actcard cdcard classact discuss ${resShown() ? '' : 'hideres'}">${caHead('Step ' + (s.pos + 1) + ' of ' + f.length)}
+  <div class="cabody">${caMeta('Discussion', resShown() ? 'Live · ' + n + ' cards played' : 'Live')}<h3 class="cdq">Discuss with your peers.</h3><p class="cdhint">Use your cards to share what you think.</p><div class="dwrap"><div class="dcards">${cards}</div></div></div>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
 /* the question list for the running activity (Concept Development comes from Bloom's taxonomy) */
@@ -159,7 +162,7 @@ function qaCard(s, f, m) {
   const qs = sortedQs(s), at = Math.min(A.q || 0, Math.max(0, qs.length - 1)), q = qs[at];
   return `<div class="card2 actcard classact qacard">${caHead('Question ' + (at + 1) + ' of ' + qs.length)}
   <div class="cabody">${caMeta('Questions & answers', 'Live · ' + qs.length + ' questions')}${q ? qaBigCard(q) : '<h3 class="cdq">No questions yet</h3>'}
-  <div class="qaline"><div class="qalist" id="qaList">${qaListHTML(s)}</div></div></div>
+  ${resShown() ? `<div class="qaline"><div class="qalist" id="qaList">${qaListHTML(s)}</div></div>` : ''}</div>
   ${navOverlay(at, Math.max(1, qs.length), at > 0 || s.pos > 0, at < qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
 function qaScroll() {}
@@ -182,12 +185,13 @@ function aboutPersona(s) {
 }
 const artExamples = s => aboutPersona(s) ? PERSONA_EXAMPLES : EXAMPLE_ARTS;
 const artPool = s => aboutPersona(s) ? PERSONA_UPLOADS : (s.artefacts || []).slice(2);
+const artVisible = s => resShown() ? artItems(s) : artItems(s).filter(x => x.ex);
 function artItems(s) { return artExamples(s).map(([t, src]) => ({ ex: true, t, src })).concat((s.liveArts || []).map(e => ({ n: artLabel(e), t: e[1], src: e[2] }))); }
 function artefactCard(s, f, m) {
-  const items = artItems(s), at = Math.max(0, Math.min(items.length - 1, A.q || 0)), it = items[at];
+  const items = artVisible(s), at = Math.max(0, Math.min(items.length - 1, A.q || 0)), it = items[at];
   const dots = items.map((x, i) => `<button class="artdot ${i === at ? 'on' : ''}" data-a="artpick" data-i="${i}" aria-label="Show ${esc(x.t)} ${i + 1}"></button>`).join('');
   return `<div class="card2 actcard artcard classact">${caHead('Artefact ' + (at + 1) + ' of ' + items.length)}
-  <div class="cameta artmeta"><small>Upload your artefact</small><span class="cachip"><i></i>${(s.liveArts || []).length} uploaded${artHeld() ? ' · Stopped' : ''}</span></div>
+  <div class="cameta artmeta"><small>Upload your artefact</small><span class="cachip"><i></i>${resShown() ? (s.liveArts || []).length + ' uploaded' : 'Live'}${artHeld() ? ' · Stopped' : ''}</span>${resBtn()}</div>
   <div class="artshow" id="artLive" data-a="artpause" title="Click to stop here">${artSlideHTML(it)}</div>
   <div class="artbar"><div class="artdots">${dots}</div></div>
   ${navOverlay(at, items.length, true, true)}</div>`;
@@ -280,7 +284,7 @@ function renderQP() {
       <div class="qwho"><b>${esc(q.who)}</b><small>${agoLabel(q)}</small></div>
       ${q.st !== 'open' ? '<span class="qtick" title="Answered" aria-label="Answered"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
     <button class="qtxt qtext2" data-a="qans" data-q="${q.id}" aria-pressed="${q.st !== 'open'}" title="Click to mark as answered"><span class="qt ${q.tr && q.showOrig ? 'zhtxt' : ''}">${esc(shown)}</span></button>
-    ${q.tr ? `<button class="qoriglink" data-a="qorig" data-q="${q.id}">${q.showOrig ? 'English' : 'Original'}</button>` : ''}
+    ${q.tr ? `<button class="qoriglink" data-a="qorig" data-q="${q.id}">${q.showOrig ? 'Show English' : 'Show original'}</button>` : ''}
     <div class="qfoot2"><button class="qvote ${q.voted ? 'on' : ''}" data-a="qup" data-q="${q.id}" aria-label="Upvote this question" aria-pressed="${!!q.voted}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>${q.up + (q.voted ? 1 : 0)}</span></button><span class="spacer"></span><button class="qslide" data-a="qslide" data-n="${sn}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Slide ${sn}</span><i>›</i></button></div></div>
     ${open ? `<div class="qd"><div class="meta">${esc(q.who)} · ${agoLabel(q)}</div>${q.st !== 'open' ? `<div class="qacts"><button class="sm" data-a="reopen" data-q="${q.id}">Reopen</button></div>` : ''}</div>` : ''}</div>`;
   }).join('') || '<div class="none">No questions yet.</div>'}</div>` + `<div class="rxfoot" aria-label="Class reactions">${EMOJIS.map(e => `<span class="rx" data-k="${e.k}" data-tip="${e.l}"><i>${e.e}</i><b>${s.reactions[e.k]}</b></span>`).join('')}</div>`;
@@ -617,7 +621,7 @@ document.addEventListener('click', e => {
     case 'toggleq': { if (A && A.type === 'Q&A Session') { L.qside = !L.qside; a.setAttribute('aria-pressed', L.qside); document.querySelector('.sess2')?.classList.toggle('qside', L.qside); return; } L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev':
-      if (A && A.type === 'Artefact upload') { const n = artItems(s).length; A.q = Math.max(0, (A.q || 0) - 1); A.hold = Date.now(); }
+      if (A && A.type === 'Artefact upload') { const n = artVisible(s).length; A.q = Math.max(0, (A.q || 0) - 1); A.hold = Date.now(); }
       else if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1);
       break;
     case 'next':
@@ -709,6 +713,7 @@ document.addEventListener('click', e => {
     case 'unitfill': { const i = document.getElementById('unitUrl'); if (i) i.value = UNIT_EXAMPLE; return; }
     case 'unitgo': doUnitImport(); return;
     case 'captoggle': Cap.toggle(); return;
+    case 'showres': A.rs = A.rs || {}; A.rs[A.q || 0] = !A.rs[A.q || 0]; break;
     case 'cdretry': retryCD(s, s.pos); break;
     case 'classcode': { if (e.shiftKey && !confirm('Start a new class with a new code? Students will need the new code.')) return; if (e.shiftKey) { Sync.newClass().then(() => toast('New class code ' + Sync.code)); return; } try { navigator.clipboard.writeText(Sync.code); } catch (x) {} toast('Class code ' + Sync.code + ' copied. Students enter it on the Student UI.'); return; }
     case 'rfretry': retryRF(s, s.pos); break;
@@ -873,9 +878,9 @@ function rfCard(s, f, m) {
   if (rf.state !== 'ready') return rfEmpty(s, f, m, rf);
   const r = rfRes(rf);
   return `<div class="card2 actcard cdcard classact reflect">${caHead('Reflection')}
-  <div class="cabody"><div class="cameta"><small>Reflection</small><span class="cachip"><i></i>Live · ${r.n} reflections</span></div>
+  <div class="cabody"><div class="cameta"><small>Reflection</small><span class="cachip"><i></i>${resShown() ? 'Live · ' + r.n + ' reflections' : 'Live'}</span>${resBtn()}</div>
   <h3 class="cdq">${esc(rf.question)}</h3>${rf.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(rf.hint)}</b></p>` : ''}
-  <div id="rfAns">${rfAnsHTML(rf)}</div>${peerHTML(flowOf(s)[s.pos])}</div>
+  ${resShown() ? `<div id="rfAns">${rfAnsHTML(rf)}</div>${peerHTML(flowOf(s)[s.pos])}` : ''}</div>
   <span class="bloomchip">${esc(rf.source)}</span><button class="rfnew" data-a="rfretry" data-tip="Ask the AI for a different question">↻ New question</button>
   ${navOverlay(0, 1, s.pos > 0, s.pos < f.length - 1)}</div>`;
 }
@@ -895,9 +900,9 @@ function cdCard(s, f, m) {
   const q = cd.qs[Math.min(A.q, cd.qs.length - 1)];
   const rs = ensureRes(q), n = q.type === 'mc' || q.type === 'scale' ? rs.counts.reduce((x, y) => x + y, 0) : rs.n;
   return `<div class="card2 actcard cdcard classact"><div class="cahead"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><b>Class activity</b><span class="spacer"></span><small>Question ${A.q + 1} of ${cd.qs.length}</small><button class="cdeditbtn" data-a="cdedit" aria-label="Edit questions" data-tip="Edit questions">✎</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
-  <div class="cabody"><div class="cameta"><small>${esc(TYPE_NAMES[q.type] || '')}</small><span class="cachip"><i></i>Live · ${n} responses</span></div>
+  <div class="cabody"><div class="cameta"><small>${esc(TYPE_NAMES[q.type] || '')}</small><span class="cachip"><i></i>${resShown() ? 'Live · ' + n + ' responses' : 'Live'}</span>${resBtn()}</div>
   <h3 class="cdq">${esc(q.text)}</h3>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}
-  <small class="calabel">What the class answered</small><div id="cdAns">${answersHTML(q)}</div>${peerHTML(flowOf(s)[s.pos])}</div>
+  ${resShown() ? `<small class="calabel">What the class answered</small><div id="cdAns">${answersHTML(q)}</div>${peerHTML(flowOf(s)[s.pos])}` : ''}</div>
   <span class="bloomchip">${esc(q.label)}</span>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }
@@ -926,7 +931,7 @@ setInterval(() => {
 setInterval(() => {
   if (Sync.on) return;
   if (!A || A.type !== 'Artefact upload' || V !== 'live' || artHeld()) return;
-  const n = artItems(S()).length; A.q = ((A.q || 0) + 1) % n; render();
+  const n = artVisible(S()).length; A.q = ((A.q || 0) + 1) % n; render();
 }, 6000);
 setInterval(() => {
   if (Sync.on) return;
