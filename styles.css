@@ -1569,3 +1569,8 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 #qp .rhead{padding-right:62px!important}
 
 .livewrap:has(.sess2:not(.qclosed)) .qopen .qcount{display:none}
+
+/* the bulb button looks like the Student UI's glass toggle */
+.livewrap .qopen,.livewrap:has(.sess2.qclosed) .qopen{top:12px!important;right:14px!important;width:36px!important;height:36px!important;border:1px solid rgba(255,255,255,.85)!important;border-radius:12px!important;background:linear-gradient(145deg,rgba(255,255,255,.8),rgba(233,240,228,.65))!important;-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4);box-shadow:0 3px 10px rgba(38,48,38,.1),inset 0 1px 0 #fff,0 0 0 .5px var(--line)!important}
+.livewrap .qopen:hover{background:rgba(255,255,255,.9)!important}
+.livewrap .qopen svg{width:24px;height:24px}
