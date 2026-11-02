@@ -1529,3 +1529,32 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .codebig span{font:600 12px var(--sans);padding:7px 12px;border-radius:9px;background:#e5ebe0;color:var(--green)}
 .codebig:hover span{background:#d6e1cf}
 .ovtop{align-items:center}
+
+/* ===== Questions column = the Student UI's questions pane (same sizes, colours and spacing), with the tutor's bulb icon ===== */
+#qp{padding:0 0 62px!important;gap:0!important}
+#qp .rhead{height:60px;margin:0!important;padding:16px 18px!important;gap:8px!important;background:none!important;border-bottom:1px solid rgba(52,75,53,.12)!important}
+#qp .rhead b{font-size:12px!important;font-weight:650!important;letter-spacing:0!important;line-height:18px!important}
+#qp .rhead .cnt{min-width:0!important;height:17px;padding:0 6px!important;border-radius:9px!important;background:#e5ebe0!important;color:#344b35!important;font:700 9px/17px var(--sans)!important;font-style:normal}
+#qp .rhbulb{width:26px!important;height:26px!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+#qp .rhbulb svg{width:24px!important;height:24px!important}
+#qp .qrows{margin:0!important;padding:10px 12px!important;gap:0!important}
+#qp .qrows .qr{margin:0 0 9px!important;padding:13px!important;border-radius:11px!important;background:rgba(255,255,255,.64)!important;border:1px solid rgba(52,75,53,.09)!important;box-shadow:0 2px 6px rgba(52,75,53,.035)!important}
+#qp .qrows .qr.done{background:#e7eee2!important;border-color:rgba(91,123,76,.19)!important}
+#qp .qrows .qr .qhead{padding:0!important;gap:8px!important}
+#qp .qav{width:30px!important;height:30px!important;font-size:9px!important;font-weight:750!important;line-height:13.5px!important}
+#qp .qav.av-0{background:#d7c8b7!important;color:#314333!important}
+#qp .qav.av-1{background:#cdd8c5!important;color:#314333!important}
+#qp .qav.av-2{background:#dcd5e7!important;color:#544d62!important}
+#qp .qwho b{font-size:10px!important;line-height:15px!important;font-weight:700!important}
+#qp .qwho small{font-size:8px!important;line-height:12px!important;color:#73796e}
+#qp .qtick{width:24px!important;height:24px!important;margin-left:auto!important;border-radius:0!important;background:none!important;color:#456045!important}
+#qp .qtick svg{width:15px;height:15px}
+#qp .qtext2{margin:10px 0 8px!important;padding:0!important}
+#qp .qtext2 .qt{font-size:12px!important;line-height:17.4px!important;font-weight:550!important}
+#qp .qoriglink{margin:0!important;padding:0 3px!important;font-size:9px!important;font-weight:600!important;color:#456045!important;border-radius:4px}
+#qp .qfoot2{margin-top:8px!important;padding-top:6px!important;gap:4px!important;border-top:1px solid rgba(52,75,53,.07)!important}
+#qp .qfoot2 .qvote{height:24px;padding:0 6px!important;font-size:8.5px!important;border-radius:6px!important;gap:4px!important}
+#qp .qfoot2 .qvote svg{width:12px;height:12px}
+#qp .qfoot2 .qslide{height:28px;padding:0 4px!important;gap:4px!important;font-size:9px!important;font-weight:550!important;color:#456045!important;border-radius:6px}
+#qp .qfoot2 .qslide svg{width:13px;height:13px}
+#qp .qfoot2 .qslide i{font-size:11px}
