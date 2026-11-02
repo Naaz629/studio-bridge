@@ -6,7 +6,7 @@
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const shortSentence = (t, n = 20) => { const w = String(t).replace(/\s+/g, ' ').trim().split(' '); return w.slice(0, n).join(' ').replace(/[,;:]$/, '') + (w.length > n ? '…' : ''); };
   async function generate(p = {}) {
-    await wait(1800);
+    await wait(700);
     const lines = String(p.text || '').split(NL).map(l => l.trim()).filter(Boolean).filter(l => !/^Slide \d+ - /.test(l));
     const sents = lines.filter(l => l.split(' ').length >= 5 && l.length <= 200 && !/acknowledg|gadigal|elders|sovereignty|traditional custodians|copyright|all rights reserved|^page \d|^week \d+$/i.test(l));
     let title = String(p.title || '').replace(/^Weeks*d+s*[:-–]?s*/i, '').trim();
@@ -28,7 +28,7 @@
     return { questions, lo, terms: [], model: 'demo', provider: 'demo' };
   }
   async function insight(p = {}) {
-    await wait(900);
+    await wait(400);
     const right = (p.total || 0) - (p.stuckN || 0);
     const weak = String(p.weakest || 'the weakest step').replace(/\s*\(.*$/, '');
     const wk = weak.toLowerCase(), gap = (p.gaps || []).map(g => String(g).replace(/^[^:]*:\s*/, '')).find(g => g.split(' ').length > 3) || '';
@@ -42,7 +42,7 @@
     return { probs, next, summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
   }
   async function reflect(p = {}) {
-    await wait(1400);
+    await wait(600);
     const title = shortSentence(String(p.title || 'this lesson').replace(/^Week\s*\d+\s*[:\-–]?\s*/i, '') || 'this lesson', 8);
     return { question: 'Look back at what we covered so far on "' + title + '". What is one idea that was new to you? How could it change your own project?', hint: 'One idea that was new to me was ... because ...', provider: 'demo' };
   }

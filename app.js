@@ -501,10 +501,12 @@ function overview() {
 /* ---------- actions ---------- */
 function insertAct(p, type, stay) {
   if (!ACTIVITY_TYPES.includes(type)) return;
-  const s = S(), f = flowOf(s); f.splice(p, 0, { k: 'a', act: type });
+  const s = S(), f = flowOf(s); f.splice(p, 0, { k: 'a', act: type }); prefetchAI(p, type);
   if (stay) { toast(`${ACT_META[type].title} added after this slide`); render(); return; }
   s.pos = p; syncA(s); toast(`${ACT_META[type].title} added at step ${p + 1}`); render();
 }
+/* start writing the questions as soon as the activity is added, so they are ready when the tutor gets there */
+function prefetchAI(p, type) { try { const s = S(); if (type === 'Concept Development') ensureCD(s, p); else if (type === 'Reflection') ensureRF(s, p); } catch (e) {} }
 /* ---------- import a unit outline (sydney.edu.au/units/...) ---------- */
 const UNIT_EXAMPLE = 'https://www.sydney.edu.au/units/IDEA9301/2026-S2C-ND-CC';
 function openUnitImport() {

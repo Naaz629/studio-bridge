@@ -202,7 +202,7 @@ const NL = String.fromCharCode(10);
 const demoWait = ms => new Promise(r => setTimeout(r, ms));
 const shortSentence = (t, n = 20) => { const w = String(t).replace(/\s+/g, ' ').trim().split(' '); return w.slice(0, n).join(' ').replace(/[,;:]$/, '') + (w.length > n ? '…' : ''); };
 async function demoGenerate(p = {}) {
-  await demoWait(1800);
+  await demoWait(700);
   const lines = String(p.text || '').split(NL).map(l => l.trim()).filter(Boolean).filter(l => !/^Slide \d+ - /.test(l));
   const sents = lines.filter(l => l.split(' ').length >= 5 && l.length <= 200 && !/acknowledg|gadigal|elders|sovereignty|traditional custodians|copyright|all rights reserved|^page \d|^week \d+$/i.test(l));
   let title = String(p.title || '').replace(/^Weeks*d+s*[:-–]?s*/i, '').trim();
@@ -246,7 +246,7 @@ const REFLECT_SYSTEM = `You write ONE reflection question for a university desig
 Reply with JSON only: {"question":"...","hint":"..."}`;
 const REFLECT_SCHEMA = { type: 'object', required: ['question', 'hint'], properties: { question: { type: 'string' }, hint: { type: 'string' } } };
 async function demoReflect(p = {}) {
-  await demoWait(1400);
+  await demoWait(600);
   const title = shortSentence(String(p.title || 'this lesson').replace(/^Week\s*\d+\s*[:\-–]?\s*/i, '') || 'this lesson', 8);
   return { question: 'Look back at what we covered so far on "' + title + '". What is one idea that was new to you? How could it change your own project?', hint: 'One idea that was new to me was ... because ...', provider: 'demo' };
 }
@@ -364,7 +364,7 @@ ipcMain.handle('ai:match', async (e, p = {}) => {
   return { lo: String(r.json.lo || 'none'), why: String(r.json.why || '').slice(0, 200) };
 });
 ipcMain.handle('ai:insight', async (e, p = {}) => {
-  if (aiLoad().provider === 'demo') { await demoWait(900); return demoInsight(p); }
+  if (aiLoad().provider === 'demo') { await demoWait(400); return demoInsight(p); }
   const lv = (p.levels || []).map(l => `- ${l.label}: ${l.n} of ${p.total} students (${l.src})`).join(String.fromCharCode(10));
   const notes = (p.notes || []).slice(0, 8).map(n => '- ' + String(n).slice(0, 140)).join(String.fromCharCode(10));
   const takes = (p.takes || []).slice(0, 4).map(n => '- "' + String(n).slice(0, 160) + '"').join(String.fromCharCode(10));
