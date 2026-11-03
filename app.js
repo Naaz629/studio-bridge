@@ -53,6 +53,18 @@ function flowOf(s) {
   return s.flow;
 }
 function syncA(s) { const it = flowOf(s)[s.pos]; A = it && it.k === 'a' ? { type: it.act, q: 0 } : null; }
+/* leaving the artefacts: step to the nearest slide before (dir -1) or after (dir +1) */
+function artLeave(s, dir) {
+  const f = flowOf(s); let np = s.pos + dir; while (np >= 0 && np < f.length && f[np].k === 'a') np += dir;
+  if (np < 0 || np >= f.length) { toast(dir > 0 ? 'This is the last slide.' : 'This is the first slide.'); return false; }
+  L.warnNext = false; goTo(s, np); return true;
+}
+function artWarn(dir) {
+  L.warnNext = dir;
+  toast(dir > 0 ? 'This is the last artefact. Press the arrow again (or double-click) to move to the next slide.' : 'This is the first artefact. Press the arrow again (or double-click) to go back to the previous slide.');
+  document.querySelectorAll(dir > 0 ? '.navarrow.r' : '.navarrow.l').forEach(b => b.classList.add('warn'));
+  clearTimeout(L.warnT); L.warnT = setTimeout(() => { L.warnNext = false; document.querySelectorAll('.navarrow').forEach(b => b.classList.remove('warn')); }, 6000);
+}
 function goTo(s, p) { const f = flowOf(s); if (A && A.type === 'Q&A Session') L.qopen = false; /* leaving the Q&A page keeps the side column closed */ s.pos = Math.max(0, Math.min(f.length - 1, p)); syncA(s); }
 let pulseKey = '', pulseTimer = null;
 function pulseDots() {
@@ -625,25 +637,20 @@ document.addEventListener('click', e => {
     case 'toggleq': { if (A && A.type === 'Q&A Session') { L.qside = !L.qside; a.setAttribute('aria-pressed', L.qside); document.querySelector('.sess2')?.classList.toggle('qside', L.qside); return; } L.qopen = !L.qopen; document.querySelector('.sess2')?.classList.toggle('qclosed', !L.qopen); a.setAttribute('aria-pressed', L.qopen); return; }
     case 'end': L.menu = false; V = 'ov'; if (s.liveWeek in s.weeks) O.w = s.liveWeek; toast('Session ended · questions saved'); break;
     case 'prev':
-      if (A && A.type === 'Artefact upload') { const n = artVisible(s).length; A.q = Math.max(0, (A.q || 0) - 1); A.hold = Date.now(); }
+      if (A && A.type === 'Artefact upload') {
+        A.hold = Date.now();
+        if ((A.q || 0) > 0) { A.q--; L.warnNext = false; }
+        else if (L.warnNext !== -1) { artWarn(-1); return; }
+        else if (!artLeave(s, -1)) return;
+      }
       else if (A && A.q > 0) A.q--; else goTo(s, s.pos - 1);
       break;
     case 'next':
       if (A && A.type === 'Artefact upload') {
         const n = artVisible(s).length; A.hold = Date.now();
-        if ((A.q || 0) < n - 1) A.q = (A.q || 0) + 1;
-        else if (!L.warnNext) {
-          /* last artefact: warn once before moving on to the next slide */
-          L.warnNext = true; toast('This is the last artefact. Press the arrow again to move to the next slide.');
-          document.querySelectorAll('.navarrow.r').forEach(b => b.classList.add('warn'));
-          clearTimeout(L.warnT); L.warnT = setTimeout(() => { L.warnNext = false; document.querySelectorAll('.navarrow.r').forEach(b => b.classList.remove('warn')); }, 6000);
-          return;
-        } else {
-          L.warnNext = false;
-          const f = flowOf(s); let np = s.pos + 1; while (np < f.length && f[np].k === 'a') np++;
-          if (np >= f.length) { toast('This is the last slide.'); return; }
-          goTo(s, np);
-        }
+        if ((A.q || 0) < n - 1) { A.q = (A.q || 0) + 1; L.warnNext = false; }
+        else if (L.warnNext !== 1) { artWarn(1); return; }
+        else if (!artLeave(s, 1)) return;
       }
       else if (A && A.q < actQs().length - 1) A.q++;
       else if (A && A.type !== 'Artefact upload' && s.pos < flowOf(s).length - 1 && !L.warnNext) {
@@ -936,11 +943,12 @@ setInterval(() => {
   const l = document.getElementById('qaList'); if (l) { const top = l.scrollTop; l.innerHTML = qaListHTML(s); l.scrollTop = top; }
 }, 4500);
 
-/* with the results shown, the tutor steps through the artefacts with the arrow keys too */
+/* the arrow keys step through the artefacts (results shown or not); at the end a warning, then the same key moves to the next or previous slide */
 document.addEventListener('keydown', e => {
-  if (V !== 'live' || !A || A.type !== 'Artefact upload' || !resShown() || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  if (V !== 'live' || !A || A.type !== 'Artefact upload' || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
   if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
-  const n = artVisible(S()).length; A.hold = Date.now(); A.q = Math.max(0, Math.min(n - 1, (A.q || 0) + (e.key === 'ArrowRight' ? 1 : -1))); render(); e.preventDefault();
+  const b = document.querySelector(e.key === 'ArrowRight' ? '.navarrow.r' : '.navarrow.l'); if (!b) return;
+  e.preventDefault(); b.click();
 });
 /* the slideshow plays by itself unless the tutor has stopped it; students' uploads arrive one by one */
 setInterval(() => {
@@ -958,13 +966,12 @@ setInterval(() => {
   render();
 }, 9000);
 
-/* double-click the artefact slideshow to carry on to the next slide */
+/* double-click the artefact slideshow: right half carries on to the next slide, left half goes back to the previous one */
 document.addEventListener('dblclick', e => {
-  if (!A || A.type !== 'Artefact upload' || !e.target.closest('.artshow')) return;
-  const s = S(), f = flowOf(s); let np = s.pos + 1;
-  while (np < f.length && f[np].k === 'a') np++;
-  if (np >= f.length) { toast('This is the last slide.'); return; }
-  goTo(s, np); render();
+  const sh = e.target.closest && e.target.closest('.artshow');
+  if (!A || A.type !== 'Artefact upload' || !sh) return;
+  const r = sh.getBoundingClientRect(), dir = e.clientX < r.left + r.width / 2 ? -1 : 1;
+  if (artLeave(S(), dir)) render();
 });
 
 /* search the questions; Ctrl+K jumps to the search box */
