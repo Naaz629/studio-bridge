@@ -551,7 +551,7 @@ function insertAct(p, type, stay) {
   if (!ACTIVITY_TYPES.includes(type)) return;
   const s = S(), f = flowOf(s); f.splice(p, 0, { k: 'a', act: type }); prefetchAI(p, type);
   if (stay) { toast(`${ACT_META[type].title} added after this slide`); render(); return; }
-  s.pos = p; syncA(s); toast(`${ACT_META[type].title} added at step ${p + 1}`); render();
+  V = 'live'; s.pos = p; syncA(s); toast(`${ACT_META[type].title} added at step ${p + 1}`); render();
 }
 /* start writing the questions as soon as the activity is added, so they are ready when the tutor gets there */
 function prefetchAI(p, type) { try { const s = S(); if (type === 'Concept Development') ensureCD(s, p); else if (type === 'Reflection') ensureRF(s, p); } catch (e) {} }
@@ -1017,7 +1017,7 @@ document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.ke
 /* click an activity to add it right after the slide (or activity) you are on; dragging still places it anywhere */
 document.addEventListener('click', e => {
   const c = e.target.closest('.achip2'); if (!c || L.dragging) return;
-  const s = S(); flowOf(s); insertAct(s.pos + 1, c.dataset.act, true);
+  const s = S(); flowOf(s); insertAct(s.pos + 1, c.dataset.act);   // the new activity goes straight onto the live screen
 });
 
 /* click the empty space of a question card to turn it green and tick it as answered (click again to undo) */
