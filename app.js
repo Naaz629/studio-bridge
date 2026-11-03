@@ -147,7 +147,7 @@ const REPLY_BANK = [
   { t: '我觉得应该先和客户确认。', en: 'I think we should check with the client first.', lang: 'Chinese' },
   { t: 'I agree with this question, we have the same problem.' }
 ];
-const sortedQs = s => [...s.qs].sort((x, y) => Sync.on ? (y.at || 0) - (x.at || 0) : (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
+const sortedQs = s => [...s.qs].sort((x, y) => y.up - x.up || (y.at || 0) - (x.at || 0))   /* most upvoted on top, newest first when tied */;
 function qaReplies(q) {
   if (!q.replies && q.real) q.replies = [];
   if (!q.replies) {
@@ -287,7 +287,7 @@ function qAvatarTone(q) { return /^anonymous$/i.test(q.who) ? 2 : hash(String(q.
 function agoLabel(q) { const m = q.at ? Math.max(0, Math.floor((Date.now() - q.at) / 60000)) : (q.ago || 0); return m < 1 ? 'just now' : m + ' min ago'; }
 function renderQP() {
   const el = $('#qp'); if (!el) return;
-  const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => Sync.on ? (y.at || 0) - (x.at || 0) : (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up);
+  const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => y.up - x.up || (y.at || 0) - (x.at || 0))   /* most upvoted on top, newest first when tied */;
   const nOpen = s.qs.filter(q => q.st === 'open').length, nAns = s.qs.length - nOpen, qf = L.qf === 'open' || L.qf === 'ans' ? L.qf : 'all';
   const head0 = `<div class="rhead" data-a="toggleq" role="button" tabindex="0" aria-label="Close the questions panel"><button class="qtoggle rhbulb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Hide questions" data-tip="Questions &amp; activities">${BULB_SVG}</button><b>Questions</b><i class="cnt">${s.qs.length}</i></div>`;
   const head = head0;
