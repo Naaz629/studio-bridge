@@ -673,8 +673,25 @@ document.addEventListener('change', e => {
 const now = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 const modal = html => { $('#modal').innerHTML = `<div class="scrim" data-x><div class="sheet" role="dialog">${html}</div></div>`; };
 
+/* the Overview section asks for a code the first time it is opened after the app starts */
+const OV_CODE = '1234'; let ovUnlocked = false;
+function askCode(done) {
+  modal('<div class="k2">Overview</div><h4>Enter the code</h4><p class="sub">This section is protected. Enter the code to open it.</p><input id="ovCode" class="cdinput" type="password" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Code" aria-label="Code"><p class="sub" id="ovCodeErr" role="alert" style="color:#a3412b;min-height:1.3em"></p><div class="row"><button class="sm" data-x>Cancel</button><span class="spacer"></span><button class="sm p" id="ovCodeGo">Open</button></div>');
+  const inp = $('#ovCode'), err = $('#ovCodeErr');
+  const go = () => {
+    if (inp.value.trim() === OV_CODE) { ovUnlocked = true; $('#modal').innerHTML = ''; done(); }
+    else { err.textContent = 'That code is not right. Try again.'; inp.value = ''; inp.focus(); }
+  };
+  $('#ovCodeGo').addEventListener('click', e => { e.stopPropagation(); go(); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+  setTimeout(() => inp.focus(), 30);
+}
 document.addEventListener('click', e => {
-  const nv = e.target.closest('.nav [data-v]'); if (nv) { V = nv.dataset.v === 'ov' ? 'ov' : 'live'; L.menu = L.subj = false; return render(); }
+  const nv = e.target.closest('.nav [data-v]'); if (nv) {
+    const want = nv.dataset.v === 'ov' ? 'ov' : 'live';
+    if (want === 'ov' && !ovUnlocked) { askCode(() => { V = 'ov'; L.menu = L.subj = false; render(); }); return; }
+    V = want; L.menu = L.subj = false; return render();
+  }
     const ss = e.target.closest('[data-ss]'); if (ss) { O.s = ss.dataset.ss; O.open = null; return render(); }
   const sd = e.target.closest('[data-s]'); if (sd) {
     const [oid, i] = sd.dataset.s.split('|'), o = findOut(oid), x = o.who[+i];
