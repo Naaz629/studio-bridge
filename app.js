@@ -865,6 +865,7 @@ function answersHTML(q) {
   return `<div class="cdopen"><div class="ophead"><b>${r.n}</b> responses · students can write in any language · only you see these</div>${(r.real || []).map(sm => `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`).join('')}${r.shown.slice(0, Math.max(0, 3 - (r.real || []).length)).map(k => { const sm = SAMPLES[k]; return `<div class="oresp"><p>${esc(sm.en || sm.t)}</p>${sm.lang ? origHTML(sm.t, sm.lang) : ''}</div>`; }).join('')}</div>`;
 }
 function peerHTML(it) {
+  return '';   // replies between students are not shown on the tutor screen
   const list = it && it.peer; if (!list || !list.length) return '';
   return `<small class="calabel">Replies between students</small><div class="peerlist">${list.map(x => `<div class="oresp"><p>${esc(x.en || x.t)}</p>${x.lang ? origHTML(x.t, x.lang) : ''}</div>`).join('')}</div>`;
 }
