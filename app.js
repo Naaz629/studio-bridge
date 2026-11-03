@@ -911,7 +911,7 @@ function cdCard(s, f, m) {
   return `<div class="card2 actcard cdcard classact"><div class="cahead"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><b>Class activity</b><span class="spacer"></span><small>Question ${A.q + 1} of ${cd.qs.length}</small><button class="cdeditbtn" data-a="cdedit" aria-label="Edit questions" data-tip="Edit questions">✎</button><button class="x" data-a="actclose" aria-label="Close activity">✕</button></div>
   <div class="cabody"><div class="cameta"><small>${esc(TYPE_NAMES[q.type] || '')}</small><span class="cachip"><i></i>${resShown() ? 'Live · ' + n + ' responses' : 'Live'}</span>${resBtn()}</div>
   <h3 class="cdq">${esc(q.text)}</h3>${q.hint ? `<p class="cdhint">Sentence starter for students: <b>${esc(q.hint)}</b></p>` : ''}
-  ${resShown() ? `<small class="calabel">What the class answered</small><div id="cdAns">${answersHTML(q)}</div>${peerHTML(flowOf(s)[s.pos])}` : ''}</div>
+  ${resShown() ? `<small class="calabel">What the class answered</small><div id="cdAns">${answersHTML(q)}</div>${peerHTML(flowOf(s)[s.pos])}` : q.type === 'mc' ? `<div class="cdopts">${(q.options || []).map((o, i) => `<div class="cdopt"><span class="let">${'ABCDEF'[i]}</span><span class="otxt">${esc(o.t)}</span></div>`).join('')}</div>` : ''}</div>
   <span class="bloomchip">${esc(q.label)}</span>
   ${navOverlay(A.q, cd.qs.length, A.q > 0 || s.pos > 0, A.q < cd.qs.length - 1 || s.pos < f.length - 1)}</div>`;
 }

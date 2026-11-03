@@ -1629,3 +1629,6 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .phead{font-family:var(--sans)!important;font-size:13px!important;font-weight:600!important}
 .pheadbtn{display:flex;align-items:center;gap:10px;padding:0;border:0;background:none;color:var(--ink);font:600 13px var(--sans);cursor:pointer}
 .pheadbtn .caret{font-style:normal;font-size:11px;color:var(--muted)}
+
+/* the right answer shows in green once the results are shown */
+.classact .cdopt.ok{border:1.6px solid #2f9e63;background:#e3f4ea}.classact .cdopt.ok .let{background:#2f9e63;border-color:#2f9e63;color:#fff}.classact .cdopt.ok .ocnt{color:#1f7a4a}
