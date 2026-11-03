@@ -167,7 +167,7 @@ function qaListHTML(s) {
 /* the question on screen looks like the question card students see, only bigger */
 function qaBigCard(q) {
   const shown = q.tr ? q.tr : q.text, sn = qSlide(q), done = q.st !== 'open';
-  return `<div class="qa-bigcard ${done ? 'done' : ''}"><div class="qbh"><span class="qav av-${qAvatarTone(q)}" aria-hidden="true">${qInitials(q)}</span><div class="qwho"><b>${esc(q.who)}</b><small>${agoLabel(q)}</small></div>${done ? '<span class="qtick" aria-label="Answered"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
+  return `<div class="qa-bigcard ${done ? 'done' : ''}" data-qid="${esc(String(q.id))}" title="Click to mark as answered"><div class="qbh"><span class="qav av-${qAvatarTone(q)}" aria-hidden="true">${qInitials(q)}</span><div class="qwho"><b>${esc(q.who)}</b><small>${agoLabel(q)}</small></div>${done ? '<span class="qtick" aria-label="Answered"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>' : ''}</div>
     <p class="qbt">${esc(shown)}</p>${q.tr ? `<small class="qbo">Original · ${esc(q.text)}</small>` : ''}
     <div class="qbf"><span class="qbv"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>${q.up}</span><span class="qbs"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Slide ${sn}<i>›</i></span></div></div>`;
 }
@@ -1027,6 +1027,16 @@ document.addEventListener('click', e => {
   const q = S().qs.find(x => String(x.id) === c.dataset.qid); if (!q) return;
   q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; Sync.setQuestion(q);
   renderQP();
+});
+
+/* click the question on screen (Q&A) to turn it green and tick it as answered; click again to undo */
+document.addEventListener('click', e => {
+  const c = e.target.closest && e.target.closest('.qa-bigcard[data-qid]');
+  if (!c || e.target.closest('button, a, summary, details')) return;
+  const s = S(), q = s.qs.find(x => String(x.id) === c.dataset.qid); if (!q) return;
+  q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; Sync.setQuestion(q);
+  if (A && A.type === 'Q&A Session') { const at = sortedQs(s).indexOf(q); if (at >= 0) A.q = at; }   // the question stays on screen when the list re-sorts
+  render();
 });
 
 /* the analysis dropdown in the learning-outcome panel */

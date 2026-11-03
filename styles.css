@@ -1632,3 +1632,27 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 
 /* the right answer shows in green once the results are shown */
 .classact .cdopt.ok{border:1.6px solid #2f9e63;background:#e3f4ea}.classact .cdopt.ok .let{background:#2f9e63;border-color:#2f9e63;color:#fff}.classact .cdopt.ok .ocnt{color:#1f7a4a}
+
+.qa-bigcard{cursor:pointer}
+
+/* the question on screen grows to fill the space the activity has */
+.qacard .cabody{display:flex;flex-direction:column;min-height:0;flex:1}
+.qacard .qa-bigcard{max-width:none;width:100%;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:clamp(22px,3.2vw,48px) clamp(26px,3.6vw,56px) clamp(14px,2vw,28px);margin-bottom:12px}
+.qacard .qa-bigcard .qav{width:clamp(52px,5vw,76px)!important;height:clamp(52px,5vw,76px)!important;font-size:clamp(15px,1.5vw,22px)!important}
+.qacard .qa-bigcard .qwho b{font-size:clamp(18px,1.9vw,28px)!important}
+.qacard .qa-bigcard .qwho small{font-size:clamp(14px,1.3vw,19px)!important}
+.qacard .qa-bigcard .qbt{font-size:clamp(26px,3.3vw,48px);line-height:1.3;margin:clamp(18px,3vw,44px) 0 8px;flex:1;display:flex;align-items:center}
+.qacard .qa-bigcard .qbf{font-size:clamp(15px,1.5vw,21px);margin-top:auto}
+.qacard .qaline{max-width:none;flex:none;max-height:42%;overflow:auto}
+/* sized from the width of the activity itself, so it fits small and large windows */
+.qacard .qa-bigcard{padding:clamp(12px,2.4cqw,40px) clamp(16px,3cqw,48px) clamp(8px,1.4cqw,22px);margin-bottom:8px}
+.qacard .qa-bigcard .qav{width:clamp(34px,5cqw,68px)!important;height:clamp(34px,5cqw,68px)!important;font-size:clamp(11px,1.6cqw,20px)!important}
+.qacard .qa-bigcard .qwho b{font-size:clamp(13px,2cqw,26px)!important}
+.qacard .qa-bigcard .qwho small{font-size:clamp(10px,1.4cqw,18px)!important}
+.qacard .qa-bigcard .qbt{font-size:clamp(16px,3.4cqw,44px);margin:clamp(8px,2cqw,36px) 0 6px;overflow:hidden}
+.qacard .qa-bigcard .qbf{font-size:clamp(11px,1.5cqw,19px);margin-top:6px;padding-top:8px}
+.qacard .qaline{flex:0 0 auto;max-height:38%;min-height:60px}
+.qacard{container-type:inline-size}
+.qacard .qa-bigcard .qbt{font-size:clamp(15px,3.6cqw,46px);align-items:flex-start}
+.qacard .qa-bigcard .qbt{font-size:clamp(14px,3cqw,44px);margin:clamp(4px,1.4cqw,28px) 0 4px;flex:1 1 0;min-height:0;overflow:auto;display:block;line-height:1.25}
+.qacard .qa-bigcard{padding-top:clamp(10px,1.8cqw,36px)}
