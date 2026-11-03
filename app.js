@@ -763,7 +763,7 @@ document.addEventListener('click', e => {
     case 'showres':
       A.rs = A.rs || {}; A.rs[resKey()] = !A.rs[resKey()];
       // artefacts: stop the slideshow and land on the first student's artefact; hiding the results goes back to the examples
-      if (A.type === 'Artefact upload') { A.hold = Date.now(); A.q = A.rs[resKey()] ? artItems(s).filter(x => x.ex).length : 0; }
+      if (A.type === 'Artefact upload') { A.hold = Date.now(); A.q = A.rs[resKey()] ? Math.min(artItems(s).filter(x => x.ex).length, artItems(s).length - 1) : 0; }
       break;
     case 'cdretry': retryCD(s, s.pos); break;
     case 'classcode': { if (e.shiftKey && !confirm('Start a new class with a new code? Students will need the new code.')) return; if (e.shiftKey) { Sync.newClass().then(() => toast('New class code ' + Sync.code)); return; } try { navigator.clipboard.writeText(Sync.code); } catch (x) {} toast('Class code ' + Sync.code + ' copied. Students enter it on the Student UI.'); return; }
