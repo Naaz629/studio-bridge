@@ -383,8 +383,36 @@ function groupsHTML(o, ins) {
   const note = ins && ins.state === 'pending' ? 'The AI is reading the answers…' : '';
   return '<div class="lvgrp">' + g.map(x => '<div class="lvrow ' + x.k + '"><b><span class="lvp">' + x.pct + '%</span> ' + x.label + '</b><p>' + esc(ok ? ins.probs[x.k] : note) + '</p></div>').join('') + (ok && ins.next ? '<div class="nextact"><small>✦ Suggested next step</small><p>' + esc(ins.next) + '</p></div>' : '') + '</div>';
 }
+/* ready-made class insight: precise recommendations written ahead of time for each weak step, so the panel opens at once */
+const READY_INSIGHT = {
+  k: {
+    start: 'Answers stay general. They can repeat a word from the slide but cannot say what it means in their own words.',
+    dev: 'They recognise the idea when they see it, but mix it up with a similar one and hesitate when asked to define it.',
+    fluent: 'They explain the idea clearly in their own words and give a correct example.',
+    next: 'Spend 3 minutes re-teaching the core idea with one real project example, then ask each pair to explain it back in one sentence before moving on.'
+  },
+  a: {
+    start: 'They understand the idea but have not tried it on their own project. Their answers describe the idea, not their work.',
+    dev: 'They start to use the idea but skip steps and are unsure what a good result looks like.',
+    fluent: 'They apply the idea to their own project and can point to the change it made.',
+    next: 'Show one worked example, then give each team 5 minutes to apply the idea to their own brief and share one result with the class.'
+  },
+  e: {
+    start: 'They can follow the steps but give one-word reasons when asked why it matters.',
+    dev: 'They give a reason, but it is not backed by evidence from their own research.',
+    fluent: 'They explain why the idea matters and support it with evidence from their project.',
+    next: 'Give the sentence frame "We did ___ because ___, which shows ___." and ask each student to write one using their own evidence.'
+  }
+};
+function readyInsight(o) {
+  const lv = Object.entries(o.lv), weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
+  const set = READY_INSIGHT[weak[0]] || READY_INSIGHT.a, stuck = o.total - weak[1][0], name = LVL[weak[0]][0];
+  const lo = String(S().ulo[o.lo] || o.out || '').replace(/[.]$/, '');
+  return { state: 'ready', summary: stuck + ' of ' + o.total + ' students are not yet secure at "' + name + '"' + (lo ? ' for: ' + lo : '') + '.', stuck: '', why: '', probs: { start: set.start, dev: set.dev, fluent: set.fluent }, next: set.next };
+}
 function ensureInsight(o) {
   if (o.insight) return o.insight;
+  if (o.total) return (o.insight = readyInsight(o));   // instant: no waiting for the AI
   const ai = (window.shell && window.shell.ai) || window.demoAI;
   if (!ai || !ai.insight) return (o.insight = { state: 'off', error: 'The AI summary runs in the desktop app.' });
   o.insight = { state: 'pending' };
