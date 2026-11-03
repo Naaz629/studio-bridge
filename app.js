@@ -412,18 +412,22 @@ function readyInsight(o) {
 }
 function ensureInsight(o) {
   if (o.insight) return o.insight;
-  if (o.total) return (o.insight = readyInsight(o));   // instant: no waiting for the AI
   const ai = (window.shell && window.shell.ai) || window.demoAI;
   if (!ai || !ai.insight) return (o.insight = { state: 'off', error: 'The AI summary runs in the desktop app.' });
-  o.insight = { state: 'pending' };
+  const ready = o.total ? readyInsight(o) : null;   // shown at once; the AI refines the group descriptions when it answers
+  o.insight = ready || { state: 'pending' };
   const lv = Object.entries(o.lv);
   const weak = lv.reduce((m, x) => x[1][0] / o.total < m[1][0] / o.total ? x : m);
-  ai.insight({ asked: S().qs.map(q => q.tr || q.text), groups: levelGroups(o).map(g => ({ label: g.label, stages: g.stages, n: g.n, pct: g.pct })), headline: groupHeadline(o), weakest: LVL[weak[0]][0] + ' (' + LVL[weak[0]][1].toLowerCase() + ')', stuckN: o.total - weak[1][0], lo: o.lo, out: S().ulo[o.lo] || o.out, week: O.w, total: o.total,
+  const slow = new Promise((_, no) => setTimeout(() => no(new Error('The AI took too long.')), 6000));
+  Promise.race([slow, ai.insight({ asked: S().qs.map(q => q.tr || q.text), groups: levelGroups(o).map(g => ({ label: g.label, stages: g.stages, n: g.n, pct: g.pct })), headline: groupHeadline(o), weakest: LVL[weak[0]][0] + ' (' + LVL[weak[0]][1].toLowerCase() + ')', stuckN: o.total - weak[1][0], lo: o.lo, out: S().ulo[o.lo] || o.out, week: O.w, total: o.total,
     levels: lv.map(([k, [n, src]]) => ({ label: LVL[k][0], n, src })),
     notes: [...new Set(o.who.map(w => w[2]))], takes: loTakes(o).map(k => SAMPLES[k].en || SAMPLES[k].t),
-    gaps: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => !a.ok).map(a => LVL[k][0] + ': ' + (a.en || a.t))), goods: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => a.ok).slice(0, 1).map(a => LVL[k][0] + ': ' + (a.en || a.t))) })
-    .then(r => { o.insight = r.summary ? { state: 'ready', summary: r.summary, stuck: r.stuck, why: r.why, probs: r.probs, next: r.next } : { state: r.off ? 'off' : 'error', error: r.error }; })
-    .catch(e => { o.insight = { state: 'error', error: e.message }; })
+    gaps: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => !a.ok).map(a => LVL[k][0] + ': ' + (a.en || a.t))), goods: Object.entries(loAnswers(o)).flatMap(([k, list]) => list.filter(a => a.ok).slice(0, 1).map(a => LVL[k][0] + ': ' + (a.en || a.t))) })])
+    .then(r => {
+      if (ready) { if (r.summary && r.probs) o.insight = Object.assign({}, ready, { summary: r.summary, probs: r.probs, ai: true }); return; }   // the prepared next step stays
+      o.insight = r.summary ? { state: 'ready', summary: r.summary, stuck: r.stuck, why: r.why, probs: r.probs, next: r.next } : { state: r.off ? 'off' : 'error', error: r.error };
+    })
+    .catch(e => { if (!ready) o.insight = { state: 'error', error: e.message }; })
     .then(() => { if (V === 'ov' && O.open === o.id) render(); });
   return o.insight;
 }
