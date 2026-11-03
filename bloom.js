@@ -183,7 +183,16 @@ function rfContext(s, pos) {
   const slides = f.slice(0, pos).filter(x => x.k === 's').length;
   return { title: c.title, text: c.text, hasText: c.hasText, lo: c.lo, out: c.out, asked: c.asked, slides, source: slides + ' slide' + (slides === 1 ? '' : 's') + ' so far' };
 }
+const READY_RF = [{"re":"evaluat|good look|criteria|rubric|success","question":"Think about the criteria we looked at today. Which one is your project weakest on, and what evidence would show it has improved?","hint":"My weakest criterion is ... and I could show improvement by ..."},{"re":"ideat|brainstorm|diverge|concept","question":"Look back at the ideas you generated today. Which idea surprised you most, and what would you test first to find out if it works?","hint":"The idea that surprised me was ... I would test it by ..."},{"re":"ethic|responsib|social good|accessib|communit|codesign","question":"Think about the people your project affects. Whose voice have you not yet heard, and how could you include them?","hint":"I have not yet heard from ... I could include them by ..."}];
+const READY_RF_GENERIC = {"question":"Look back at what we covered so far. What is one idea that was new to you, and how could it change your own project?","hint":"One idea that was new to me was ... because ..."};
+function readyRF(ctx) {
+  if (!ctx.hasText) return null;
+  const hay = (ctx.title || '') + ' ' + (ctx.text || '').slice(0, 1500);
+  const hit = READY_RF.find(x => new RegExp(x.re, 'i').test(hay)) || READY_RF_GENERIC;
+  return Object.assign({}, ctx, { question: hit.question, hint: hit.hint, state: 'ready', pending: false, aiProvider: 'ready' });
+}
 async function aiBuildRF(ctx) {
+  { const ready = readyRF(ctx); if (ready) return ready; }   // instant: question written ahead of time
   const ai = (window.shell && window.shell.ai) || window.demoAI;
   const fail = (state, msg) => Object.assign(new Error(msg), { state });
   if (!ai || !ai.reflect) throw fail('off', 'The AI question writer runs in the desktop app.');
