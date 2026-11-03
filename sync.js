@@ -41,7 +41,7 @@ const Sync = (() => {
   }
   function updateQuestion(r) {
     const q = S().qs.find(x => x.dbId === r.id); if (!q) return addQuestion(r);
-    q.up = r.upvotes || q.up; q.st = r.status === 'ans' ? 'ans' : 'open'; q.ans = r.answer || q.ans; tick();
+    q.up = r.upvotes || q.up; q.st = r.status === 'ans' ? 'ans' : 'open'; q.ans = r.answer || undefined; q.at = new Date(r.created_at).getTime(); q.ago = Math.max(0, Math.round((Date.now() - q.at) / 60000)); tick();   // a recycled question comes back as just asked
   }
   function onResponse(r) {
     me.real++;

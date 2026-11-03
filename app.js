@@ -1000,7 +1000,7 @@ setInterval(() => {
   got.push(pool[got.length]);
   if (!artHeld()) A.q = EXAMPLE_ARTS.length + got.length - 1;
   render();
-}, 9000);
+}, 3000);
 
 /* double-click the artefact slideshow: right half carries on to the next slide, left half goes back to the previous one */
 document.addEventListener('dblclick', e => {
