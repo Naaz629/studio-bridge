@@ -235,7 +235,7 @@ function demoInsight(p = {}) {
   };
   const next = 'Before moving on, spend five minutes on the "' + weak + '" questions. Show one worked example, then ask groups to try it on their own project and share one result.';
   const quote = (p.gaps || [])[0] && String(p.gaps[0]).split(' ').length > 5 ? ' One weak answer was: "' + shortSentence(String(p.gaps[0]).replace(/^[^:]*:\s*/, ''), 12) + '".' : '';
-  return { probs, next, summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '' };
+  return { probs, next, summary: right + ' of ' + p.total + ' students got the "' + weak + '" step right. ' + (p.stuckN || 0) + ' are stuck there: their answers stay general and do not link the idea to their own project.' + quote, stuck: '', why: '', provider: 'demo' };
 }
 const REFLECT_SYSTEM = `You write ONE reflection question for a university design tutor to ask the whole class. The students have just seen several slides. Many students are international students and English is an additional language, so use plain, simple English.
 - Read ALL the slide text you are given and ask about the whole lesson so far, not one slide.
