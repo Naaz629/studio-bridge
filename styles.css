@@ -1656,3 +1656,5 @@ body{background:#f7f3e9;color:var(--ink);font-family:var(--sans)}
 .qacard .qa-bigcard .qbt{font-size:clamp(15px,3.6cqw,46px);align-items:flex-start}
 .qacard .qa-bigcard .qbt{font-size:clamp(14px,3cqw,44px);margin:clamp(4px,1.4cqw,28px) 0 4px;flex:1 1 0;min-height:0;overflow:auto;display:block;line-height:1.25}
 .qacard .qa-bigcard{padding-top:clamp(10px,1.8cqw,36px)}
+
+.qr.ticking{transition:background .25s,border-color .25s}

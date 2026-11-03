@@ -285,9 +285,29 @@ function qInitials(q) {
 function qAvatarTone(q) { return /^anonymous$/i.test(q.who) ? 2 : hash(String(q.who)) % 2; }
 /* how long ago a question was asked: counted from the real time when it comes from the shared class */
 function agoLabel(q) { const m = q.at ? Math.max(0, Math.floor((Date.now() - q.at) / 60000)) : (q.ago || 0); return m < 1 ? 'just now' : m + ' min ago'; }
+/* a ticked question turns green where it is, then slides down to the answered group (FLIP animation on the rows) */
+function tickQuestion(q) {
+  const row = document.querySelector('#qp .qr[data-qid="' + q.id + '"]');
+  if (!row || q.st === 'open') { L.freezeUntil = 0; renderQP(); return; }
+  row.classList.add('done', 'ticking');
+  setTimeout(() => {
+    L.freezeUntil = 0;
+    const before = new Map([...document.querySelectorAll('#qp .qr[data-qid]')].map(r => [r.dataset.qid, r.getBoundingClientRect().top]));
+    renderQP();
+    document.querySelectorAll('#qp .qr[data-qid]').forEach(r => {
+      const was = before.get(r.dataset.qid); if (was == null) return;
+      const dy = was - r.getBoundingClientRect().top; if (Math.abs(dy) < 2 || !r.animate) return;
+      const mine = r.dataset.qid === String(q.id);
+      r.style.position = 'relative'; if (mine) r.style.zIndex = 3;
+      r.animate([{ transform: 'translateY(' + dy + 'px)' }, { transform: 'translateY(0)' }], { duration: mine ? 420 : 320, easing: 'cubic-bezier(.3,.7,.2,1)' });
+    });
+  }, 320);
+}
 function renderQP() {
   const el = $('#qp'); if (!el) return;
   const s = S(), q0 = String(L.qsearch || '').trim().toLowerCase(), list = [...s.qs].filter(q => !q0 || (q.text + ' ' + (q.tr || '') + ' ' + q.who).toLowerCase().includes(q0)).sort((x, y) => (x.st === 'open' ? 0 : 1) - (y.st === 'open' ? 0 : 1) || y.up - x.up || (y.at || 0) - (x.at || 0))   /* open questions first, most upvoted on top; ticked ones sink to the bottom, most upvoted first */;
+  if (L.freezeUntil > Date.now() && L.order) list.sort((x, y) => { const a = L.order.indexOf(x.id), b = L.order.indexOf(y.id); return (a < 0 ? 1e9 : a) - (b < 0 ? 1e9 : b); });
+  L.order = list.map(q => q.id);
   const nOpen = s.qs.filter(q => q.st === 'open').length, nAns = s.qs.length - nOpen, qf = L.qf === 'open' || L.qf === 'ans' ? L.qf : 'all';
   const head0 = `<div class="rhead" data-a="toggleq" role="button" tabindex="0" aria-label="Close the questions panel"><button class="qtoggle rhbulb" data-a="toggleq" id="qbtn" aria-pressed="${L.qopen}" aria-label="Hide questions" data-tip="Questions &amp; activities">${BULB_SVG}</button><b>Questions</b><i class="cnt">${s.qs.length}</i></div>`;
   const head = head0;
@@ -1025,8 +1045,9 @@ document.addEventListener('click', e => {
   const c = e.target.closest('.qrows .qr[data-qid]');
   if (!c || e.target.closest('button, a')) return;
   const q = S().qs.find(x => String(x.id) === c.dataset.qid); if (!q) return;
+  L.freezeUntil = Date.now() + 340;   // hold the order while the card turns green
   q.st = q.st === 'open' ? 'ans' : 'open'; if (q.st !== 'open') q.seen = true; Sync.setQuestion(q);
-  renderQP();
+  tickQuestion(q);
 });
 
 /* click the question on screen (Q&A) to turn it green and tick it as answered; click again to undo */
