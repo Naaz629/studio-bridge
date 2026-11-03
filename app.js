@@ -671,7 +671,7 @@ document.addEventListener('click', e => {
     case 'trtoggle': L.trShut = !L.trShut; break;
     case 'qsave': q.saved = !q.saved; renderQP(); return;
     case 'rtab': L.rtab = a.dataset.t; renderQP(); return;
-    case 'tile': goTo(s, +a.dataset.i); break;
+    case 'tile': goTo(s, +a.dataset.i); V = 'live'; if (A && A.type) { A.q = 0; A.hold = 0; } break;   // the clicked step becomes the current display
     case 'artpick': A.q = +a.dataset.i; A.hold = Date.now(); break;
     case 'artpause': A.hold = artHeld() ? 0 : Date.now(); break;
     case 'rmflow': { const f = flowOf(s), i = +a.dataset.i; f.splice(i, 1); if (i < s.pos) s.pos--; if (s.pos >= f.length) s.pos = f.length - 1; syncA(s); break; }
